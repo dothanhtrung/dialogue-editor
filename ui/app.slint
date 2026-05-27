@@ -1,17 +1,60 @@
-import { Button, VerticalBox } from "std-widgets.slint";
+import { Button, VerticalBox, HorizontalBox, ScrollView, TextEdit, ComboBox } from "std-widgets.slint";
 
 export component AppWindow inherits Window {
-    in-out property <int> counter: 42;
-    callback request-increase-value();
+    in-out property <[int]> class_id;
+    in-out property <[int]> state_id;
+    in-out property <string> content;
+    in-out property <int> affect_class_id;
+    in-out property <int> affect_state_id;
+    callback request-save();
+    callback request-load(string);
     VerticalBox {
-        Text {
-            text: "Counter: \{root.counter}";
+        HorizontalBox {
+            // Class actor
+            VerticalBox {
+                ScrollView {
+                    
+                }
+
+                Button {
+                    text: "Add";
+                }
+            }
+
+            // Dialogue State
+            VerticalBox {
+                ScrollView {}
+                Button {
+                    text: "Add";
+                }
+            }
+
+            // Dialogue content
+            VerticalBox {
+                TextEdit {
+                    placeholder-text: "Dialogue content";
+                }
+
+                ComboBox {
+                    
+                }
+
+                ComboBox {
+                    
+                }
+            }
         }
 
         Button {
-            text: "Increase value";
+            text: "Load";
             clicked => {
-                root.request-increase-value();
+                root.request-load("");
+            }
+        }
+        Button {
+            text: "Save";
+            clicked => {
+                root.request-save();
             }
         }
     }
