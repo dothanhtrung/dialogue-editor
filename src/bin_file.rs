@@ -3,7 +3,7 @@ use simple_crypt::encrypt;
 use std::fs;
 use std::fs::File;
 use std::io::Write;
-use std::path::{Path, PathBuf};
+use std::path::Path;
 
 pub(crate) trait BinFile: Serialize + for<'de> Deserialize<'de> + Send + 'static {
     const ENCR_KEY: &'static str = "";
@@ -20,7 +20,7 @@ pub(crate) trait BinFile: Serialize + for<'de> Deserialize<'de> + Send + 'static
         Ok(())
     }
 
-    fn save_to(&self, file_path: PathBuf) -> anyhow::Result<()> {
+    fn save_to(&self, file_path: &Path) -> anyhow::Result<()> {
         let data = postcard::to_allocvec(self)?;
 
         let enc_saved = if Self::ENCR_KEY.is_empty() {
