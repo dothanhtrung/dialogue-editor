@@ -4,11 +4,13 @@
 mod bin_file;
 mod ron_file;
 
-use crate::{bin_file::BinFile, ron_file::RonFile};
+use isolang::Language;
 use serde::{Deserialize, Serialize};
 use slint::SharedString;
+use tracing::info;
+use tracing_subscriber::EnvFilter;
 use std::{
-    cell::{RefCell, RefMut},
+    cell::RefCell,
     collections::{BTreeMap, HashMap},
     error::Error,
     path::{Path, PathBuf},
@@ -20,7 +22,7 @@ slint::include_modules!();
 
 #[derive(Serialize, Deserialize, Default, Clone)]
 struct Dialogue {
-    content: String,
+    content: HashMap<Language, String>,
     /// The class this dialogue will affect and the state that class will change to
     #[serde(default)]
     affect: Option<(u64, u64)>,
@@ -33,50 +35,70 @@ struct AppData {
     state_name_map: HashMap<u64, String>,
 }
 
-impl RonFile for AppData {}
+#[derive(Default, Serialize, Deserialize)]
+enum FileFormat {
+    #[default]
+    Ron,
+    Bin,
+}
 
+// TODO: Config UI
 #[derive(Serialize, Deserialize, Default)]
 struct Config {
     #[serde(default)]
     file_path: PathBuf,
+    #[serde(default)]
     selected_class: u64,
+    #[serde(default)]
     selected_state: u64,
+    #[serde(default)]
+    /// Used when file_format is Bin
+    encrypt_key: String,
+    #[serde(default)]
+    file_format: FileFormat,
 }
 
-impl RonFile for Config {}
+// TODO: Cache the xxh3_64
+// TODO: Warning to save before exit
 
 fn main() -> Result<(), Box<dyn Error>> {
+    let subscriber = tracing_subscriber::fmt()
+        .with_env_filter(
+            EnvFilter::try_from_default_env().unwrap_or_else(|_| EnvFilter::new("info")),
+        )
+        .with_thread_ids(true)
+        .finish();
+    tracing::subscriber::set_global_default(subscriber)?;
+
     let ui = AppWindow::new()?;
-
-    let mut config = Config::default();
-    let _ = config.load_from(Path::new("./dialog-editor.ron"));
-
-    ui.set_file_path(config.file_path.to_str().unwrap_or_default().into());
+    let config: Config = ron_file::load_from(Path::new("./dialog-editor.ron")).unwrap_or_default();
 
     let data = AppData::default();
 
-    let config = Rc::new(RefCell::new(config));
-    let config_ref1 = config.clone();
-    let config_ref2 = config.clone();
+    ui.set_file_path(config.file_path.to_str().unwrap_or_default().into());
 
+    let config = Rc::new(RefCell::new(config));
     let data = Rc::new(RefCell::new(data));
-    let data_ref1 = data.clone();
-    let data_ref2 = data.clone();
-    let data_ref3 = data.clone();
-    let data_ref4 = data.clone();
-    let data_ref5 = data.clone();
 
     ui.on_request_load({
         // TODO: Loading icon
+        let data = data.clone();
+        let config = config.clone();
         let ui_handle = ui.as_weak();
         move |file_path| {
             let ui = ui_handle.unwrap();
-            let mut config = config_ref1.borrow_mut();
-            let mut data = data_ref1.borrow_mut();
+            let mut config = config.borrow_mut();
+            let mut data = data.borrow_mut();
             config.file_path = PathBuf::from(file_path.as_str());
-            let _ = config.save_to(Path::new("./dialog-editor.ron"));
+            let _ = ron_file::save_to::<Config>(&config, Path::new("./dialog-editor.ron"));
 
-            if config.file_path.is_file() && data.load_from(&config.file_path).is_ok() {
+            if config.file_path.is_file() {
+                // TODO: Noti if fail to load
+                *data = match config.file_format {
+                    FileFormat::Bin => bin_file::load_from(&config.file_path, &config.encrypt_key)
+                        .unwrap_or_default(),
+                    FileFormat::Ron => ron_file::load_from(&config.file_path).unwrap_or_default(),
+                };
                 if (config.selected_class == 0
                     || !data.class_name_map.contains_key(&config.selected_class))
                     && let Some(first_class) = data.dialogues.keys().next()
@@ -92,41 +114,127 @@ fn main() -> Result<(), Box<dyn Error>> {
                     config.selected_class = *first_state;
                 }
 
-                reload(&mut data, &ui);
+                reload_all(&data, &ui, &config);
             }
         }
     });
 
     ui.on_request_save({
         // TODO: show save status
+        let data = data.clone();
+        let config = config.clone();
         move || {
-            let config = config_ref2.borrow_mut();
-            let data = data_ref2.borrow_mut();
+            let config = config.borrow_mut();
+            let data = data.borrow_mut();
 
-            let _ = data.save_to(&config.file_path);
+            // TODO: Noti if fail to save
+            match config.file_format {
+                FileFormat::Bin => {
+                    let _ =
+                        bin_file::save_to::<AppData>(&data, &config.file_path, &config.encrypt_key);
+                }
+                FileFormat::Ron => {
+                    let _ = ron_file::save_to::<AppData>(&data, &config.file_path);
+                }
+            }
         }
     });
 
     ui.on_add_class({
         let ui_handle = ui.as_weak();
+        let data = data.clone();
+        let config = config.clone();
         move |class_name| {
             let ui = ui_handle.unwrap();
-            let mut data = data_ref3.borrow_mut();
+            let mut data = data.borrow_mut();
+            let mut config = config.borrow_mut();
             let class_id = xxh3_64(class_name.as_bytes());
-            data.class_name_map.insert(class_id, class_name.to_string());
-            data.dialogues.insert(class_id, BTreeMap::new());
+            // TODO: Notify if class already exist
+            data.class_name_map
+                .entry(class_id)
+                .or_insert(class_name.to_string());
+            data.dialogues.entry(class_id).or_insert(BTreeMap::new());
+            config.selected_class = class_id;
+            config.selected_state = 0;
+            reload_all(&data, &ui, &config);
+        }
+    });
 
-            reload(&mut data, &ui);
+    ui.on_edit_class({
+        let ui_handle = ui.as_weak();
+        let data = data.clone();
+        let config = config.clone();
+        move |old_name, new_name| {
+            let ui = ui_handle.unwrap();
+            let mut data = data.borrow_mut();
+            let mut config = config.borrow_mut();
+            let old_class_id = xxh3_64(old_name.as_bytes());
+            let new_class_id = xxh3_64(new_name.as_bytes());
+
+            if !data.dialogues.contains_key(&new_class_id) {
+                if let Some(value) = data.dialogues.remove(&old_class_id) {
+                    data.dialogues.insert(new_class_id, value);
+                    data.class_name_map.entry(new_class_id).or_insert(new_name.to_string());
+                    data.class_name_map.remove(&old_class_id);
+
+                    config.selected_class = new_class_id;
+                    reload_all(&data, &ui, &config);
+                }
+            } else {
+                // TODO: Noti new name already exists
+            }
+        }
+    });
+
+    ui.on_remove_class({
+        let ui_handle = ui.as_weak();
+        let data = data.clone();
+        let config = config.clone();
+        move |class_name| {
+            let ui = ui_handle.unwrap();
+            let mut data = data.borrow_mut();
+            let mut config = config.borrow_mut();
+            let class_id = xxh3_64(class_name.as_bytes());
+            data.class_name_map.remove(&class_id);
+            data.dialogues.remove(&class_id);
+            config.selected_class = 0;
+            config.selected_state = 0;
+            reload_class(&data, &ui);
+        }
+    });
+
+    ui.on_select_class({
+        let ui_handle = ui.as_weak();
+        let data = data.clone();
+        let config = config.clone();
+        move |class_name| {
+            let ui = ui_handle.unwrap();
+            let data = data.borrow();
+            let mut config = config.borrow_mut();
+            let class_id = xxh3_64(class_name.as_bytes());
+            config.selected_class = class_id;
+            reload_state(&data, &ui, &config);
         }
     });
 
     ui.on_add_state({
         let ui_handle = ui.as_weak();
+        let data = data.clone();
+        let config = config.clone();
         move |state_name| {
             let ui = ui_handle.unwrap();
-            let mut data = data_ref4.borrow_mut();
+            let mut data = data.borrow_mut();
+            let mut config = config.borrow_mut();
             let state_id = xxh3_64(state_name.as_bytes());
-            data.state_name_map.insert(state_id, state_name.to_string());
+            // Notify if state already exists
+            config.selected_state = state_id;
+            data.state_name_map
+                .entry(state_id)
+                .or_insert(state_name.to_string());
+            if let Some(class) = data.dialogues.get_mut(&config.selected_class) {
+                class.entry(state_id).or_insert(Vec::new());
+                reload_state(&data, &ui, &config);
+            }
         }
     });
 
@@ -135,11 +243,39 @@ fn main() -> Result<(), Box<dyn Error>> {
     Ok(())
 }
 
-fn reload(data: &mut RefMut<'_, AppData>, ui: &AppWindow) {
+fn reload_all(data: &AppData, ui: &AppWindow, config: &Config) {
+    reload_class(data, ui);
+    reload_state(data, ui, config);
+    reload_dialogue(data, ui, config);
+}
+
+/// Reload class section and clear state/dialogue section
+fn reload_class(data: &AppData, ui: &AppWindow) {
     let mut classes: Vec<SharedString> = Vec::new();
     for (_, name) in data.class_name_map.iter() {
         classes.push(name.into());
     }
 
     ui.set_classes(classes.as_slice().into());
+    ui.set_states([].into());
+    ui.set_dialogues([].into());
 }
+
+/// Reload state section and clear dialogue section
+fn reload_state(data: &AppData, ui: &AppWindow, config: &Config) {
+    if let Some(class) = data.dialogues.get(&config.selected_class) {
+        let mut states: Vec<SharedString> = Vec::new();
+        for state_id in class.keys() {
+            let state_name = if let Some(ret) = data.state_name_map.get(state_id) {
+                ret.clone()
+            } else {
+                state_id.to_string()
+            };
+            states.push(state_name.into());
+        }
+        ui.set_states(states.as_slice().into());
+    }
+    ui.set_dialogues([].into());
+}
+
+fn reload_dialogue(data: &AppData, ui: &AppWindow, config: &Config) {}

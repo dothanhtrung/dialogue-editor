@@ -1,97 +1,130 @@
-import { TextEdit, Button, VerticalBox, HorizontalBox, ScrollView, ComboBox } from "std-widgets.slint";
+import {
+    TextEdit,
+    Button,
+    VerticalBox,
+    HorizontalBox,
+    ListView,
+    ComboBox,
+} from "std-widgets.slint";
+import { TextInputToggle } from "app_widgets.slint";
 
 export component AppWindow inherits Window {
     in-out property <string> file_path;
     in-out property <[string]> classes;
     in-out property <[string]> states;
-    in-out property <[{content: string, affect_class: string, affect_state: string}]> dialogues;
+    in-out property <[{
+        contents: [{ content: string, language: string}],
+        affect_class: string,
+        affect_state: string
+    }]> dialogues;
     callback request-save();
     callback request-load(string);
-    callback load-class(string);
+    callback select-class(string);
     callback remove-class(string);
     callback add-class(string);
-    callback load-state(string);
+    callback edit-class(string, string); // old name, new name
+    callback select-state(string);
     callback remove-state(string);
     callback add-state(string);
+    callback edit-state(string, string); // old name, new name
     callback add-dialog(string);
+    callback remove-dialog(int);
     VerticalBox {
         HorizontalBox {
             // Class actor
             VerticalBox {
-                class_list := ScrollView {
-                    for class in classes: VerticalBox {
-                        HorizontalBox {
-                            VerticalBox {
-                                Text {
-                                    text: class;
-                                } 
-                            }
-                            Button {
-                                text: "Delete";
-                                clicked => {root.remove-class(class);};
-                            }
-                        }
-                        TouchArea {
-                            width: 100%;
-                            height: 100%;
-                            clicked => {root.load-class(class);};
-                        }
+                ListView {
+                    for class_name[i] in classes: TextInputToggle {
+                        value: class_name;
+                        select => {
+                            select-class(class_name);
+                        };
+                        submit(new_name) => {
+                            edit-class(class_name, new_name);
+                        };
+                        delete => {
+                            remove-class(class_name);
+                        };
                     }
                 }
 
-                new_class:= TextInput {
+                new_class := TextInput {
                     text: "New class";
                 }
+
                 Button {
                     text: "Add";
-                    clicked => {root.add-class(new_class.text);};
+                    clicked => {
+                        root.add-class(new_class.text);
+                    };
                 }
             }
 
             // Dialogue State
             VerticalBox {
-                state_list := ScrollView {
-                    for state in states: VerticalBox {
-                        HorizontalBox {
-                            VerticalBox {
-                                Text {text: state;} 
-                            }
-                            Button {
-                                text: "Delete";
-                                clicked => {root.remove-state(state)};
-                            }
-                        }
-                        TouchArea {
-                            width: 100%;
-                            height: 100%;
-                            clicked => {root.load-state(state);};
-                        }
+                ListView {
+                    for state_name in states: TextInputToggle {
+                        value: state_name;
+                        select => {
+                            select-state(state_name);
+                        };
+                        submit(new_name) => {
+                            edit-state(state_name, new_name);
+                        };
+                        delete => {
+                            remove-state(state_name);
+                        };
                     }
                 }
+
                 new_state := TextInput {
                     text: "New state";
                 }
+
                 Button {
                     text: "Add";
-                    clicked => {root.add-state(new_state.text);}
+                    clicked => {
+                        root.add-state(new_state.text);
+                    }
                 }
             }
 
             // Dialogue content
             VerticalBox {
-                ScrollView {
-                    for dialog in dialogues: HorizontalBox {
-                        TextEdit {
-                            text: dialog.content;
+                ListView {
+                    for dialog[i] in dialogues: VerticalBox {
+                        ListView {
+                            for content[j] in dialog.contents: HorizontalBox {
+                                TextEdit {
+                                    text: content.content;
+                                }
+
+                                ComboBox {
+                                    current-value: content.language;
+                                }
+                            }
+                        }
+
+                        ComboBox {
+                            model: classes;
+                        }
+
+                        ComboBox {
+                            // TODO: Filter states by selected class in combo box
+                            model: states;
                         }
                     }
                 }
-                new_dialog := TextEdit {
-                
-                }
+
+                new_dialog := TextEdit { }
+
+                language_edit := ComboBox { }
+
                 Button {
                     text: "Add";
-                    clicked => {root.add-dialog(new_dialog.text);}
+                    clicked => {
+                        root.add-dialog(new_dialog.text);
+                    }
                 }
             }
         }
@@ -99,12 +132,14 @@ export component AppWindow inherits Window {
         file_path_input := TextInput {
             text: root.file_path;
         }
+
         Button {
             text: "Load";
             clicked => {
                 root.request-load(file_path_input.text);
             }
         }
+
         Button {
             text: "Save";
             clicked => {

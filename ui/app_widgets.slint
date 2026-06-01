@@ -1,0 +1,47 @@
+import { HorizontalBox, Button } from "std-widgets.slint";
+
+export component TextInputToggle inherits Rectangle {
+    in property <string> value;
+    callback submit(string);
+    callback delete();
+    callback select;
+
+    TouchArea {
+        width: 100%;
+        height: 100%;
+        double-clicked => {
+            view.visible = false;
+            edit.visible = true;
+            save_btn.visible = true;
+        }
+        clicked => {
+            select();
+        }
+
+        HorizontalBox {
+            view := Text {
+                text: value;
+            }
+
+            edit := TextInput {
+                text: value;
+                visible: false;
+            }
+
+            save_btn := Button {
+                text: "Save";
+                visible: false;
+                clicked => {
+                    submit(edit.text);
+                }
+            }
+
+            Button {
+                text: "Delete";
+                clicked => {
+                    delete();
+                }
+            }
+        }
+    }
+}

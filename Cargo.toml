@@ -1,5 +1,5 @@
 [package]
-name = "data-editor"
+name = "dialog-editor"
 version = "0.1.0"
 edition = "2024"
 
@@ -11,6 +11,10 @@ simple_crypt = { version = "0.2" }
 ron = { version = "0.12" }
 anyhow = { version = "1.0" }
 xxhash-rust = {version = "0.8.15", default-features = false, features = ["xxh3"] }
+isolang = {version = "2.4", features = ["serde"]}
+tracing = {version = "0.1"}
+tracing-subscriber = { version = "0.3", features = ["env-filter"] }
+
 
 [build-dependencies]
 slint-build = "1.16.1"
@@ -18,3 +22,4 @@ slint-build = "1.16.1"
 [profile.release]
 codegen-units = 1
 lto = true
+strip = true
