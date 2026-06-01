@@ -2,16 +2,16 @@ import { TextEdit, Button, VerticalBox, HorizontalBox, ScrollView, ComboBox } fr
 
 export component AppWindow inherits Window {
     in-out property <string> file_path;
-    in-out property <[{name: string, id: int}]> classes;
-    in-out property <[{name: string, id: int}]> states;
-    in-out property <[{content: string, affect_class: int, affect_state: int}]> dialogues;
+    in-out property <[string]> classes;
+    in-out property <[string]> states;
+    in-out property <[{content: string, affect_class: string, affect_state: string}]> dialogues;
     callback request-save();
     callback request-load(string);
-    callback load-class(int);
-    callback remove-class(int);
+    callback load-class(string);
+    callback remove-class(string);
     callback add-class(string);
-    callback load-state(int);
-    callback remove-state(int);
+    callback load-state(string);
+    callback remove-state(string);
     callback add-state(string);
     callback add-dialog(string);
     VerticalBox {
@@ -23,21 +23,18 @@ export component AppWindow inherits Window {
                         HorizontalBox {
                             VerticalBox {
                                 Text {
-                                    text: class.name;
-                                }
-                                Text {
-                                    text: class.id;
-                                }
+                                    text: class;
+                                } 
                             }
                             Button {
                                 text: "Delete";
-                                clicked => {root.remove-class(class.id);};
+                                clicked => {root.remove-class(class);};
                             }
                         }
                         TouchArea {
                             width: 100%;
                             height: 100%;
-                            clicked => {root.load-class(class.id);};
+                            clicked => {root.load-class(class);};
                         }
                     }
                 }
@@ -57,18 +54,17 @@ export component AppWindow inherits Window {
                     for state in states: VerticalBox {
                         HorizontalBox {
                             VerticalBox {
-                                Text {text: state.name;}
-                                Text {text: state.id;}
+                                Text {text: state;} 
                             }
                             Button {
                                 text: "Delete";
-                                clicked => {root.remove-state(state.id)};
+                                clicked => {root.remove-state(state)};
                             }
                         }
                         TouchArea {
                             width: 100%;
                             height: 100%;
-                            clicked => {root.load-state(state.id);};
+                            clicked => {root.load-state(state);};
                         }
                     }
                 }
