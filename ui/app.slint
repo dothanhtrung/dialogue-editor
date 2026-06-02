@@ -6,18 +6,16 @@ import {
     ListView,
     ComboBox,
 } from "std-widgets.slint";
-import { TextInputToggle } from "app_widgets.slint";
+import { EditableTextBox, UiDialogue, DialogueBox } from "app_widgets.slint";
 
-export struct Dialogue {
-    contents: [{content: string, language:string}],
-    affects: [{class: string, state: string}],
-}
 
 export component AppWindow inherits Window {
     in-out property <string> file_path;
     in-out property <[string]> classes;
     in-out property <[string]> states;
-    in-out property <[Dialogue]> dialogues;
+    in-out property <[UiDialogue]> dialogues;
+    in-out property <[string]> lang-list;
+
     callback request-save();
     callback request-load(string);
     callback select-class(string);
@@ -28,14 +26,18 @@ export component AppWindow inherits Window {
     callback remove-state(string);
     callback add-state(string);
     callback rename-state(string, string); // old name, new name
-    callback add-dialog(string);
+    callback add-dialog(string, string, string, string);
     callback remove-dialog(int);
+
+    callback new_trans_content(int, string, string);
+    callback new_affect(int, string, string);
+
     VerticalBox {
         HorizontalBox {
             // Class actor
             VerticalBox {
                 ListView {
-                    for class_name[i] in classes: TextInputToggle {
+                    for class_name[i] in classes: EditableTextBox {
                         value: class_name;
                         select => {
                             select-class(class_name);
@@ -64,7 +66,7 @@ export component AppWindow inherits Window {
             // Dialogue State
             VerticalBox {
                 ListView {
-                    for state_name in states: TextInputToggle {
+                    for state_name in states: EditableTextBox {
                         value: state_name;
                         select => {
                             select-state(state_name);
@@ -93,38 +95,39 @@ export component AppWindow inherits Window {
             // Dialogue content
             VerticalBox {
                 ListView {
-                    for dialog[i] in dialogues: VerticalBox {
-                        ListView {
-                            for content[j] in dialog.contents: HorizontalBox {
-                                TextEdit {
-                                    text: content.content;
-                                }
+                    for dialog[i] in dialogues: DialogueBox {
+                        dialogue: dialog;
+                        lang_list: lang-list;
+                        class_list: classes;
+                        state_list: states;
 
-                                ComboBox {
-                                    current-value: content.language;
-                                }
-                            }
-                        }
-
-                        ComboBox {
-                            model: classes;
-                        }
-
-                        ComboBox {
-                            // TODO: Filter states by selected class in combo box
-                            model: states;
-                        }
+                        new_lang_content(lang, content) => {
+                            new_trans_content(i, lang, content);
+                        };
+                        new_affect(class, state) => {
+                            new_affect(i, class, state);
+                        };
                     }
                 }
 
-                new_dialog := TextEdit { }
+                VerticalBox {
+                    HorizontalBox {
+                        new_lang := ComboBox { }
 
-                language_edit := ComboBox { }
+                        new_dialog := TextEdit { }
+                    }
 
-                Button {
-                    text: "Add";
-                    clicked => {
-                        root.add-dialog(new_dialog.text);
+                    HorizontalBox {
+                        new_affect_class := ComboBox { }
+
+                        new_affect_state := ComboBox { }
+                    }
+
+                    Button {
+                        text: "Add";
+                        clicked => {
+                            root.add-dialog(new_lang.current-value, new_dialog.text, new_affect_class.current-value, new_affect_state.current-value);
+                        }
                     }
                 }
             }

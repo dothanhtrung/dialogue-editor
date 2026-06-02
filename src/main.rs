@@ -10,7 +10,6 @@ use serde::{
     Serialize,
 };
 use slint::SharedString;
-use slint_generatedAppWindow::Dialogue as SlintDialogue;
 use std::{
     cell::RefCell,
     collections::{
@@ -34,7 +33,7 @@ struct Dialogue {
     contents: HashMap<Language, String>,
     /// The class this dialogue will affect and the state that class will change to
     #[serde(default)]
-    affects: Vec<(u64, u64)>,
+    affects: HashMap<u64, u64>,
 }
 
 #[derive(Serialize, Deserialize, Default, Clone)]
@@ -326,29 +325,29 @@ fn reload_state(data: &AppData, ui: &AppWindow, config: &Config) {
 }
 
 fn reload_dialogue(data: &AppData, ui: &AppWindow, config: &Config) {
-    let mut dialogues: Vec<SlintDialogue> = Vec::new();
+    let mut dialogues: Vec<UiDialogue> = Vec::new();
     if let Some(state) = data.dialogues.get(&config.selected_class)
         && let Some(state_dialogs) = state.get(&config.selected_state)
     {
         for dialog in state_dialogs {
-            let mut slint_contents = Vec::new();
-            let mut slint_affects = Vec::new();
+            let mut slint_contents: Vec<(SharedString, SharedString)> = Vec::new();
+            let mut slint_affects: Vec<(SharedString, SharedString)> = Vec::new();
 
             for (lang, content) in dialog.contents.iter() {
-                slint_contents.push((lang.to_string(), content.clone()));
+                slint_contents.push((lang.to_string().into(), content.into()));
             }
-            for (class, state) in dialog.affects.iter() {
-                if let Some(class) = data.class_name_map.get(class)
-                    && let Some(state) = data.state_name_map.get(state)
+            for (class_id, state_id) in dialog.affects.iter() {
+                if let Some(class_name) = data.class_name_map.get(class_id)
+                    && let Some(state_name) = data.state_name_map.get(state_id)
                 {
-                    slint_affects.push((class.clone(), state.clone()));
+                    slint_affects.push((class_name.into(), state_name.into()));
                 }
             }
-            // TODO: Pass dialogue data
-            // dialogues.push(SlintDialogue {
-            //     contents: slint_contents.as_slice().into(),
-            //     affects: slint_affects.as_slice().into(),
-            // });
+
+            dialogues.push(UiDialogue {
+                contents: slint_contents.as_slice().into(),
+                affects: slint_affects.as_slice().into(),
+            });
         }
     }
 }

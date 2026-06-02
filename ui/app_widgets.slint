@@ -1,6 +1,86 @@
-import { HorizontalBox, Button } from "std-widgets.slint";
+import {
+    HorizontalBox,
+    Button,
+    VerticalBox,
+    ComboBox,
+    TextEdit,
+} from "std-widgets.slint";
 
-export component TextInputToggle inherits Rectangle {
+export struct UiDialogue {
+    contents: [{ content: string, language: string}],
+    affects: [{ class: string, state: string}],
+}
+
+export component DialogueBox inherits Rectangle {
+    in-out property <UiDialogue> dialogue;
+    in property <[string]> lang_list;
+    in property <[string]> class_list;
+    in property <[string]> state_list;
+
+    callback new_lang_content(string, string);
+    callback new_affect(string, string);
+
+    VerticalBox {
+        for dialog[i] in dialogue.contents: HorizontalBox {
+            ComboBox {
+                model: lang_list;
+                current-value: dialog.language;
+                selected(current-value) => {
+                    root.dialogue.contents[i].language = current-value;
+                }
+            }
+
+            TextEdit {
+                text: dialog.content;
+                edited(value) => {
+                    root.dialogue.contents[i].content = value;
+                }
+            }
+            // TODO: Submit change
+        }
+        new_lang := ComboBox {
+            model: lang_list;
+        }
+
+        new_content := TextEdit { }
+
+        Button {
+            text: "Add";
+            clicked => {
+                new_lang_content(new_lang.current-value, new_content.text);
+            };
+        }
+
+        for affect[i] in dialogue.affects: HorizontalBox {
+            ComboBox {
+                model: class_list;
+                current-value: affect.class;
+            }
+
+            ComboBox {
+                // TODO: Filter state by class
+                model: state_list;
+                current-value: affect.state;
+            }
+        }
+        new_affect_class := ComboBox {
+            model: class_list;
+        }
+
+        new_affect_state := ComboBox {
+            model: state_list;
+        }
+
+        Button {
+            text: "Add";
+            clicked => {
+                new_affect(new_affect_class.current-value, new_affect_state.current-value);
+            };
+        }
+    }
+}
+
+export component EditableTextBox inherits Rectangle {
     in property <string> value;
     callback submit(string);
     callback delete();
@@ -33,7 +113,7 @@ export component TextInputToggle inherits Rectangle {
             }
 
             save_btn := Button {
-                text: "Save";
+                text: "Accept";
                 visible: false;
                 clicked => {
                     submit(edit.text);
