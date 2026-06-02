@@ -8,25 +8,26 @@ import {
 } from "std-widgets.slint";
 import { TextInputToggle } from "app_widgets.slint";
 
+export struct Dialogue {
+    contents: [{content: string, language:string}],
+    affects: [{class: string, state: string}],
+}
+
 export component AppWindow inherits Window {
     in-out property <string> file_path;
     in-out property <[string]> classes;
     in-out property <[string]> states;
-    in-out property <[{
-        contents: [{ content: string, language: string}],
-        affect_class: string,
-        affect_state: string
-    }]> dialogues;
+    in-out property <[Dialogue]> dialogues;
     callback request-save();
     callback request-load(string);
     callback select-class(string);
     callback remove-class(string);
     callback add-class(string);
-    callback edit-class(string, string); // old name, new name
+    callback rename-class(string, string); // old name, new name
     callback select-state(string);
     callback remove-state(string);
     callback add-state(string);
-    callback edit-state(string, string); // old name, new name
+    callback rename-state(string, string); // old name, new name
     callback add-dialog(string);
     callback remove-dialog(int);
     VerticalBox {
@@ -40,7 +41,7 @@ export component AppWindow inherits Window {
                             select-class(class_name);
                         };
                         submit(new_name) => {
-                            edit-class(class_name, new_name);
+                            rename-class(class_name, new_name);
                         };
                         delete => {
                             remove-class(class_name);
@@ -69,7 +70,7 @@ export component AppWindow inherits Window {
                             select-state(state_name);
                         };
                         submit(new_name) => {
-                            edit-state(state_name, new_name);
+                            rename-state(state_name, new_name);
                         };
                         delete => {
                             remove-state(state_name);
