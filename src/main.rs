@@ -30,10 +30,10 @@ slint::include_modules!();
 
 #[derive(Serialize, Deserialize, Default, Clone)]
 struct Dialogue {
-    contents: HashMap<Language, String>,
+    contents: BTreeMap<Language, String>,
     /// The class this dialogue will affect and the state that class will change to
     #[serde(default)]
-    affects: HashMap<u64, u64>,
+    affects: BTreeMap<u64, u64>,
 }
 
 #[derive(Serialize, Deserialize, Default, Clone)]
@@ -60,10 +60,18 @@ struct Config {
     #[serde(default)]
     selected_state: u64,
     #[serde(default)]
+    selected_dialog: usize,
+    #[serde(default)]
     /// Used when file_format is Bin
     encrypt_key: String,
     #[serde(default)]
     file_format: FileFormat,
+}
+
+impl Config {
+    fn save(&self) {
+        let _ = ron_file::save_to::<Config>(self, Path::new("./dialog-editor.ron"));
+    }
 }
 
 // TODO: Cache the xxh3_64
@@ -96,7 +104,7 @@ fn main() -> Result<(), Box<dyn Error>> {
             let mut config = config.borrow_mut();
             let mut data = data.borrow_mut();
             config.file_path = PathBuf::from(file_path.as_str());
-            let _ = ron_file::save_to::<Config>(&config, Path::new("./dialog-editor.ron"));
+            config.save();
 
             if config.file_path.is_file() {
                 // TODO: Noti if fail to load
@@ -127,8 +135,9 @@ fn main() -> Result<(), Box<dyn Error>> {
         let data = data.clone();
         let config = config.clone();
         move || {
-            let config = config.borrow_mut();
-            let data = data.borrow_mut();
+            let config = config.borrow();
+            let data = data.borrow();
+            config.save();
 
             // TODO: Noti if fail to save
             match config.file_format {
@@ -253,7 +262,7 @@ fn main() -> Result<(), Box<dyn Error>> {
         move |state_name| {
             let ui = ui_handle.unwrap();
             let mut data = data.borrow_mut();
-            let config = config.borrow_mut();
+            let config = config.borrow();
             let state_id = xxh3_64(state_name.as_bytes());
             if let Some(class) = data.dialogues.get_mut(&config.selected_class) {
                 class.remove(&state_id);
@@ -284,6 +293,20 @@ fn main() -> Result<(), Box<dyn Error>> {
             } else {
                 // TODO: Noti new name exists
             }
+        }
+    });
+
+    ui.on_select_dialog({
+        let ui_handle = ui.as_weak();
+        let data = data.clone();
+        let config = config.clone();
+        move |dialog_id| {
+            let ui = ui_handle.unwrap();
+            let data = data.borrow_mut();
+            let mut config = config.borrow_mut();
+
+            config.selected_dialog = dialog_id as usize;
+            reload_dialogue_detail(&data, &ui, &config);
         }
     });
 
@@ -325,29 +348,42 @@ fn reload_state(data: &AppData, ui: &AppWindow, config: &Config) {
 }
 
 fn reload_dialogue(data: &AppData, ui: &AppWindow, config: &Config) {
-    let mut dialogues: Vec<UiDialogue> = Vec::new();
     if let Some(state) = data.dialogues.get(&config.selected_class)
         && let Some(state_dialogs) = state.get(&config.selected_state)
     {
+        let mut dialogues: Vec<SharedString> = Vec::new();
         for dialog in state_dialogs {
-            let mut slint_contents: Vec<(SharedString, SharedString)> = Vec::new();
-            let mut slint_affects: Vec<(SharedString, SharedString)> = Vec::new();
-
-            for (lang, content) in dialog.contents.iter() {
-                slint_contents.push((lang.to_string().into(), content.into()));
+            if let Some((_, content)) = dialog.contents.first_key_value() {
+                dialogues.push(content.into());
             }
-            for (class_id, state_id) in dialog.affects.iter() {
-                if let Some(class_name) = data.class_name_map.get(class_id)
-                    && let Some(state_name) = data.state_name_map.get(state_id)
-                {
-                    slint_affects.push((class_name.into(), state_name.into()));
-                }
-            }
-
-            dialogues.push(UiDialogue {
-                contents: slint_contents.as_slice().into(),
-                affects: slint_affects.as_slice().into(),
-            });
         }
+
+        ui.set_dialogues(dialogues.as_slice().into());
+    }
+}
+
+fn reload_dialogue_detail(data: &AppData, ui: &AppWindow, config: &Config) {
+    if let Some(state) = data.dialogues.get(&config.selected_class)
+        && let Some(dialog_list) = state.get(&config.selected_state)
+        && let Some(dialog) = dialog_list.get(config.selected_dialog)
+    {
+        let mut contents: Vec<(SharedString, SharedString)> = Vec::new();
+        let mut affects: Vec<(SharedString, SharedString)> = Vec::new();
+        for (lang, content) in dialog.contents.iter() {
+            contents.push((lang.to_string().into(), content.into()));
+        }
+        for (class, state) in dialog.affects.iter() {
+            if let Some(class_name) = data.class_name_map.get(class)
+                && let Some(state_name) = data.state_name_map.get(state)
+            {
+                affects.push((class_name.into(), state_name.into()));
+            }
+        }
+
+        let ui_dialogue = UiDialogue {
+            contents: contents.as_slice().into(),
+            affects: affects.as_slice().into(),
+        };
+        ui.set_dialogue(ui_dialogue);
     }
 }

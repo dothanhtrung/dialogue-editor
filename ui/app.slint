@@ -6,31 +6,42 @@ import {
     ListView,
     ComboBox,
 } from "std-widgets.slint";
-import { EditableTextBox, UiDialogue, DialogueBox } from "app_widgets.slint";
+import {
+    EditableTextBox,
+    UiDialogue,
+    DialogueBox,
+    SelectableBox,
+} from "app_widgets.slint";
 
 
 export component AppWindow inherits Window {
     in-out property <string> file_path;
     in-out property <[string]> classes;
     in-out property <[string]> states;
-    in-out property <[UiDialogue]> dialogues;
+    in-out property <[string]> dialogues;
+    in-out property <UiDialogue> dialogue;
     in-out property <[string]> lang-list;
 
     callback request-save();
     callback request-load(string);
+
     callback select-class(string);
     callback remove-class(string);
     callback add-class(string);
     callback rename-class(string, string); // old name, new name
+    
     callback select-state(string);
     callback remove-state(string);
     callback add-state(string);
     callback rename-state(string, string); // old name, new name
-    callback add-dialog(string, string, string, string);
+
+    callback select-dialog(int);
+    callback add-dialog();
     callback remove-dialog(int);
 
-    callback new_trans_content(int, string, string);
-    callback new_affect(int, string, string);
+    callback new_lang_content(string, string); // lang, content
+    callback new_affect(string, string); // affect_class, affect_state
+    callback update_content(UiDialogue); // dialog
 
     VerticalBox {
         HorizontalBox {
@@ -95,40 +106,42 @@ export component AppWindow inherits Window {
             // Dialogue content
             VerticalBox {
                 ListView {
-                    for dialog[i] in dialogues: DialogueBox {
-                        dialogue: dialog;
-                        lang_list: lang-list;
-                        class_list: classes;
-                        state_list: states;
-
-                        new_lang_content(lang, content) => {
-                            new_trans_content(i, lang, content);
+                    for dialog[i] in dialogues: SelectableBox {
+                        value: dialog;
+                        select => {
+                            select-dialog(i);
                         };
-                        new_affect(class, state) => {
-                            new_affect(i, class, state);
+                        delete => {
+                            remove-dialog(i);
                         };
                     }
                 }
 
-                VerticalBox {
-                    HorizontalBox {
-                        new_lang := ComboBox { }
-
-                        new_dialog := TextEdit { }
+                Button {
+                    text: "Add";
+                    clicked => {
+                        root.add-dialog();
                     }
+                }
+            }
 
-                    HorizontalBox {
-                        new_affect_class := ComboBox { }
+            // Dialog detail
+            VerticalBox {
+                DialogueBox {
+                    dialogue: dialogue;
+                    lang_list: lang-list;
+                    class_list: classes;
+                    state_list: states;
 
-                        new_affect_state := ComboBox { }
-                    }
-
-                    Button {
-                        text: "Add";
-                        clicked => {
-                            root.add-dialog(new_lang.current-value, new_dialog.text, new_affect_class.current-value, new_affect_state.current-value);
-                        }
-                    }
+                    update_content => {
+                        update_content(self.dialogue);
+                    };
+                    new_lang_content(lang, content) => {
+                        new_lang_content(lang, content);
+                    };
+                    new_affect(class, state) => {
+                        new_affect(class, state);
+                    };
                 }
             }
         }

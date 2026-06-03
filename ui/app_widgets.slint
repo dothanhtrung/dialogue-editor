@@ -19,14 +19,16 @@ export component DialogueBox inherits Rectangle {
 
     callback new_lang_content(string, string);
     callback new_affect(string, string);
+    callback update_content();
 
-    VerticalBox {
+    outer := VerticalBox {
         for dialog[i] in dialogue.contents: HorizontalBox {
             ComboBox {
                 model: lang_list;
                 current-value: dialog.language;
                 selected(current-value) => {
                     root.dialogue.contents[i].language = current-value;
+                    submit_btn.visible = true;
                 }
             }
 
@@ -34,9 +36,9 @@ export component DialogueBox inherits Rectangle {
                 text: dialog.content;
                 edited(value) => {
                     root.dialogue.contents[i].content = value;
+                    submit_btn.visible = true;
                 }
             }
-            // TODO: Submit change
         }
         new_lang := ComboBox {
             model: lang_list;
@@ -47,6 +49,7 @@ export component DialogueBox inherits Rectangle {
         Button {
             text: "Add";
             clicked => {
+                update_content();
                 new_lang_content(new_lang.current-value, new_content.text);
             };
         }
@@ -55,12 +58,20 @@ export component DialogueBox inherits Rectangle {
             ComboBox {
                 model: class_list;
                 current-value: affect.class;
+                selected(current-value) => {
+                    dialogue.affects[i].class = current-value;
+                    submit_btn.visible = true;
+                }
             }
 
             ComboBox {
                 // TODO: Filter state by class
                 model: state_list;
                 current-value: affect.state;
+                selected(current-value) => {
+                    dialogue.affects[i].state = current-value;
+                    submit_btn.visible = true;
+                }
             }
         }
         new_affect_class := ComboBox {
@@ -74,17 +85,25 @@ export component DialogueBox inherits Rectangle {
         Button {
             text: "Add";
             clicked => {
+                update_content();
                 new_affect(new_affect_class.current-value, new_affect_state.current-value);
+            };
+        }
+
+        submit_btn := Button {
+            text: "Submit";
+            clicked => {
+                root.update_content();
+                self.visible = false;
             };
         }
     }
 }
 
-export component EditableTextBox inherits Rectangle {
+export component SelectableBox inherits Rectangle {
     in property <string> value;
-    callback submit(string);
     callback delete();
-    callback select;
+    callback select();
 
     border-width: 1px;
     border-color: #ffffff;
@@ -93,23 +112,64 @@ export component EditableTextBox inherits Rectangle {
     TouchArea {
         width: 100%;
         height: 100%;
-        double-clicked => {
-            view.visible = false;
-            edit.visible = true;
-            save_btn.visible = true;
-        }
+
         clicked => {
+            del_btn.visible = true;
+            select();
+        }
+
+        Text {
+            text: value;
+        }
+
+        del_btn := Button {
+            text: "Delete";
+            visible: false;
+            clicked => {
+                delete();
+            };
+        }
+    }
+}
+
+
+export component EditableTextBox inherits Rectangle {
+    in property <string> value;
+    callback submit(string);
+    callback delete();
+    callback select;
+
+    public function unfocus() {
+        touch_area.unfocus();
+    }
+
+    border-width: 1px;
+    border-color: #ffffff;
+    border-radius: 5px;
+
+    touch_area := TouchArea {
+        width: 100%;
+        height: 100%;
+
+        function unfocus() {
+            edit.read-only = true;
+            edit.clear-focus();
+            save_btn.visible = false;
+            del_btn.visible = false;
+        }
+
+        clicked => {
+            edit.read-only = false;
+            edit.focus();
+            save_btn.visible = true;
+            del_btn.visible = true;
             select();
         }
 
         HorizontalBox {
-            view := Text {
-                text: value;
-            }
-
             edit := TextInput {
                 text: value;
-                visible: false;
+                read-only: true;
             }
 
             save_btn := Button {
@@ -120,8 +180,9 @@ export component EditableTextBox inherits Rectangle {
                 }
             }
 
-            Button {
+            del_btn := Button {
                 text: "Delete";
+                visible: false;
                 clicked => {
                     delete();
                 }
