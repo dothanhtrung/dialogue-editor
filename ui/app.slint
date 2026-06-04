@@ -20,7 +20,11 @@ export component AppWindow inherits Window {
     in-out property <[string]> states;
     in-out property <[string]> dialogues;
     in-out property <UiDialogue> dialogue;
-    in-out property <[string]> lang-list;
+    in-out property <[string]> lang_list;
+
+    property <int> selecting_class;
+    property <int> selecting_state;
+    property <int> selecting_dialog;
 
     callback request-save();
     callback request-load(string);
@@ -42,16 +46,18 @@ export component AppWindow inherits Window {
     callback new_lang_content(string, string); // lang, content
     callback new_affect(string, string); // affect_class, affect_state
     callback update_content(UiDialogue); // dialog
-
+    
     VerticalBox {
         HorizontalBox {
             // Class actor
             VerticalBox {
                 ListView {
+                    // TODO: unfocus other when one is focus
                     for class_name[i] in classes: EditableTextBox {
                         value: class_name;
                         select => {
                             select-class(class_name);
+                            root.selecting_class = i;
                         };
                         submit(new_name) => {
                             rename-class(class_name, new_name);
@@ -62,25 +68,28 @@ export component AppWindow inherits Window {
                     }
                 }
 
-                new_class := TextInput {
-                    text: "New class";
-                }
+                HorizontalBox {
+                    new_class := TextInput {
+                        text: "New class";
+                    }
 
-                Button {
-                    text: "Add";
-                    clicked => {
-                        root.add-class(new_class.text);
-                    };
+                    Button {
+                        text: "Add";
+                        clicked => {
+                            root.add-class(new_class.text);
+                        };
+                    }
                 }
             }
 
             // Dialogue State
             VerticalBox {
                 ListView {
-                    for state_name in states: EditableTextBox {
+                    for state_name[i] in states: EditableTextBox {
                         value: state_name;
                         select => {
                             select-state(state_name);
+                            root.selecting_dialog = i;
                         };
                         submit(new_name) => {
                             rename-state(state_name, new_name);
@@ -91,25 +100,28 @@ export component AppWindow inherits Window {
                     }
                 }
 
-                new_state := TextInput {
-                    text: "New state";
-                }
+                HorizontalBox {
+                    new_state := TextInput {
+                        text: "New state";
+                    }
 
-                Button {
-                    text: "Add";
-                    clicked => {
-                        root.add-state(new_state.text);
+                    Button {
+                        text: "Add";
+                        clicked => {
+                            root.add-state(new_state.text);
+                        }
                     }
                 }
             }
 
-            // Dialogue content
+            // Dialogue list
             VerticalBox {
                 ListView {
                     for dialog[i] in dialogues: SelectableBox {
                         value: dialog;
                         select => {
                             select-dialog(i);
+                            root.selecting_dialog = i;
                         };
                         delete => {
                             remove-dialog(i);
@@ -129,7 +141,7 @@ export component AppWindow inherits Window {
             VerticalBox {
                 DialogueBox {
                     dialogue: dialogue;
-                    lang_list: lang-list;
+                    lang_list: lang_list;
                     class_list: classes;
                     state_list: states;
 
@@ -146,21 +158,25 @@ export component AppWindow inherits Window {
             }
         }
 
-        file_path_input := TextInput {
-            text: root.file_path;
-        }
-
-        Button {
-            text: "Load";
-            clicked => {
-                root.request-load(file_path_input.text);
+        VerticalBox {
+            file_path_input := TextInput {
+                text: root.file_path;
             }
-        }
 
-        Button {
-            text: "Save";
-            clicked => {
-                root.request-save();
+            HorizontalBox {
+                Button {
+                    text: "Load";
+                    clicked => {
+                        root.request-load(file_path_input.text);
+                    }
+                }
+
+                Button {
+                    text: "Save";
+                    clicked => {
+                        root.request-save();
+                    }
+                }
             }
         }
     }

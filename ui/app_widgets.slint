@@ -7,7 +7,7 @@ import {
 } from "std-widgets.slint";
 
 export struct UiDialogue {
-    contents: [{ content: string, language: string}],
+    contents: [{ language: string, content: string}],
     affects: [{ class: string, state: string}],
 }
 
@@ -16,6 +16,7 @@ export component DialogueBox inherits Rectangle {
     in property <[string]> lang_list;
     in property <[string]> class_list;
     in property <[string]> state_list;
+    property <int> content_selecting;
 
     callback new_lang_content(string, string);
     callback new_affect(string, string);
@@ -23,35 +24,62 @@ export component DialogueBox inherits Rectangle {
 
     outer := VerticalBox {
         for dialog[i] in dialogue.contents: HorizontalBox {
-            ComboBox {
+            TouchArea {
+                width: 100%;
+                height: 100%;
+
+                clicked => {
+                    root.content_selecting = i;
+                }
+
+                lang_view := ComboBox {
+                    model: lang_list;
+                    current-value: dialog.language;
+                    enabled: {
+                        if (root.content_selecting == i) {
+                            true
+                        } else {
+                            false
+                        }
+                    };
+                    selected(current-value) => {
+                        root.dialogue.contents[i].language = current-value;
+                        submit_btn.visible = true;
+                    }
+                }
+
+                content_view := TextEdit {
+                    text: dialog.content;
+                    enabled: {
+                        if (root.content_selecting == i) {
+                            true
+                        } else {
+                            false
+                        }
+                    };
+                    edited(value) => {
+                        root.dialogue.contents[i].content = value;
+                        submit_btn.visible = true;
+                    }
+                }
+            // TODO: Delete
+            }
+        }
+
+        HorizontalBox {
+            new_lang := ComboBox {
                 model: lang_list;
-                current-value: dialog.language;
-                selected(current-value) => {
-                    root.dialogue.contents[i].language = current-value;
-                    submit_btn.visible = true;
-                }
             }
 
-            TextEdit {
-                text: dialog.content;
-                edited(value) => {
-                    root.dialogue.contents[i].content = value;
-                    submit_btn.visible = true;
-                }
+            new_content := TextEdit { }
+
+            Button {
+                text: "Add";
+                clicked => {
+                    update_content();
+                    new_lang_content(new_lang.current-value, new_content.text);
+                };
             }
-        }
-        new_lang := ComboBox {
-            model: lang_list;
-        }
-
-        new_content := TextEdit { }
-
-        Button {
-            text: "Add";
-            clicked => {
-                update_content();
-                new_lang_content(new_lang.current-value, new_content.text);
-            };
         }
 
         for affect[i] in dialogue.affects: HorizontalBox {
@@ -74,20 +102,23 @@ export component DialogueBox inherits Rectangle {
                 }
             }
         }
-        new_affect_class := ComboBox {
-            model: class_list;
-        }
 
-        new_affect_state := ComboBox {
-            model: state_list;
-        }
+        HorizontalBox {
+            new_affect_class := ComboBox {
+                model: class_list;
+            }
 
-        Button {
-            text: "Add";
-            clicked => {
-                update_content();
-                new_affect(new_affect_class.current-value, new_affect_state.current-value);
-            };
+            new_affect_state := ComboBox {
+                model: state_list;
+            }
+
+            Button {
+                text: "Add";
+                clicked => {
+                    update_content();
+                    new_affect(new_affect_class.current-value, new_affect_state.current-value);
+                };
+            }
         }
 
         submit_btn := Button {
@@ -118,16 +149,24 @@ export component SelectableBox inherits Rectangle {
             select();
         }
 
-        Text {
-            text: value;
-        }
+        HorizontalBox {
+            Text {
+                text: {
+                    if (value == "") {
+                        return "New";
+                    } else {
+                        return value;
+                    }
+                };
+            }
 
-        del_btn := Button {
-            text: "Delete";
-            visible: false;
-            clicked => {
-                delete();
-            };
+            del_btn := Button {
+                text: "Delete";
+                visible: false;
+                clicked => {
+                    delete();
+                };
+            }
         }
     }
 }
