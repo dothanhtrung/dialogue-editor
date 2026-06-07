@@ -423,6 +423,47 @@ fn main() -> Result<(), Box<dyn Error>> {
                 }
             }
         });
+
+        ui.on_delete_content({
+            let ui_handle = ui.as_weak();
+            let data = data.clone();
+            let config = config.clone();
+            move |lang| {
+                let ui = ui_handle.unwrap();
+                let mut data = data.borrow_mut();
+                let config = config.borrow();
+
+                if let Some(class) = data.dialogues.get_mut(&config.selected_class)
+                    && let Some(state) = class.get_mut(&config.selected_state)
+                    && let Some(dialogue) = state.get_mut(config.selected_dialog)
+                {
+                    dialogue
+                        .contents
+                        .remove(&Language::from_639_3(lang.to_string().as_str()).unwrap_or_default());
+                }
+                reload_dialogue_detail(&data, &ui, &config);
+            }
+        });
+
+        ui.on_delete_affect({
+            let ui_handle = ui.as_weak();
+            let data = data.clone();
+            let config = config.clone();
+            move |class_name| {
+                let ui = ui_handle.unwrap();
+                let mut data = data.borrow_mut();
+                let config = config.borrow();
+
+                if let Some(class) = data.dialogues.get_mut(&config.selected_class)
+                    && let Some(state) = class.get_mut(&config.selected_state)
+                    && let Some(dialogue) = state.get_mut(config.selected_dialog)
+                {
+                    let class_id = xxh3_64(class_name.as_bytes());
+                    dialogue.affects.remove(&class_id);
+                }
+                reload_dialogue_detail(&data, &ui, &config);
+            }
+        });
     }
 
     ui.run()?;
@@ -447,6 +488,7 @@ fn reload_class(data: &AppData, ui: &AppWindow) {
     ui.set_classes(classes.as_slice().into());
     ui.set_states([].into());
     ui.set_dialogues([].into());
+    ui.set_dialogue(UiDialogue::default());
 }
 
 /// Reload state section and clear dialogue section
@@ -461,6 +503,7 @@ fn reload_state(data: &AppData, ui: &AppWindow, config: &Config) {
         ui.set_states(states.as_slice().into());
     }
     ui.set_dialogues([].into());
+    ui.set_dialogue(UiDialogue::default());
 }
 
 fn reload_dialogue(data: &AppData, ui: &AppWindow, config: &Config) {
@@ -471,6 +514,8 @@ fn reload_dialogue(data: &AppData, ui: &AppWindow, config: &Config) {
         for dialog in state_dialogs {
             if let Some((_, content)) = dialog.contents.first_key_value() {
                 dialogues.push(content.into());
+            } else {
+                dialogues.push(SharedString::new());
             }
         }
 
@@ -484,16 +529,23 @@ fn reload_dialogue_detail(data: &AppData, ui: &AppWindow, config: &Config) {
         && let Some(dialog_list) = state.get(&config.selected_state)
         && let Some(dialog) = dialog_list.get(config.selected_dialog)
     {
-        let mut contents: Vec<(SharedString, SharedString)> = Vec::new();
-        let mut affects: Vec<(SharedString, SharedString)> = Vec::new();
+        let mut contents: Vec<ContentLang> = Vec::new();
+        let mut affects: Vec<Affect> = Vec::new();
         for (lang, content) in dialog.contents.iter() {
-            contents.push((lang.to_639_3().to_string().into(), content.into()));
+            // FIXME: Why we need to push tuple data in reverse order
+            contents.push(ContentLang {
+                language: lang.to_639_3().to_string().into(),
+                content: content.into(),
+            });
         }
         for (class, state) in dialog.affects.iter() {
             if let Some(class_name) = data.class_name_map.get(class)
                 && let Some(state_name) = data.state_name_map.get(state)
             {
-                affects.push((class_name.into(), state_name.into()));
+                affects.push(Affect {
+                    class: class_name.into(),
+                    state: state_name.into(),
+                });
             }
         }
 
@@ -514,15 +566,15 @@ fn reload_dialogue_detail(data: &AppData, ui: &AppWindow, config: &Config) {
 impl From<UiDialogue> for Dialogue {
     fn from(ui_dialog: UiDialogue) -> Self {
         let mut ret = Self::default();
-        for (class, state) in ui_dialog.affects.iter() {
-            let class_id = xxh3_64(class.as_bytes());
-            let state_id = xxh3_64(state.as_bytes());
+        for affect in ui_dialog.affects.iter() {
+            let class_id = xxh3_64(affect.class.as_bytes());
+            let state_id = xxh3_64(affect.state.as_bytes());
             ret.affects.insert(class_id, state_id);
         }
-        for (lang, content) in ui_dialog.contents.iter() {
+        for content in ui_dialog.contents.iter() {
             ret.contents.insert(
-                Language::from_639_3(lang.as_str()).unwrap_or_default(),
-                content.to_string(),
+                Language::from_639_3(content.language.as_str()).unwrap_or_default(),
+                content.content.to_string(),
             );
         }
         ret

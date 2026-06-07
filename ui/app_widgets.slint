@@ -6,9 +6,19 @@ import {
     TextEdit,
 } from "std-widgets.slint";
 
+export struct ContentLang {
+    language: string,
+    content: string,
+}
+
+export struct Affect {
+    class: string,
+    state: string,
+}
+
 export struct UiDialogue {
-    contents: [{ language: string, content: string}],
-    affects: [{ class: string, state: string}],
+    contents: [ContentLang],
+    affects: [Affect],
 }
 
 export component DialogueBox inherits Rectangle {
@@ -21,18 +31,14 @@ export component DialogueBox inherits Rectangle {
     callback new_lang_content(string, string);
     callback new_affect(string, string);
     callback update_content();
+    callback delete_content(string);
+    callback delete_affect(string);
 
-    outer := VerticalBox {
-        for dialog[i] in dialogue.contents: HorizontalBox {
-            TouchArea {
-                width: 100%;
-                height: 100%;
-
-                clicked => {
-                    root.content_selecting = i;
-                }
-
+    VerticalBox {
+        VerticalBox {
+            for dialog[i] in dialogue.contents: HorizontalBox {
                 lang_view := ComboBox {
+                    width: 20%;
                     model: lang_list;
                     current-value: dialog.language;
                     enabled: {
@@ -62,67 +68,89 @@ export component DialogueBox inherits Rectangle {
                         submit_btn.visible = true;
                     }
                 }
-            // TODO: Delete
-            }
-        }
 
-        HorizontalBox {
-            new_lang := ComboBox {
-                model: lang_list;
-            }
-
-            new_content := TextEdit { }
-
-            Button {
-                text: "Add";
-                clicked => {
-                    update_content();
-                    new_lang_content(new_lang.current-value, new_content.text);
-                };
-            }
-        }
-
-        for affect[i] in dialogue.affects: HorizontalBox {
-            ComboBox {
-                model: class_list;
-                current-value: affect.class;
-                selected(current-value) => {
-                    dialogue.affects[i].class = current-value;
-                    submit_btn.visible = true;
+                Button {
+                    text: "Delete";
+                    clicked => {
+                        delete_content(dialog.language);
+                    }
                 }
             }
 
-            ComboBox {
-                // TODO: Filter state by class
-                model: state_list;
-                current-value: affect.state;
-                selected(current-value) => {
-                    dialogue.affects[i].state = current-value;
-                    submit_btn.visible = true;
+            HorizontalBox {
+                new_lang := ComboBox {
+                    width: 20%;
+                    model: lang_list;
+                    current-index: 0;
+                }
+
+                new_content := TextEdit {
+                    text: "new dialog";
+                }
+
+                Button {
+                    text: "Add";
+                    clicked => {
+                        update_content();
+                        new_lang_content(new_lang.current-value, new_content.text);
+                    };
                 }
             }
         }
 
-        HorizontalBox {
-            new_affect_class := ComboBox {
-                model: class_list;
+        VerticalBox {
+            for affect[i] in dialogue.affects: HorizontalBox {
+                ComboBox {
+                    model: class_list;
+                    current-value: affect.class;
+                    selected(current-value) => {
+                        dialogue.affects[i].class = current-value;
+                        submit_btn.visible = true;
+                    }
+                }
+
+                ComboBox {
+                    // TODO: Filter state by class
+                    model: state_list;
+                    current-value: affect.state;
+                    selected(current-value) => {
+                        dialogue.affects[i].state = current-value;
+                        submit_btn.visible = true;
+                    }
+                }
+
+                Button {
+                    text: "Delete";
+                    clicked => {
+                        delete_affect(affect.class);
+                    }
+                }
             }
 
-            new_affect_state := ComboBox {
-                model: state_list;
-            }
+            HorizontalBox {
+                new_affect_class := ComboBox {
+                    model: class_list;
+                    current-index: 0;
+                }
 
-            Button {
-                text: "Add";
-                clicked => {
-                    update_content();
-                    new_affect(new_affect_class.current-value, new_affect_state.current-value);
-                };
+                new_affect_state := ComboBox {
+                    model: state_list;
+                    current-index: 0;
+                }
+
+                Button {
+                    text: "Add";
+                    clicked => {
+                        update_content();
+                        new_affect(new_affect_class.current-value, new_affect_state.current-value);
+                    };
+                }
             }
         }
 
         submit_btn := Button {
             text: "Submit";
+            visible: false;
             clicked => {
                 root.update_content();
                 self.visible = false;
@@ -133,19 +161,16 @@ export component DialogueBox inherits Rectangle {
 
 export component SelectableBox inherits Rectangle {
     in property <string> value;
-    callback delete();
-    callback select();
+    in property <bool> selected;
 
-    border-width: 1px;
-    border-color: #ffffff;
-    border-radius: 5px;
+    callback delete_dialog();
+    callback select();
 
     TouchArea {
         width: 100%;
         height: 100%;
 
         clicked => {
-            del_btn.visible = true;
             select();
         }
 
@@ -162,9 +187,9 @@ export component SelectableBox inherits Rectangle {
 
             del_btn := Button {
                 text: "Delete";
-                visible: false;
+                visible: selected;
                 clicked => {
-                    delete();
+                    delete_dialog();
                 };
             }
         }
@@ -174,56 +199,42 @@ export component SelectableBox inherits Rectangle {
 
 export component EditableTextBox inherits Rectangle {
     in property <string> value;
+    in-out property <bool> selected;
+
     callback submit(string);
     callback delete();
     callback select;
-
-    public function unfocus() {
-        touch_area.unfocus();
-    }
-
-    border-width: 1px;
-    border-color: #ffffff;
-    border-radius: 5px;
 
     touch_area := TouchArea {
         width: 100%;
         height: 100%;
 
-        function unfocus() {
-            edit.read-only = true;
-            edit.clear-focus();
-            save_btn.visible = false;
-            del_btn.visible = false;
-        }
-
         clicked => {
-            edit.read-only = false;
-            edit.focus();
-            save_btn.visible = true;
-            del_btn.visible = true;
+            // edit.focus();
             select();
         }
 
         HorizontalBox {
             edit := TextInput {
                 text: value;
-                read-only: true;
+                read-only: !selected;
             }
 
             save_btn := Button {
                 text: "Accept";
-                visible: false;
+                visible: selected;
                 clicked => {
                     submit(edit.text);
+                    selected = false;
                 }
             }
 
             del_btn := Button {
                 text: "Delete";
-                visible: false;
+                visible: selected;
                 clicked => {
                     delete();
+                    selected = false;
                 }
             }
         }

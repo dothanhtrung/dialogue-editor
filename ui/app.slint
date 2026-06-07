@@ -46,7 +46,9 @@ export component AppWindow inherits Window {
     callback new_lang_content(string, string); // lang, content
     callback new_affect(string, string); // affect_class, affect_state
     callback update_content(UiDialogue); // dialog
-    
+    callback delete_content(string);
+    callback delete_affect(string);
+
     VerticalBox {
         HorizontalBox {
             // Class actor
@@ -55,6 +57,9 @@ export component AppWindow inherits Window {
                     // TODO: unfocus other when one is focus
                     for class_name[i] in classes: EditableTextBox {
                         value: class_name;
+                        selected: {
+                            root.selecting_class == i
+                        };
                         select => {
                             select-class(class_name);
                             root.selecting_class = i;
@@ -87,9 +92,12 @@ export component AppWindow inherits Window {
                 ListView {
                     for state_name[i] in states: EditableTextBox {
                         value: state_name;
+                        selected: {
+                            root.selecting_state == i
+                        };
                         select => {
                             select-state(state_name);
-                            root.selecting_dialog = i;
+                            root.selecting_state = i;
                         };
                         submit(new_name) => {
                             rename-state(state_name, new_name);
@@ -119,11 +127,14 @@ export component AppWindow inherits Window {
                 ListView {
                     for dialog[i] in dialogues: SelectableBox {
                         value: dialog;
+                        selected: {
+                            root.selecting_dialog == i
+                        };
                         select => {
                             select-dialog(i);
                             root.selecting_dialog = i;
                         };
-                        delete => {
+                        delete_dialog => {
                             remove-dialog(i);
                         };
                     }
@@ -146,19 +157,26 @@ export component AppWindow inherits Window {
                     state_list: states;
 
                     update_content => {
-                        update_content(self.dialogue);
+                        root.update_content(self.dialogue);
                     };
                     new_lang_content(lang, content) => {
-                        new_lang_content(lang, content);
+                        root.new_lang_content(lang, content);
                     };
                     new_affect(class, state) => {
-                        new_affect(class, state);
+                        root.new_affect(class, state);
                     };
+                    delete_content(lang) => {
+                        root.delete_content(lang);
+                    }
+                    delete_affect(class) => {
+                        root.delete_affect(class);
+                    }
                 }
             }
         }
 
         VerticalBox {
+            height: 10%;
             file_path_input := TextInput {
                 text: root.file_path;
             }
