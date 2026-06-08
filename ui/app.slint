@@ -23,9 +23,9 @@ export component AppWindow inherits Window {
     in-out property <UiDialogue> dialogue;
     in-out property <[string]> lang_list;
 
-    property <int> selecting_class;
-    property <int> selecting_state;
-    property <int> selecting_dialog;
+    property <int> selecting_class: -1;
+    property <int> selecting_state: -1;
+    property <int> selecting_dialog: -1;
 
     callback request-save();
     callback request-load(string);
@@ -54,8 +54,11 @@ export component AppWindow inherits Window {
 
     VerticalBox {
         HorizontalBox {
+
             // Class actor
             VerticalBox {
+                width: 20%;
+
                 LineEdit {
                     placeholder-text: "Search...";
                     accepted(text) => {
@@ -63,23 +66,31 @@ export component AppWindow inherits Window {
                     }
                 }
 
-                ListView {
+                TouchArea {
+                    clicked => {
+                        // root.selecting_class = -1;
+                    }
+
+                    ListView {
                     // TODO: unfocus other when one is focus
                     for class_name[i] in classes: EditableTextBox {
-                        value: class_name;
-                        selected: {
-                            root.selecting_class == i
-                        };
-                        select => {
-                            select-class(class_name);
-                            root.selecting_class = i;
-                        };
-                        submit(new_name) => {
-                            rename-class(class_name, new_name);
-                        };
-                        delete => {
-                            remove-class(class_name);
-                        };
+                            value: class_name;
+                            selected: {
+                                root.selecting_class == i
+                            };
+                            select => {
+                                select-class(class_name);
+                                root.selecting_class = i;
+                                root.selecting_state = -1;
+                                root.selecting_dialog = -1;
+                            };
+                            submit(new_name) => {
+                                rename-class(class_name, new_name);
+                            };
+                            delete => {
+                                remove-class(class_name);
+                            };
+                        }
                     }
                 }
 
@@ -99,6 +110,8 @@ export component AppWindow inherits Window {
 
             // Dialogue State
             VerticalBox {
+                width: 20%;
+
                 LineEdit {
                     placeholder-text: "Search...";
                     accepted(text) => {
@@ -106,26 +119,36 @@ export component AppWindow inherits Window {
                     }
                 }
 
-                ListView {
-                    for state_name[i] in states: EditableTextBox {
-                        value: state_name;
-                        selected: {
-                            root.selecting_state == i
-                        };
-                        select => {
-                            select-state(state_name);
-                            root.selecting_state = i;
-                        };
-                        submit(new_name) => {
-                            rename-state(state_name, new_name);
-                        };
-                        delete => {
-                            remove-state(state_name);
-                        };
+                TouchArea {
+                    clicked => {
+                        // root.selecting_state = -1;
+                    }
+
+                    ListView {
+                        for state_name[i] in states: EditableTextBox {
+                            value: state_name;
+                            selected: {
+                                root.selecting_state == i
+                            };
+                            select => {
+                                select-state(state_name);
+                                root.selecting_state = i;
+                                root.selecting_dialog = -1;
+                            };
+                            submit(new_name) => {
+                                rename-state(state_name, new_name);
+                            };
+                            delete => {
+                                remove-state(state_name);
+                            };
+                        }
                     }
                 }
 
                 HorizontalBox {
+                    visible: {
+                        root.selecting_class >= 0
+                    };
                     new_state := LineEdit {
                         placeholder-text: "New state";
                     }
@@ -141,23 +164,40 @@ export component AppWindow inherits Window {
 
             // Dialogue list
             VerticalBox {
-                ListView {
-                    for dialog[i] in dialogues: SelectableBox {
-                        value: dialog;
-                        selected: {
-                            root.selecting_dialog == i
-                        };
-                        select => {
-                            select-dialog(i);
-                            root.selecting_dialog = i;
-                        };
-                        delete_dialog => {
-                            remove-dialog(i);
-                        };
+                width: 20%;
+
+                // Just to keep consistent position with other columns
+                LineEdit {
+                    placeholder-text: "Search...";
+                    visible: false;
+                }
+
+                TouchArea {
+                    clicked => {
+                        // root.selecting_dialog = -1;
+                    }
+
+                    ListView {
+                        for dialog[i] in dialogues: SelectableBox {
+                            value: dialog;
+                            selected: {
+                                root.selecting_dialog == i
+                            };
+                            select => {
+                                select-dialog(i);
+                                root.selecting_dialog = i;
+                            };
+                            delete_dialog => {
+                                remove-dialog(i);
+                            };
+                        }
                     }
                 }
 
                 Button {
+                    visible: {
+                        root.selecting_state >= 0
+                    };
                     text: "Add";
                     clicked => {
                         root.add-dialog();
@@ -168,6 +208,9 @@ export component AppWindow inherits Window {
             // Dialog detail
             VerticalBox {
                 DialogueBox {
+                    visible: {
+                        root.selecting_dialog >= 0
+                    };
                     dialogue: dialogue;
                     lang_list: lang_list;
                     class_list: classes;

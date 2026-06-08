@@ -3,7 +3,9 @@ import {
     Button,
     VerticalBox,
     ComboBox,
-    TextEdit, LineEdit,
+    TextEdit,
+    LineEdit,
+    ListView,
 } from "std-widgets.slint";
 
 export struct ContentLang {
@@ -36,48 +38,46 @@ export component DialogueBox inherits Rectangle {
 
     VerticalBox {
         VerticalBox {
-            for dialog[i] in dialogue.contents: HorizontalBox {
-                lang_view := ComboBox {
-                    width: 20%;
-                    model: lang_list;
-                    current-value: dialog.language;
-                    enabled: {
-                        if (root.content_selecting == i) {
-                            true
-                        } else {
-                            false
-                        }
-                    };
-                    selected(current-value) => {
-                        root.dialogue.contents[i].language = current-value;
-                        submit_btn.visible = true;
-                    }
-                }
+            height: 70%;
 
-                content_view := TextEdit {
-                    text: dialog.content;
-                    enabled: {
-                        if (root.content_selecting == i) {
-                            true
-                        } else {
-                            false
+            ListView {
+                for dialog[i] in dialogue.contents: HorizontalBox {
+                    height: 25%;
+                    lang_view := ComboBox {
+                        width: 20%;
+                        model: lang_list;
+                        current-value: dialog.language;
+                        enabled: {
+                            root.content_selecting == i
+                        };
+                        selected(current-value) => {
+                            root.dialogue.contents[i].language = current-value;
+                            submit_btn.visible = true;
                         }
-                    };
-                    edited(value) => {
-                        root.dialogue.contents[i].content = value;
-                        submit_btn.visible = true;
                     }
-                }
 
-                Button {
-                    text: "Delete";
-                    clicked => {
-                        delete_content(dialog.language);
+                    content_view := TextEdit {
+                        text: dialog.content;
+                        enabled: {
+                            root.content_selecting == i
+                        };
+                        edited(value) => {
+                            root.dialogue.contents[i].content = value;
+                            submit_btn.visible = true;
+                        }
+                    }
+
+                    Button {
+                        text: "Delete";
+                        clicked => {
+                            delete_content(dialog.language);
+                        }
                     }
                 }
             }
 
             HorizontalBox {
+                height: 20%;
                 new_lang := ComboBox {
                     width: 20%;
                     model: lang_list;
@@ -99,30 +99,32 @@ export component DialogueBox inherits Rectangle {
         }
 
         VerticalBox {
-            for affect[i] in dialogue.affects: HorizontalBox {
-                ComboBox {
-                    model: class_list;
-                    current-value: affect.class;
-                    selected(current-value) => {
-                        dialogue.affects[i].class = current-value;
-                        submit_btn.visible = true;
+            ListView {
+                for affect[i] in dialogue.affects: HorizontalBox {
+                    ComboBox {
+                        model: class_list;
+                        current-value: affect.class;
+                        selected(current-value) => {
+                            dialogue.affects[i].class = current-value;
+                            submit_btn.visible = true;
+                        }
                     }
-                }
 
-                ComboBox {
+                    ComboBox {
                     // TODO: Filter state by class
                     model: state_list;
-                    current-value: affect.state;
-                    selected(current-value) => {
-                        dialogue.affects[i].state = current-value;
-                        submit_btn.visible = true;
+                        current-value: affect.state;
+                        selected(current-value) => {
+                            dialogue.affects[i].state = current-value;
+                            submit_btn.visible = true;
+                        }
                     }
-                }
 
-                Button {
-                    text: "Delete";
-                    clicked => {
-                        delete_affect(affect.class);
+                    Button {
+                        text: "Delete";
+                        clicked => {
+                            delete_affect(affect.class);
+                        }
                     }
                 }
             }
@@ -210,13 +212,13 @@ export component EditableTextBox inherits Rectangle {
         height: 100%;
 
         clicked => {
-            // edit.focus();
             select();
         }
 
         HorizontalBox {
             edit := LineEdit {
                 text: value;
+                enabled: selected;
                 read-only: !selected;
             }
 
