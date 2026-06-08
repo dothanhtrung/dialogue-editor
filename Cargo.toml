@@ -14,7 +14,7 @@ xxhash-rust = {version = "0.8.15", default-features = false, features = ["xxh3"]
 isolang = {version = "2.4", features = ["serde"]}
 tracing = {version = "0.1"}
 tracing-subscriber = { version = "0.3", features = ["env-filter"] }
-
+regex-lite = {version = "0.1"}
 
 [build-dependencies]
 slint-build = "1.16.1"

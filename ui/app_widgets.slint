@@ -3,7 +3,7 @@ import {
     Button,
     VerticalBox,
     ComboBox,
-    TextEdit,
+    TextEdit, LineEdit,
 } from "std-widgets.slint";
 
 export struct ContentLang {
@@ -215,7 +215,7 @@ export component EditableTextBox inherits Rectangle {
         }
 
         HorizontalBox {
-            edit := TextInput {
+            edit := LineEdit {
                 text: value;
                 read-only: !selected;
             }

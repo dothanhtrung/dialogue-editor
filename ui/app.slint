@@ -5,6 +5,7 @@ import {
     HorizontalBox,
     ListView,
     ComboBox,
+    LineEdit,
 } from "std-widgets.slint";
 import {
     EditableTextBox,
@@ -49,10 +50,19 @@ export component AppWindow inherits Window {
     callback delete_content(string);
     callback delete_affect(string);
 
+    callback search(string, string);
+
     VerticalBox {
         HorizontalBox {
             // Class actor
             VerticalBox {
+                LineEdit {
+                    placeholder-text: "Search...";
+                    accepted(text) => {
+                        search(text, "");
+                    }
+                }
+
                 ListView {
                     // TODO: unfocus other when one is focus
                     for class_name[i] in classes: EditableTextBox {
@@ -74,8 +84,8 @@ export component AppWindow inherits Window {
                 }
 
                 HorizontalBox {
-                    new_class := TextInput {
-                        text: "New class";
+                    new_class := LineEdit {
+                        placeholder-text: "New class";
                     }
 
                     Button {
@@ -89,6 +99,13 @@ export component AppWindow inherits Window {
 
             // Dialogue State
             VerticalBox {
+                LineEdit {
+                    placeholder-text: "Search...";
+                    accepted(text) => {
+                        search("", text);
+                    }
+                }
+
                 ListView {
                     for state_name[i] in states: EditableTextBox {
                         value: state_name;
@@ -109,8 +126,8 @@ export component AppWindow inherits Window {
                 }
 
                 HorizontalBox {
-                    new_state := TextInput {
-                        text: "New state";
+                    new_state := LineEdit {
+                        placeholder-text: "New state";
                     }
 
                     Button {
@@ -177,7 +194,7 @@ export component AppWindow inherits Window {
 
         VerticalBox {
             height: 10%;
-            file_path_input := TextInput {
+            file_path_input := LineEdit {
                 text: root.file_path;
             }
 

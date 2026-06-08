@@ -5,6 +5,7 @@ mod bin_file;
 mod ron_file;
 
 use isolang::Language;
+use regex_lite::Regex;
 use serde::{
     Deserialize,
     Serialize,
@@ -133,7 +134,7 @@ fn main() -> Result<(), Box<dyn Error>> {
                         config.selected_class = *first_state;
                     }
 
-                    reload_all(&data, &ui, &config);
+                    reload_all(&data, &ui, &config, "", "");
                 }
             }
         });
@@ -169,13 +170,14 @@ fn main() -> Result<(), Box<dyn Error>> {
                 let ui = ui_handle.unwrap();
                 let mut data = data.borrow_mut();
                 let mut config = config.borrow_mut();
+                // TODO: Cache the id to avoid hashing too many times.
                 let class_id = xxh3_64(class_name.as_bytes());
                 // TODO: Notify if class already exist
                 data.class_name_map.entry(class_id).or_insert(class_name.to_string());
                 data.dialogues.entry(class_id).or_insert(BTreeMap::new());
                 config.selected_class = class_id;
                 config.selected_state = 0;
-                reload_all(&data, &ui, &config);
+                reload_class(&data, &ui, "");
             }
         });
 
@@ -197,7 +199,7 @@ fn main() -> Result<(), Box<dyn Error>> {
                         data.class_name_map.remove(&old_class_id);
 
                         config.selected_class = new_class_id;
-                        reload_all(&data, &ui, &config);
+                        reload_all(&data, &ui, &config, "", "");
                     }
                 } else {
                     // TODO: Noti new name already exists
@@ -214,7 +216,7 @@ fn main() -> Result<(), Box<dyn Error>> {
                 let class_id = xxh3_64(class_name.as_bytes());
                 data.class_name_map.remove(&class_id);
                 data.dialogues.remove(&class_id);
-                reload_class(&data, &ui);
+                reload_class(&data, &ui, "");
             }
         });
 
@@ -228,7 +230,7 @@ fn main() -> Result<(), Box<dyn Error>> {
                 let mut config = config.borrow_mut();
                 let class_id = xxh3_64(class_name.as_bytes());
                 config.selected_class = class_id;
-                reload_state(&data, &ui, &config);
+                reload_state(&data, &ui, &config, "");
             }
         });
     }
@@ -248,7 +250,7 @@ fn main() -> Result<(), Box<dyn Error>> {
                 data.state_name_map.entry(state_id).or_insert(state_name.to_string());
                 if let Some(class) = data.dialogues.get_mut(&config.selected_class) {
                     class.entry(state_id).or_insert(Vec::new());
-                    reload_state(&data, &ui, &config);
+                    reload_state(&data, &ui, &config, "");
                 }
             }
         });
@@ -278,7 +280,7 @@ fn main() -> Result<(), Box<dyn Error>> {
                 let state_id = xxh3_64(state_name.as_bytes());
                 if let Some(class) = data.dialogues.get_mut(&config.selected_class) {
                     class.remove(&state_id);
-                    reload_state(&data, &ui, &config);
+                    reload_state(&data, &ui, &config, "");
                 }
             }
         });
@@ -301,7 +303,7 @@ fn main() -> Result<(), Box<dyn Error>> {
                     data.dialogues.insert(new_id, dialog);
                     data.state_name_map.entry(new_id).or_insert(new_name.to_string());
                     config.selected_state = new_id;
-                    reload_all(&data, &ui, &config);
+                    reload_all(&data, &ui, &config, "", "");
                 } else {
                     // TODO: Noti new name exists
                 }
@@ -466,23 +468,49 @@ fn main() -> Result<(), Box<dyn Error>> {
         });
     }
 
+    ui.on_search({
+        let ui_handle = ui.as_weak();
+        let data = data.clone();
+        let config = config.clone();
+        move |search_class, search_state| {
+            let ui = ui_handle.unwrap();
+            let data = data.borrow();
+            let mut config = config.borrow_mut();
+            reload_all(&data, &ui, &config, search_class.as_str(), search_state.as_str());
+
+            if !search_class.is_empty() {
+                config.selected_class = 0;
+                config.selected_state = 0;
+            } else if !search_state.is_empty() {
+                config.selected_state = 0;
+            }
+        }
+    });
+
     ui.run()?;
 
     Ok(())
 }
 
-fn reload_all(data: &AppData, ui: &AppWindow, config: &Config) {
-    reload_class(data, ui);
-    reload_state(data, ui, config);
+fn reload_all(data: &AppData, ui: &AppWindow, config: &Config, search_class: &str, search_state: &str) {
+    reload_class(data, ui, search_class);
+    reload_state(data, ui, config, search_state);
     reload_dialogue(data, ui, config);
     reload_dialogue_detail(data, ui, config);
 }
 
 /// Reload class section and clear state/dialogue section
-fn reload_class(data: &AppData, ui: &AppWindow) {
+fn reload_class(data: &AppData, ui: &AppWindow, search_class: &str) {
     let mut classes: Vec<SharedString> = Vec::new();
+    let re = Regex::new(search_class);
     for (_, name) in data.class_name_map.iter() {
-        classes.push(name.into());
+        if search_class.is_empty() {
+            classes.push(name.into());
+        } else if let Ok(re) = re.as_ref()
+            && re.is_match(name)
+        {
+            classes.push(name.into());
+        }
     }
 
     ui.set_classes(classes.as_slice().into());
@@ -492,13 +520,21 @@ fn reload_class(data: &AppData, ui: &AppWindow) {
 }
 
 /// Reload state section and clear dialogue section
-fn reload_state(data: &AppData, ui: &AppWindow, config: &Config) {
+fn reload_state(data: &AppData, ui: &AppWindow, config: &Config, search_state: &str) {
+    let re = Regex::new(search_state);
+
     if let Some(class) = data.dialogues.get(&config.selected_class) {
         let mut states: Vec<SharedString> = Vec::new();
         for state_id in class.keys() {
             let state_name =
                 if let Some(ret) = data.state_name_map.get(state_id) { ret.clone() } else { state_id.to_string() };
-            states.push(state_name.into());
+            if search_state.is_empty() {
+                states.push(state_name.into());
+            } else if let Ok(re) = re.as_ref()
+                && re.is_match(state_name.as_str())
+            {
+                states.push(state_name.into());
+            }
         }
         ui.set_states(states.as_slice().into());
     }
