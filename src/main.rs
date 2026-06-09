@@ -6,6 +6,7 @@ mod ron_file;
 
 use isolang::Language;
 use regex_lite::Regex;
+use rfd::FileDialog;
 use serde::{
     Deserialize,
     Serialize,
@@ -80,12 +81,6 @@ impl Config {
     }
 }
 
-#[derive(Default)]
-struct DataCache {
-    name_map: HashMap<String, u64>,
-}
-
-// TODO: Cache the xxh3_64
 // TODO: Warning to save before exit
 
 fn main() -> Result<(), Box<dyn Error>> {
@@ -96,18 +91,30 @@ fn main() -> Result<(), Box<dyn Error>> {
     tracing::subscriber::set_global_default(subscriber)?;
 
     let ui = AppWindow::new()?;
-    let cache = DataCache::default();
     let config: Config = ron_file::load_from(Path::new("./dialog-editor.ron")).unwrap_or_default();
 
     let data = AppData::default();
 
     ui.set_file_path(config.file_path.to_str().unwrap_or_default().into());
 
-    let cache = Rc::new(RefCell::new(cache));
     let config = Rc::new(RefCell::new(config));
     let data = Rc::new(RefCell::new(data));
 
     {
+        ui.on_file_picker({
+            let config = config.clone();
+            let ui_handle = ui.as_weak();
+            move || {
+                let ui = ui_handle.unwrap();
+                let mut config = config.borrow_mut();
+                config.file_path = FileDialog::new()
+                    .set_directory(config.file_path.parent().unwrap_or(Path::new("/")).to_str().unwrap_or("/"))
+                    .pick_file()
+                    .unwrap_or_default();
+                ui.set_file_path(config.file_path.to_str().unwrap_or_default().into());
+            }
+        });
+
         ui.on_request_load({
             // TODO: Loading icon
             let data = data.clone();
@@ -173,14 +180,12 @@ fn main() -> Result<(), Box<dyn Error>> {
             let ui_handle = ui.as_weak();
             let data = data.clone();
             let config = config.clone();
-            let cache = cache.clone();
             move |class_name| {
                 let ui = ui_handle.unwrap();
                 let mut data = data.borrow_mut();
                 let mut config = config.borrow_mut();
-                let mut cache = cache.borrow_mut();
                 // TODO: Cache the id to avoid hashing too many times.
-                let class_id = string_to_id(class_name.as_str(), &mut cache);
+                let class_id = xxh3_64(class_name.as_bytes());
                 // TODO: Notify if class already exist
                 data.class_name_map.entry(class_id).or_insert(class_name.to_string());
                 data.dialogues.entry(class_id).or_insert(BTreeMap::new());
@@ -194,14 +199,12 @@ fn main() -> Result<(), Box<dyn Error>> {
             let ui_handle = ui.as_weak();
             let data = data.clone();
             let config = config.clone();
-            let cache = cache.clone();
             move |old_name, new_name| {
                 let ui = ui_handle.unwrap();
                 let mut data = data.borrow_mut();
                 let mut config = config.borrow_mut();
-                let mut cache = cache.borrow_mut();
-                let old_class_id = string_to_id(old_name.as_str(), &mut cache);
-                let new_class_id = string_to_id(new_name.as_str(), &mut cache);
+                let old_class_id = xxh3_64(old_name.as_bytes());
+                let new_class_id = xxh3_64(new_name.as_bytes());
 
                 if !data.dialogues.contains_key(&new_class_id) {
                     if let Some(value) = data.dialogues.remove(&old_class_id) {
@@ -221,12 +224,10 @@ fn main() -> Result<(), Box<dyn Error>> {
         ui.on_remove_class({
             let ui_handle = ui.as_weak();
             let data = data.clone();
-            let cache = cache.clone();
             move |class_name| {
                 let ui = ui_handle.unwrap();
                 let mut data = data.borrow_mut();
-                let mut cache = cache.borrow_mut();
-                let class_id = string_to_id(class_name.as_str(), &mut cache);
+                let class_id = xxh3_64(class_name.as_bytes());
                 data.class_name_map.remove(&class_id);
                 data.dialogues.remove(&class_id);
                 reload_class(&data, &ui, "");
@@ -237,13 +238,11 @@ fn main() -> Result<(), Box<dyn Error>> {
             let ui_handle = ui.as_weak();
             let data = data.clone();
             let config = config.clone();
-            let cache = cache.clone();
             move |class_name| {
                 let ui = ui_handle.unwrap();
                 let data = data.borrow();
                 let mut config = config.borrow_mut();
-                let mut cache = cache.borrow_mut();
-                let class_id = string_to_id(class_name.as_str(), &mut cache);
+                let class_id = xxh3_64(class_name.as_bytes());
                 config.selected_class = class_id;
                 reload_state(&data, &ui, &config, "");
             }
@@ -255,13 +254,11 @@ fn main() -> Result<(), Box<dyn Error>> {
             let ui_handle = ui.as_weak();
             let data = data.clone();
             let config = config.clone();
-            let cache = cache.clone();
             move |state_name| {
                 let ui = ui_handle.unwrap();
                 let mut data = data.borrow_mut();
                 let mut config = config.borrow_mut();
-                let mut cache = cache.borrow_mut();
-                let state_id = string_to_id(state_name.as_str(), &mut cache);
+                let state_id = xxh3_64(state_name.as_bytes());
                 // Notify if state already exists
                 config.selected_state = state_id;
                 data.state_name_map.entry(state_id).or_insert(state_name.to_string());
@@ -276,13 +273,11 @@ fn main() -> Result<(), Box<dyn Error>> {
             let ui_handle = ui.as_weak();
             let data = data.clone();
             let config = config.clone();
-            let cache = cache.clone();
             move |state_name| {
                 let ui = ui_handle.unwrap();
                 let data = data.borrow();
                 let mut config = config.borrow_mut();
-                let mut cache = cache.borrow_mut();
-                let state_id = string_to_id(state_name.as_str(), &mut cache);
+                let state_id = xxh3_64(state_name.as_bytes());
                 config.selected_state = state_id;
                 reload_dialogue(&data, &ui, &config);
             }
@@ -292,13 +287,11 @@ fn main() -> Result<(), Box<dyn Error>> {
             let ui_handle = ui.as_weak();
             let data = data.clone();
             let config = config.clone();
-            let cache = cache.clone();
             move |state_name| {
                 let ui = ui_handle.unwrap();
                 let mut data = data.borrow_mut();
                 let config = config.borrow();
-                let mut cache = cache.borrow_mut();
-                let state_id = string_to_id(state_name.as_str(), &mut cache);
+                let state_id = xxh3_64(state_name.as_bytes());
                 if let Some(class) = data.dialogues.get_mut(&config.selected_class) {
                     class.remove(&state_id);
                     reload_state(&data, &ui, &config, "");
@@ -310,11 +303,9 @@ fn main() -> Result<(), Box<dyn Error>> {
             let ui_handle = ui.as_weak();
             let data = data.clone();
             let config = config.clone();
-            let cache = cache.clone();
             move |old_name, new_name| {
-                let mut cache = cache.borrow_mut();
-                let old_id = string_to_id(old_name.as_str(), &mut cache);
-                let new_id = string_to_id(new_name.as_str(), &mut cache);
+                let old_id = xxh3_64(old_name.as_bytes());
+                let new_id = xxh3_64(new_name.as_bytes());
 
                 let ui = ui_handle.unwrap();
                 let mut data = data.borrow_mut();
@@ -413,18 +404,16 @@ fn main() -> Result<(), Box<dyn Error>> {
             let ui_handle = ui.as_weak();
             let data = data.clone();
             let config = config.clone();
-            let cache = cache.clone();
             move |class_name, state_name| {
                 let ui = ui_handle.unwrap();
                 let mut data = data.borrow_mut();
                 let config = config.borrow();
-                let mut cache = cache.borrow_mut();
                 if let Some(class) = data.dialogues.get_mut(&config.selected_class)
                     && let Some(state) = class.get_mut(&config.selected_state)
                     && let Some(dialogue) = state.get_mut(config.selected_dialog)
                 {
-                    let class_id = string_to_id(class_name.as_str(), &mut cache);
-                    let state_id = string_to_id(state_name.as_str(), &mut cache);
+                    let class_id = xxh3_64(class_name.as_bytes());
+                    let state_id = xxh3_64(state_name.as_bytes());
 
                     dialogue.affects.insert(class_id, state_id);
                     reload_dialogue_detail(&data, &ui, &config);
@@ -476,18 +465,16 @@ fn main() -> Result<(), Box<dyn Error>> {
             let ui_handle = ui.as_weak();
             let data = data.clone();
             let config = config.clone();
-            let cache = cache.clone();
             move |class_name| {
                 let ui = ui_handle.unwrap();
                 let mut data = data.borrow_mut();
                 let config = config.borrow();
-                let mut cache = cache.borrow_mut();
 
                 if let Some(class) = data.dialogues.get_mut(&config.selected_class)
                     && let Some(state) = class.get_mut(&config.selected_state)
                     && let Some(dialogue) = state.get_mut(config.selected_dialog)
                 {
-                    let class_id = string_to_id(class_name.as_str(), &mut cache);
+                    let class_id = xxh3_64(class_name.as_bytes());
                     dialogue.affects.remove(&class_id);
                 }
                 reload_dialogue_detail(&data, &ui, &config);
@@ -595,6 +582,7 @@ fn reload_dialogue_detail(data: &AppData, ui: &AppWindow, config: &Config) {
         let mut contents: Vec<ContentLang> = Vec::new();
         let mut affects: Vec<Affect> = Vec::new();
         for (lang, content) in dialog.contents.iter() {
+            // FIXME: Why we need to push tuple data in reverse order
             contents.push(ContentLang {
                 language: lang.to_639_3().to_string().into(),
                 content: content.into(),
@@ -640,16 +628,5 @@ impl From<UiDialogue> for Dialogue {
             );
         }
         ret
-    }
-}
-
-fn string_to_id(name: &str, cache: &mut DataCache) -> u64 {
-    let lower = name.to_lowercase();
-    if let Some(id) = cache.name_map.get(lower.as_str()) {
-        *id
-    } else {
-        let id = xxh3_64(lower.as_bytes());
-        cache.name_map.insert(lower, id);
-        id
     }
 }

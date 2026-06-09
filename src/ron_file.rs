@@ -4,6 +4,7 @@ use std::fs::File;
 use std::io::Write;
 use std::path::Path;
 
+// TODO: Load/save in another thread
 pub fn load_from<T>(file_path: &Path) -> anyhow::Result<T>
 where
     T: for<'de> Deserialize<'de>,

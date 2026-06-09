@@ -51,6 +51,7 @@ export component AppWindow inherits Window {
     callback delete_affect(string);
 
     callback search(string, string);
+    callback file_picker();
 
     VerticalBox {
         HorizontalBox {
@@ -237,8 +238,17 @@ export component AppWindow inherits Window {
 
         VerticalBox {
             height: 10%;
-            file_path_input := LineEdit {
-                text: root.file_path;
+            HorizontalBox {
+                file_path_input := LineEdit {
+                    text: root.file_path;
+                }
+
+                Button {
+                    text: "Browse";
+                    clicked => {
+                        file_picker();
+                    }
+                }
             }
 
             HorizontalBox {
