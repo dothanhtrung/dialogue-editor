@@ -6,6 +6,7 @@ import {
     ListView,
     ComboBox,
     LineEdit,
+    Palette,
 } from "std-widgets.slint";
 import {
     EditableTextBox,
@@ -17,18 +18,22 @@ import {
 
 export component AppWindow inherits Window {
     in-out property <string> file_path;
+    in-out property <int> file_format;
+    in-out property <string> encrypt_key;
     in-out property <[string]> classes;
     in-out property <[string]> states;
     in-out property <[string]> dialogues;
     in-out property <UiDialogue> dialogue;
     in-out property <[string]> lang_list;
 
+    in-out property <[string]> state_list;
+
     property <int> selecting_class: -1;
     property <int> selecting_state: -1;
     property <int> selecting_dialog: -1;
 
-    callback request-save();
-    callback request-load(string);
+    callback request-save(string, int, string);
+    callback request-load(string, int, string);
 
     callback select-class(string);
     callback remove-class(string);
@@ -55,188 +60,220 @@ export component AppWindow inherits Window {
 
     VerticalBox {
         HorizontalBox {
-
             // Class actor
-            VerticalBox {
+            Rectangle {
                 width: 20%;
+                background: Palette.alternate-background;
 
-                LineEdit {
-                    placeholder-text: "Search...";
-                    accepted(text) => {
-                        search(text, "");
+                VerticalBox {
+                    LineEdit {
+                        placeholder-text: "Search...";
+                        accepted(text) => {
+                            search(text, "");
+                        }
                     }
-                }
 
-                TouchArea {
-                    clicked => {
+                    TouchArea {
+                        clicked => {
                         // root.selecting_class = -1;
                     }
 
-                    ListView {
-                    // TODO: unfocus other when one is focus
-                    for class_name[i] in classes: EditableTextBox {
-                            value: class_name;
-                            selected: {
-                                root.selecting_class == i
-                            };
-                            select => {
-                                select-class(class_name);
-                                root.selecting_class = i;
-                                root.selecting_state = -1;
-                                root.selecting_dialog = -1;
-                            };
-                            submit(new_name) => {
-                                rename-class(class_name, new_name);
-                            };
-                            delete => {
-                                remove-class(class_name);
-                            };
+                        ListView {
+                            for class_name[i] in classes: EditableTextBox {
+                                value: class_name;
+                                selected: {
+                                    root.selecting_class == i
+                                };
+                                background: {
+                                    if (root.selecting_class == i) {
+                                        Palette.background
+                                    } else {
+                                        Palette.alternate-background
+                                    }
+                                };
+                                select => {
+                                    select-class(class_name);
+                                    root.selecting_class = i;
+                                    root.selecting_state = -1;
+                                    root.selecting_dialog = -1;
+                                };
+                                submit(new_name) => {
+                                    rename-class(class_name, new_name);
+                                };
+                                delete => {
+                                    remove-class(class_name);
+                                };
+                            }
                         }
                     }
-                }
 
-                HorizontalBox {
-                    new_class := LineEdit {
-                        placeholder-text: "New class";
-                    }
+                    HorizontalBox {
+                        new_class := LineEdit {
+                            placeholder-text: "New class";
+                        }
 
-                    Button {
-                        text: "Add";
-                        clicked => {
-                            root.add-class(new_class.text);
-                        };
+                        Button {
+                            text: "Add";
+                            clicked => {
+                                root.add-class(new_class.text);
+                                new_class.text = "";
+                            };
+                        }
                     }
                 }
             }
 
             // Dialogue State
-            VerticalBox {
+            Rectangle {
                 width: 20%;
+                background: Palette.control-background;
+                VerticalBox {
 
-                LineEdit {
-                    placeholder-text: "Search...";
-                    accepted(text) => {
-                        search("", text);
+                    LineEdit {
+                        placeholder-text: "Search...";
+                        accepted(text) => {
+                            search("", text);
+                        }
                     }
-                }
 
-                TouchArea {
-                    clicked => {
+                    TouchArea {
+                        clicked => {
                         // root.selecting_state = -1;
                     }
 
-                    ListView {
-                        for state_name[i] in states: EditableTextBox {
-                            value: state_name;
-                            selected: {
-                                root.selecting_state == i
-                            };
-                            select => {
-                                select-state(state_name);
-                                root.selecting_state = i;
-                                root.selecting_dialog = -1;
-                            };
-                            submit(new_name) => {
-                                rename-state(state_name, new_name);
-                            };
-                            delete => {
-                                remove-state(state_name);
-                            };
+                        ListView {
+                            for state_name[i] in states: EditableTextBox {
+                                value: state_name;
+                                selected: {
+                                    root.selecting_state == i
+                                };
+                                background: {
+                                    if (root.selecting_state == i) {
+                                        Palette.background
+                                    } else {
+                                        Palette.alternate-background
+                                    }
+                                };
+                                select => {
+                                    select-state(state_name);
+                                    root.selecting_state = i;
+                                    root.selecting_dialog = -1;
+                                };
+                                submit(new_name) => {
+                                    rename-state(state_name, new_name);
+                                };
+                                delete => {
+                                    remove-state(state_name);
+                                };
+                            }
                         }
                     }
-                }
 
-                HorizontalBox {
-                    visible: {
-                        root.selecting_class >= 0
-                    };
-                    new_state := LineEdit {
-                        placeholder-text: "New state";
-                    }
+                    HorizontalBox {
+                        visible: {
+                            root.selecting_class >= 0
+                        };
+                        new_state := LineEdit {
+                            placeholder-text: "New state";
+                        }
 
-                    Button {
-                        text: "Add";
-                        clicked => {
-                            root.add-state(new_state.text);
+                        Button {
+                            text: "Add";
+                            clicked => {
+                                root.add-state(new_state.text);
+                                new_state.text = "";
+                            }
                         }
                     }
                 }
             }
 
             // Dialogue list
-            VerticalBox {
+            Rectangle {
                 width: 20%;
+                background: Palette.control-background;
+                VerticalBox {
 
-                // Just to keep consistent position with other columns
+                    // Just to keep consistent position with other columns
                 LineEdit {
-                    placeholder-text: "Search...";
-                    visible: false;
-                }
-
-                TouchArea {
-                    clicked => {
-                        // root.selecting_dialog = -1;
+                        placeholder-text: "Search...";
+                        visible: false;
                     }
 
-                    ListView {
-                        for dialog[i] in dialogues: SelectableBox {
-                            value: dialog;
-                            selected: {
-                                root.selecting_dialog == i
-                            };
-                            select => {
-                                select-dialog(i);
-                                root.selecting_dialog = i;
-                            };
-                            delete_dialog => {
-                                remove-dialog(i);
-                            };
+                    TouchArea {
+                        clicked => {
+                        // root.selecting_dialog = -1;
+                        }
+
+                        ListView {
+                            for dialog[i] in dialogues: SelectableBox {
+                                value: dialog;
+                                selected: {
+                                    root.selecting_dialog == i
+                                };
+                                background: {
+                                    if (root.selecting_dialog == i) {
+                                        Palette.background
+                                    } else {
+                                        Palette.alternate-background
+                                    }
+                                };
+                                select => {
+                                    select-dialog(i);
+                                    root.selecting_dialog = i;
+                                };
+                                delete_dialog => {
+                                    remove-dialog(i);
+                                };
+                            }
                         }
                     }
-                }
 
-                Button {
-                    visible: {
-                        root.selecting_state >= 0
-                    };
-                    text: "Add";
-                    clicked => {
-                        root.add-dialog();
+                    Button {
+                        visible: {
+                            root.selecting_state >= 0
+                        };
+                        text: "Add";
+                        clicked => {
+                            root.add-dialog();
+                        }
                     }
                 }
             }
 
             // Dialog detail
-            VerticalBox {
-                DialogueBox {
-                    visible: {
-                        root.selecting_dialog >= 0
-                    };
-                    dialogue: dialogue;
-                    lang_list: lang_list;
-                    class_list: classes;
-                    state_list: states;
+            Rectangle {
+                VerticalBox {
+                    DialogueBox {
+                        visible: {
+                            root.selecting_dialog >= 0
+                        };
+                        dialogue: dialogue;
+                        lang_list: lang_list;
+                        class_list: classes;
+                        state_list: state_list;
 
-                    update_content => {
-                        root.update_content(self.dialogue);
-                    };
-                    new_lang_content(lang, content) => {
-                        root.new_lang_content(lang, content);
-                    };
-                    new_affect(class, state) => {
-                        root.new_affect(class, state);
-                    };
-                    delete_content(lang) => {
-                        root.delete_content(lang);
-                    }
-                    delete_affect(class) => {
-                        root.delete_affect(class);
+                        update_content => {
+                            root.update_content(self.dialogue);
+                        };
+                        new_lang_content(lang, content) => {
+                            root.new_lang_content(lang, content);
+                        };
+                        new_affect(class, state) => {
+                            root.new_affect(class, state);
+                        };
+                        delete_content(lang) => {
+                            root.delete_content(lang);
+                        }
+                        delete_affect(class) => {
+                            root.delete_affect(class);
+                        }
                     }
                 }
             }
         }
 
-        VerticalBox {
+        VerticalLayout {
             height: 10%;
             HorizontalBox {
                 file_path_input := LineEdit {
@@ -252,17 +289,30 @@ export component AppWindow inherits Window {
             }
 
             HorizontalBox {
+                ui_file_format := ComboBox {
+                    width: 80px;
+                    model: ["RON", "BIN"];
+                    current-index: file_format;
+                }
+
+                ui_encrypt_key := LineEdit {
+                    text: encrypt_key;
+                    placeholder-text: "Encryption key";
+                }
+            }
+
+            HorizontalBox {
                 Button {
                     text: "Load";
                     clicked => {
-                        root.request-load(file_path_input.text);
+                        root.request-load(file_path_input.text, ui_file_format.current-index, ui_encrypt_key.text);
                     }
                 }
 
                 Button {
                     text: "Save";
                     clicked => {
-                        root.request-save();
+                        root.request-save(file_path_input.text, ui_file_format.current-index, ui_encrypt_key.text);
                     }
                 }
             }

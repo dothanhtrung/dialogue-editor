@@ -22,11 +22,16 @@ use std::{
         HashMap,
     },
     error::Error,
+    fs,
     path::{
         Path,
         PathBuf,
     },
     rc::Rc,
+};
+use tracing::{
+    error,
+    info,
 };
 use tracing_subscriber::EnvFilter;
 use xxhash_rust::xxh3::xxh3_64;
@@ -48,11 +53,22 @@ struct AppData {
     state_name_map: HashMap<u64, String>,
 }
 
-#[derive(Default, Serialize, Deserialize)]
+#[repr(i32)]
+#[derive(Default, Serialize, Deserialize, Clone, Copy)]
 enum FileFormat {
     #[default]
-    Ron,
+    Ron = 0,
     Bin,
+}
+
+impl From<i32> for FileFormat {
+    fn from(number: i32) -> Self {
+        match number {
+            0 => Self::Ron,
+            1 => Self::Bin,
+            _ => Self::Ron,
+        }
+    }
 }
 
 // TODO: Config UI
@@ -96,6 +112,8 @@ fn main() -> Result<(), Box<dyn Error>> {
     let data = AppData::default();
 
     ui.set_file_path(config.file_path.to_str().unwrap_or_default().into());
+    ui.set_encrypt_key(config.encrypt_key.as_str().into());
+    ui.set_file_format(config.file_format as i32);
 
     let config = Rc::new(RefCell::new(config));
     let data = Rc::new(RefCell::new(data));
@@ -108,10 +126,32 @@ fn main() -> Result<(), Box<dyn Error>> {
                 let ui = ui_handle.unwrap();
                 let mut config = config.borrow_mut();
                 config.file_path = FileDialog::new()
-                    .set_directory(config.file_path.parent().unwrap_or(Path::new("/")).to_str().unwrap_or("/"))
+                    .set_directory(
+                        config
+                            .file_path
+                            .parent()
+                            .unwrap_or(Path::new("/"))
+                            .to_str()
+                            .unwrap_or("/"),
+                    )
                     .pick_file()
                     .unwrap_or_default();
                 ui.set_file_path(config.file_path.to_str().unwrap_or_default().into());
+
+                // Poor implementation but good enough
+                let Some(ext) = config.file_path.extension() else {
+                    return;
+                };
+                let Some(ext) = ext.to_str() else {
+                    return;
+                };
+                let ext = ext.to_string();
+                if ext.eq_ignore_ascii_case("ron") {
+                    config.file_format = FileFormat::Ron;
+                } else {
+                    config.file_format = FileFormat::Bin;
+                }
+                ui.set_file_format(config.file_format as i32);
             }
         });
 
@@ -120,10 +160,13 @@ fn main() -> Result<(), Box<dyn Error>> {
             let data = data.clone();
             let config = config.clone();
             let ui_handle = ui.as_weak();
-            move |file_path| {
+            move |file_path, file_format, encrypt_key| {
                 let ui = ui_handle.unwrap();
                 let mut config = config.borrow_mut();
                 let mut data = data.borrow_mut();
+
+                config.file_format = file_format.into();
+                config.encrypt_key = encrypt_key.to_string();
                 config.file_path = PathBuf::from(file_path.as_str());
                 config.save();
 
@@ -157,18 +200,26 @@ fn main() -> Result<(), Box<dyn Error>> {
             // TODO: show save status
             let data = data.clone();
             let config = config.clone();
-            move || {
-                let config = config.borrow();
+            move |file_path, file_format, encrypt_key| {
+                let mut config = config.borrow_mut();
                 let data = data.borrow();
+
+                config.file_format = file_format.into();
+                config.encrypt_key = encrypt_key.to_string();
+                config.file_path = PathBuf::from(file_path.as_str());
                 config.save();
 
                 // TODO: Noti if fail to save
                 match config.file_format {
                     FileFormat::Bin => {
-                        let _ = bin_file::save_to::<AppData>(&data, &config.file_path, &config.encrypt_key);
+                        if let Err(e) = bin_file::save_to::<AppData>(&data, &config.file_path, &config.encrypt_key) {
+                            error!("Failed to save: {:?}", e);
+                        }
                     }
                     FileFormat::Ron => {
-                        let _ = ron_file::save_to::<AppData>(&data, &config.file_path);
+                        if let Err(e) = ron_file::save_to::<AppData>(&data, &config.file_path) {
+                            error!("Failed to save: {:?}", e);
+                        }
                     }
                 }
             }
@@ -229,6 +280,7 @@ fn main() -> Result<(), Box<dyn Error>> {
                 let mut data = data.borrow_mut();
                 let class_id = xxh3_64(class_name.as_bytes());
                 data.class_name_map.remove(&class_id);
+                // TODO: Remove state name map if no class contain it
                 data.dialogues.remove(&class_id);
                 reload_class(&data, &ui, "");
             }
@@ -294,6 +346,7 @@ fn main() -> Result<(), Box<dyn Error>> {
                 let state_id = xxh3_64(state_name.as_bytes());
                 if let Some(class) = data.dialogues.get_mut(&config.selected_class) {
                     class.remove(&state_id);
+                    // TODO: Remove state name map if no class contain it
                     reload_state(&data, &ui, &config, "");
                 }
             }
@@ -610,6 +663,12 @@ fn reload_dialogue_detail(data: &AppData, ui: &AppWindow, config: &Config) {
             lang_list.push(lang.to_639_3().to_string().into());
         }
         ui.set_lang_list(lang_list.as_slice().into());
+
+        let mut state_list: Vec<SharedString> = Vec::new();
+        for (_, state) in data.state_name_map.iter() {
+            state_list.push(state.into());
+        }
+        ui.set_state_list(state_list.as_slice().into());
     }
 }
 

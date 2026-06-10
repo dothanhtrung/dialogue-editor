@@ -2,7 +2,6 @@
   {
     "label": "Build",
     "command": "cargo build",
-    "env": { "RUST_LOG": "info" },
     "use_new_terminal": false,
     "allow_concurrent_runs": false,
   },
