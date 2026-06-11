@@ -702,8 +702,8 @@ impl From<UiDialogue> for Dialogue {
     fn from(ui_dialog: UiDialogue) -> Self {
         let mut ret = Self::default();
         for affect in ui_dialog.affects.iter() {
-            let class_id = xxh3_64(affect.class.as_bytes());
-            let state_id = xxh3_64(affect.state.as_bytes());
+            let class_id = xxh3_64(affect.class.to_lowercase().as_bytes());
+            let state_id = xxh3_64(affect.state.to_lowercase().as_bytes());
             ret.affects.insert(class_id, state_id);
         }
         for content in ui_dialog.contents.iter() {

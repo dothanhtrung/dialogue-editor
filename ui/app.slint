@@ -63,7 +63,6 @@ export component AppWindow inherits Window {
             // Class actor
             Rectangle {
                 width: 20%;
-                background: Palette.alternate-background;
 
                 VerticalBox {
                     LineEdit {
@@ -86,9 +85,9 @@ export component AppWindow inherits Window {
                                 };
                                 background: {
                                     if (root.selecting_class == i) {
-                                        Palette.background
+                                        Palette.selection-background
                                     } else {
-                                        Palette.alternate-background
+                                        Palette.background
                                     }
                                 };
                                 select => {
@@ -126,7 +125,7 @@ export component AppWindow inherits Window {
             // Dialogue State
             Rectangle {
                 width: 20%;
-                background: Palette.control-background;
+
                 VerticalBox {
 
                     LineEdit {
@@ -149,9 +148,9 @@ export component AppWindow inherits Window {
                                 };
                                 background: {
                                     if (root.selecting_state == i) {
-                                        Palette.background
+                                        Palette.selection-background
                                     } else {
-                                        Palette.alternate-background
+                                        Palette.background
                                     }
                                 };
                                 select => {
@@ -191,7 +190,7 @@ export component AppWindow inherits Window {
             // Dialogue list
             Rectangle {
                 width: 20%;
-                background: Palette.control-background;
+
                 VerticalBox {
 
                     // Just to keep consistent position with other columns
@@ -213,9 +212,9 @@ export component AppWindow inherits Window {
                                 };
                                 background: {
                                     if (root.selecting_dialog == i) {
-                                        Palette.background
+                                        Palette.selection-background
                                     } else {
-                                        Palette.alternate-background
+                                        Palette.background
                                     }
                                 };
                                 select => {
