@@ -230,6 +230,10 @@ export component EditableTextBox inherits Rectangle {
                 text: value;
                 enabled: selected;
                 read-only: !selected;
+                accepted(text) => {
+                    submit(self.text);
+                    selected = false;
+                }
             }
 
             save_btn := Button {
