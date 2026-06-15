@@ -1,5 +1,4 @@
 use serde::{Deserialize, Serialize};
-use simple_crypt::encrypt;
 use std::fs;
 use std::fs::File;
 use std::io::Write;
@@ -14,7 +13,10 @@ where
     let decrypted = if encr_key.is_empty() {
         enc_saved
     } else {
-        simple_crypt::decrypt(enc_saved.as_slice(), encr_key.as_bytes())?
+        #[cfg(feature = "crypt")]
+        return simple_crypt::decrypt(enc_saved.as_slice(), encr_key.as_bytes())?;
+        #[cfg(not(feature = "crypt"))]
+        enc_saved
     };
     let data = postcard::from_bytes(decrypted.as_slice())?;
     Ok(data)
@@ -29,7 +31,10 @@ where
     let enc_saved = if encr_key.is_empty() {
         data
     } else {
-        encrypt(data.as_slice(), encr_key.as_bytes())?
+        #[cfg(feature = "crypt")]
+        return simple_crypt::encrypt(data.as_slice(), encr_key.as_bytes())?;
+        #[cfg(not(feature = "crypt"))]
+        data
     };
 
     if let Some(parent_dir) = file_path.parent() {

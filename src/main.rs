@@ -22,17 +22,13 @@ use std::{
         HashMap,
     },
     error::Error,
-    fs,
     path::{
         Path,
         PathBuf,
     },
     rc::Rc,
 };
-use tracing::{
-    error,
-    info,
-};
+use tracing::error;
 use tracing_subscriber::EnvFilter;
 use xxhash_rust::xxh3::xxh3_64;
 
@@ -121,6 +117,9 @@ fn main() -> Result<(), Box<dyn Error>> {
     ui.set_encrypt_key(config.encrypt_key.as_str().into());
     ui.set_file_format(config.file_format as i32);
 
+    #[cfg(feature = "crypt")]
+    ui.set_enable_crypt(true);
+
     let cache = Rc::new(RefCell::new(cache));
     let config = Rc::new(RefCell::new(config));
     let data = Rc::new(RefCell::new(data));
@@ -164,6 +163,7 @@ fn main() -> Result<(), Box<dyn Error>> {
 
         ui.on_request_load({
             // TODO: Loading icon
+            // TODO: Warn if there is unsave content
             let data = data.clone();
             let config = config.clone();
             let ui_handle = ui.as_weak();
@@ -199,6 +199,7 @@ fn main() -> Result<(), Box<dyn Error>> {
                     }
 
                     reload_all(&data, &ui, &config, "", "");
+                    ui.set_is_saved(true);
                 }
             }
         });
@@ -207,9 +208,11 @@ fn main() -> Result<(), Box<dyn Error>> {
             // TODO: show save status
             let data = data.clone();
             let config = config.clone();
+            let ui_handle = ui.as_weak();
             move |file_path, file_format, encrypt_key| {
                 let mut config = config.borrow_mut();
                 let data = data.borrow();
+                let ui = ui_handle.unwrap();
 
                 config.file_format = file_format.into();
                 config.encrypt_key = encrypt_key.to_string();
@@ -221,11 +224,15 @@ fn main() -> Result<(), Box<dyn Error>> {
                     FileFormat::Bin => {
                         if let Err(e) = bin_file::save_to::<AppData>(&data, &config.file_path, &config.encrypt_key) {
                             error!("Failed to save: {:?}", e);
+                        } else {
+                            ui.set_is_saved(true);
                         }
                     }
                     FileFormat::Ron => {
                         if let Err(e) = ron_file::save_to::<AppData>(&data, &config.file_path) {
                             error!("Failed to save: {:?}", e);
+                        } else {
+                            ui.set_is_saved(true);
                         }
                     }
                 }
@@ -716,6 +723,7 @@ impl From<UiDialogue> for Dialogue {
     }
 }
 
+// TODO: Allow to manually set id of string without hashing
 fn string_to_id(name: &str, cache: &mut DataCache) -> u64 {
     let lower = name.to_lowercase();
     if let Some(id) = cache.name_map.get(lower.as_str()) {

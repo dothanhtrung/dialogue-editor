@@ -225,6 +225,7 @@ export component EditableTextBox inherits Rectangle {
             select();
         }
 
+        // TODO: Fix cropped view
         HorizontalBox {
             edit := LineEdit {
                 text: value;
@@ -238,7 +239,7 @@ export component EditableTextBox inherits Rectangle {
 
             save_btn := Button {
                 text: "✅";
-                visible: selected;
+                visible: selected; // TODO: If data is not submited, do not hide this button
                 clicked => {
                     submit(edit.text);
                     selected = false;

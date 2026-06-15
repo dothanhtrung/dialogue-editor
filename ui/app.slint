@@ -14,7 +14,9 @@ import {
     DialogueBox,
     SelectableBox,
 } from "app_widgets.slint";
+import { StatusBar } from "status_bar.slint";
 
+// TODO: Status bar, Config UI, Notification
 
 export component AppWindow inherits Window {
     in-out property <string> file_path;
@@ -25,8 +27,11 @@ export component AppWindow inherits Window {
     in-out property <[string]> dialogues;
     in-out property <UiDialogue> dialogue;
     in-out property <[string]> lang_list;
-
     in-out property <[string]> state_list;
+
+    in-out property <bool> is_saved: true;
+
+    in-out property <bool> enable_crypt: false;
 
     property <int> selecting_class: -1;
     property <int> selecting_state: -1;
@@ -98,9 +103,11 @@ export component AppWindow inherits Window {
                                 };
                                 submit(new_name) => {
                                     rename-class(class_name, new_name);
+                                    root.is_saved = false;
                                 };
                                 delete => {
                                     remove-class(class_name);
+                                    root.is_saved = false;
                                 };
                             }
                         }
@@ -116,6 +123,7 @@ export component AppWindow inherits Window {
                             clicked => {
                                 root.add-class(new_class.text);
                                 new_class.text = "";
+                                root.is_saved = false;
                             };
                         }
                     }
@@ -136,9 +144,10 @@ export component AppWindow inherits Window {
                     }
 
                     TouchArea {
-                        clicked => {
-                        // root.selecting_state = -1;
-                    }
+                        // Unselect when click outside
+                        // clicked => {
+                        //      root.selecting_state = -1;
+                        // }
 
                         ListView {
                             for state_name[i] in states: EditableTextBox {
@@ -160,9 +169,11 @@ export component AppWindow inherits Window {
                                 };
                                 submit(new_name) => {
                                     rename-state(state_name, new_name);
+                                    root.is_saved = false;
                                 };
                                 delete => {
                                     remove-state(state_name);
+                                    root.is_saved = false;
                                 };
                             }
                         }
@@ -180,6 +191,7 @@ export component AppWindow inherits Window {
                             text: "Add";
                             clicked => {
                                 root.add-state(new_state.text);
+                                root.is_saved = false;
                                 new_state.text = "";
                             }
                         }
@@ -223,6 +235,7 @@ export component AppWindow inherits Window {
                                 };
                                 delete_dialog => {
                                     remove-dialog(i);
+                                    root.is_saved = false;
                                 };
                             }
                         }
@@ -235,6 +248,7 @@ export component AppWindow inherits Window {
                         text: "Add";
                         clicked => {
                             root.add-dialog();
+                            root.is_saved = false;
                         }
                     }
                 }
@@ -254,18 +268,23 @@ export component AppWindow inherits Window {
 
                         update_content => {
                             root.update_content(self.dialogue);
+                            root.is_saved = false;
                         };
                         new_lang_content(lang, content) => {
                             root.new_lang_content(lang, content);
+                            root.is_saved = false;
                         };
                         new_affect(class, state) => {
                             root.new_affect(class, state);
+                            root.is_saved = false;
                         };
                         delete_content(lang) => {
                             root.delete_content(lang);
+                            root.is_saved = false;
                         }
                         delete_affect(class) => {
                             root.delete_affect(class);
+                            root.is_saved = false;
                         }
                     }
                 }
@@ -291,11 +310,12 @@ export component AppWindow inherits Window {
                 ui_file_format := ComboBox {
                     width: 80px;
                     model: ["RON", "BIN"];
-                    current-index: file_format;
+                    current-index: file_format; // FIXME: If this is manual changed from UI, it can't be changed from backend anymore
                 }
 
                 ui_encrypt_key := LineEdit {
                     text: encrypt_key;
+                    visible: enable_crypt;
                     placeholder-text: "Encryption key";
                 }
             }
@@ -315,6 +335,11 @@ export component AppWindow inherits Window {
                     }
                 }
             }
+        }
+
+        StatusBar {
+            height: 24px;
+            is_saved: root.is_saved;
         }
     }
 }
