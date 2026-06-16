@@ -15,6 +15,7 @@ import {
     SelectableBox,
 } from "app_widgets.slint";
 import { StatusBar } from "status_bar.slint";
+import { FileSection } from "file_section.slint";
 
 // TODO: Status bar, Config UI, Notification
 
@@ -291,49 +292,22 @@ export component AppWindow inherits Window {
             }
         }
 
-        VerticalLayout {
-            height: 10%;
-            HorizontalBox {
-                file_path_input := LineEdit {
-                    text: root.file_path;
-                }
+        FileSection {
+            file_format: root.file_format;
+            file_path: root.file_path;
+            enable_crypt: root.enable_crypt;
+            encrypt_key: root.encrypt_key;
 
-                Button {
-                    text: "Browse";
-                    clicked => {
-                        file_picker();
-                    }
-                }
+            browse_click => {
+                root.file_picker();
             }
 
-            HorizontalBox {
-                ui_file_format := ComboBox {
-                    width: 80px;
-                    model: ["RON", "BIN"];
-                    current-index: file_format; // FIXME: If this is manual changed from UI, it can't be changed from backend anymore
-                }
-
-                ui_encrypt_key := LineEdit {
-                    text: encrypt_key;
-                    visible: enable_crypt;
-                    placeholder-text: "Encryption key";
-                }
+            load(path_str, type_int, encrypt_str) => {
+                root.request-load(path_str, type_int, encrypt_str);
             }
 
-            HorizontalBox {
-                Button {
-                    text: "Load";
-                    clicked => {
-                        root.request-load(file_path_input.text, ui_file_format.current-index, ui_encrypt_key.text);
-                    }
-                }
-
-                Button {
-                    text: "Save";
-                    clicked => {
-                        root.request-save(file_path_input.text, ui_file_format.current-index, ui_encrypt_key.text);
-                    }
-                }
+            save(path_str, type_int, encrypt_str) => {
+                root.request-save(path_str, type_int, encrypt_str);
             }
         }
 

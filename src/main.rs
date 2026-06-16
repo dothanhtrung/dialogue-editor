@@ -44,8 +44,11 @@ struct Dialogue {
 
 #[derive(Serialize, Deserialize, Default, Clone)]
 struct AppData {
+    #[serde(default)]
     dialogues: HashMap<u64, BTreeMap<u64, Vec<Dialogue>>>,
+    #[serde(default)]
     class_name_map: HashMap<u64, String>,
+    #[serde(default)]
     state_name_map: HashMap<u64, String>,
 }
 

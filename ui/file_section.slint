@@ -1,0 +1,59 @@
+
+import { HorizontalBox, ComboBox, LineEdit, Button } from "std-widgets.slint";
+
+export component FileSection inherits Rectangle {
+    in property <int> file_format;
+    in property <bool> enable_crypt;
+    in property <string> encrypt_key;
+    in-out property <string> file_path;
+
+    callback browse_click();
+    callback load(string, int, string);
+    callback save(string, int, string);
+
+    VerticalLayout {
+        height: 10%;
+        HorizontalBox {
+            ui_file_format := ComboBox {
+                width: 80px;
+                model: ["RON", "BIN"];
+                current-index: file_format; // FIXME: If this is manual changed from UI, it can't be changed from backend anymore
+            }
+
+            file_path_input := LineEdit {
+                text: root.file_path;
+            }
+
+            Button {
+                text: "Browse";
+                clicked => {
+                    browse_click();
+                }
+            }
+        }
+
+        HorizontalBox {
+            ui_encrypt_key := LineEdit {
+                text: encrypt_key;
+                visible: enable_crypt;
+                placeholder-text: "Encryption key";
+            }
+        }
+
+        HorizontalBox {
+            Button {
+                text: "Load";
+                clicked => {
+                    load(file_path_input.text, ui_file_format.current-index, ui_encrypt_key.text);
+                }
+            }
+
+            Button {
+                text: "Save";
+                clicked => {
+                    save(file_path_input.text, ui_file_format.current-index, ui_encrypt_key.text);
+                }
+            }
+        }
+    }
+}
