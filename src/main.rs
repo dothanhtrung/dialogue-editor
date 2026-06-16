@@ -1,20 +1,17 @@
 // Prevent console window in addition to Slint window in Windows release builds when, e.g., starting the app via file manager. Ignored on other platforms.
 #![cfg_attr(not(debug_assertions), windows_subsystem = "windows")]
 
-mod bin_file;
-mod ron_file;
+mod file_handle;
+mod reload_ui;
 
+use file_handle::*;
 use isolang::Language;
-use regex_lite::Regex;
-use rfd::FileDialog;
+use reload_ui::*;
 use serde::{
     Deserialize,
     Serialize,
 };
-use slint::{
-    Model,
-    SharedString,
-};
+use slint::Model;
 use std::{
     cell::RefCell,
     collections::{
@@ -28,7 +25,6 @@ use std::{
     },
     rc::Rc,
 };
-use tracing::error;
 use tracing_subscriber::EnvFilter;
 use xxhash_rust::xxh3::xxh3_64;
 
@@ -50,24 +46,6 @@ struct AppData {
     class_name_map: HashMap<u64, String>,
     #[serde(default)]
     state_name_map: HashMap<u64, String>,
-}
-
-#[repr(i32)]
-#[derive(Default, Serialize, Deserialize, Clone, Copy)]
-enum FileFormat {
-    #[default]
-    Ron = 0,
-    Bin,
-}
-
-impl From<i32> for FileFormat {
-    fn from(number: i32) -> Self {
-        match number {
-            0 => Self::Ron,
-            1 => Self::Bin,
-            _ => Self::Ron,
-        }
-    }
 }
 
 // TODO: Config UI
@@ -127,121 +105,9 @@ fn main() -> Result<(), Box<dyn Error>> {
     let config = Rc::new(RefCell::new(config));
     let data = Rc::new(RefCell::new(data));
 
-    {
-        ui.on_file_picker({
-            let config = config.clone();
-            let ui_handle = ui.as_weak();
-            move || {
-                let ui = ui_handle.unwrap();
-                let mut config = config.borrow_mut();
-                config.file_path = FileDialog::new()
-                    .set_directory(
-                        config
-                            .file_path
-                            .parent()
-                            .unwrap_or(Path::new("/"))
-                            .to_str()
-                            .unwrap_or("/"),
-                    )
-                    .pick_file()
-                    .unwrap_or_default();
-                ui.set_file_path(config.file_path.to_str().unwrap_or_default().into());
-
-                // Poor implementation but good enough
-                let Some(ext) = config.file_path.extension() else {
-                    return;
-                };
-                let Some(ext) = ext.to_str() else {
-                    return;
-                };
-                let ext = ext.to_string();
-                if ext.eq_ignore_ascii_case("ron") {
-                    config.file_format = FileFormat::Ron;
-                } else {
-                    config.file_format = FileFormat::Bin;
-                }
-                ui.set_file_format(config.file_format as i32);
-            }
-        });
-
-        ui.on_request_load({
-            // TODO: Loading icon
-            // TODO: Warn if there is unsave content
-            let data = data.clone();
-            let config = config.clone();
-            let ui_handle = ui.as_weak();
-            move |file_path, file_format, encrypt_key| {
-                let ui = ui_handle.unwrap();
-                let mut config = config.borrow_mut();
-                let mut data = data.borrow_mut();
-
-                config.file_format = file_format.into();
-                config.encrypt_key = encrypt_key.to_string();
-                config.file_path = PathBuf::from(file_path.as_str());
-                config.save();
-
-                if config.file_path.is_file() {
-                    // TODO: Noti if fail to load
-                    *data = match config.file_format {
-                        FileFormat::Bin => {
-                            bin_file::load_from(&config.file_path, &config.encrypt_key).unwrap_or_default()
-                        }
-                        FileFormat::Ron => ron_file::load_from(&config.file_path).unwrap_or_default(),
-                    };
-                    if (config.selected_class == 0 || !data.class_name_map.contains_key(&config.selected_class))
-                        && let Some(first_class) = data.dialogues.keys().next()
-                    {
-                        config.selected_class = *first_class;
-                    }
-
-                    if (config.selected_state == 0 || !data.state_name_map.contains_key(&config.selected_state))
-                        && let Some(selected_class) = data.dialogues.get(&config.selected_class)
-                        && let Some((first_state, _)) = selected_class.first_key_value()
-                    {
-                        config.selected_class = *first_state;
-                    }
-
-                    reload_all(&data, &ui, &config, "", "");
-                    ui.set_is_saved(true);
-                }
-            }
-        });
-
-        ui.on_request_save({
-            // TODO: show save status
-            let data = data.clone();
-            let config = config.clone();
-            let ui_handle = ui.as_weak();
-            move |file_path, file_format, encrypt_key| {
-                let mut config = config.borrow_mut();
-                let data = data.borrow();
-                let ui = ui_handle.unwrap();
-
-                config.file_format = file_format.into();
-                config.encrypt_key = encrypt_key.to_string();
-                config.file_path = PathBuf::from(file_path.as_str());
-                config.save();
-
-                // TODO: Noti if fail to save
-                match config.file_format {
-                    FileFormat::Bin => {
-                        if let Err(e) = bin_file::save_to::<AppData>(&data, &config.file_path, &config.encrypt_key) {
-                            error!("Failed to save: {:?}", e);
-                        } else {
-                            ui.set_is_saved(true);
-                        }
-                    }
-                    FileFormat::Ron => {
-                        if let Err(e) = ron_file::save_to::<AppData>(&data, &config.file_path) {
-                            error!("Failed to save: {:?}", e);
-                        } else {
-                            ui.set_is_saved(true);
-                        }
-                    }
-                }
-            }
-        });
-    }
+    ui.on_file_picker(file_picker(config.clone(), ui.as_weak()));
+    ui.on_request_load(request_load(data.clone(), config.clone(), ui.as_weak()));
+    ui.on_request_save(request_save(data.clone(), config.clone(), ui.as_weak()));
 
     {
         ui.on_add_class({
@@ -596,118 +462,6 @@ fn main() -> Result<(), Box<dyn Error>> {
     Ok(())
 }
 
-fn reload_all(data: &AppData, ui: &AppWindow, config: &Config, search_class: &str, search_state: &str) {
-    reload_class(data, ui, search_class);
-    reload_state(data, ui, config, search_state);
-    reload_dialogue(data, ui, config);
-    reload_dialogue_detail(data, ui, config);
-}
-
-/// Reload class section and clear state/dialogue section
-fn reload_class(data: &AppData, ui: &AppWindow, search_class: &str) {
-    let mut classes: Vec<SharedString> = Vec::new();
-    let re = Regex::new(search_class);
-    for (_, name) in data.class_name_map.iter() {
-        if search_class.is_empty() {
-            classes.push(name.into());
-        } else if let Ok(re) = re.as_ref()
-            && re.is_match(name)
-        {
-            classes.push(name.into());
-        }
-    }
-
-    ui.set_classes(classes.as_slice().into());
-    ui.set_states([].into());
-    ui.set_dialogues([].into());
-    ui.set_dialogue(UiDialogue::default());
-}
-
-/// Reload state section and clear dialogue section
-fn reload_state(data: &AppData, ui: &AppWindow, config: &Config, search_state: &str) {
-    let re = Regex::new(search_state);
-
-    if let Some(class) = data.dialogues.get(&config.selected_class) {
-        let mut states: Vec<SharedString> = Vec::new();
-        for state_id in class.keys() {
-            let state_name =
-                if let Some(ret) = data.state_name_map.get(state_id) { ret.clone() } else { state_id.to_string() };
-            if search_state.is_empty() {
-                states.push(state_name.into());
-            } else if let Ok(re) = re.as_ref()
-                && re.is_match(state_name.as_str())
-            {
-                states.push(state_name.into());
-            }
-        }
-        ui.set_states(states.as_slice().into());
-    }
-    ui.set_dialogues([].into());
-    ui.set_dialogue(UiDialogue::default());
-}
-
-fn reload_dialogue(data: &AppData, ui: &AppWindow, config: &Config) {
-    if let Some(state) = data.dialogues.get(&config.selected_class)
-        && let Some(state_dialogs) = state.get(&config.selected_state)
-    {
-        let mut dialogues: Vec<SharedString> = Vec::new();
-        for dialog in state_dialogs {
-            if let Some((_, content)) = dialog.contents.first_key_value() {
-                dialogues.push(content.into());
-            } else {
-                dialogues.push(SharedString::new());
-            }
-        }
-
-        ui.set_dialogues(dialogues.as_slice().into());
-        ui.set_dialogue(UiDialogue::default());
-    }
-}
-
-fn reload_dialogue_detail(data: &AppData, ui: &AppWindow, config: &Config) {
-    if let Some(state) = data.dialogues.get(&config.selected_class)
-        && let Some(dialog_list) = state.get(&config.selected_state)
-        && let Some(dialog) = dialog_list.get(config.selected_dialog)
-    {
-        let mut contents: Vec<ContentLang> = Vec::new();
-        let mut affects: Vec<Affect> = Vec::new();
-        for (lang, content) in dialog.contents.iter() {
-            contents.push(ContentLang {
-                language: lang.to_639_3().to_string().into(),
-                content: content.into(),
-            });
-        }
-        for (class, state) in dialog.affects.iter() {
-            if let Some(class_name) = data.class_name_map.get(class)
-                && let Some(state_name) = data.state_name_map.get(state)
-            {
-                affects.push(Affect {
-                    class: class_name.into(),
-                    state: state_name.into(),
-                });
-            }
-        }
-
-        let ui_dialogue = UiDialogue {
-            contents: contents.as_slice().into(),
-            affects: affects.as_slice().into(),
-        };
-        ui.set_dialogue(ui_dialogue);
-
-        let mut lang_list: Vec<SharedString> = Vec::new();
-        for lang in config.langs.iter() {
-            lang_list.push(lang.to_639_3().to_string().into());
-        }
-        ui.set_lang_list(lang_list.as_slice().into());
-
-        let mut state_list: Vec<SharedString> = Vec::new();
-        for (_, state) in data.state_name_map.iter() {
-            state_list.push(state.into());
-        }
-        ui.set_state_list(state_list.as_slice().into());
-    }
-}
-
 impl From<UiDialogue> for Dialogue {
     fn from(ui_dialog: UiDialogue) -> Self {
         let mut ret = Self::default();
@@ -723,17 +477,5 @@ impl From<UiDialogue> for Dialogue {
             );
         }
         ret
-    }
-}
-
-// TODO: Allow to manually set id of string without hashing
-fn string_to_id(name: &str, cache: &mut DataCache) -> u64 {
-    let lower = name.to_lowercase();
-    if let Some(id) = cache.name_map.get(lower.as_str()) {
-        *id
-    } else {
-        let id = xxh3_64(lower.as_bytes());
-        cache.name_map.insert(lower, id);
-        id
     }
 }

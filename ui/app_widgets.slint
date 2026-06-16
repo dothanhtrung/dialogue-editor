@@ -109,6 +109,7 @@ export component DialogueBox inherits Rectangle {
             Rectangle {
                 background: Palette.control-background;
                 ListView {
+                    // TODO: Add "Go to" the affected state
                     for affect[i] in dialogue.affects: HorizontalBox {
                         ComboBox {
                             model: class_list;
@@ -120,8 +121,8 @@ export component DialogueBox inherits Rectangle {
                         }
 
                         ComboBox {
-                    // TODO: Filter state by class
-                    model: state_list;
+                            // TODO: Filter state by class
+                            model: state_list;
                             current-value: affect.state;
                             selected(current-value) => {
                                 dialogue.affects[i].state = current-value;
