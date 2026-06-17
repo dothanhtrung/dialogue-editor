@@ -36,6 +36,13 @@ export component FileSection inherits Rectangle {
             ui_encrypt_key := LineEdit {
                 text: encrypt_key;
                 visible: enable_crypt;
+                height: {
+                    if (enable_crypt) {
+                        30%
+                    } else {
+                        0%
+                    }
+                };
                 placeholder-text: "Encryption key";
             }
         }

@@ -17,7 +17,7 @@ import {
 import { StatusBar } from "status_bar.slint";
 import { FileSection } from "file_section.slint";
 
-// TODO: Status bar, Config UI, Notification
+// TODO: Status bar, Config UI, Notification,
 
 export component AppWindow inherits Window {
     in-out property <string> file_path;
@@ -312,7 +312,6 @@ export component AppWindow inherits Window {
         }
 
         StatusBar {
-            height: 24px;
             is_saved: root.is_saved;
         }
     }
