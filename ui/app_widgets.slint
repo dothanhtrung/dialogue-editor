@@ -22,6 +22,7 @@ export struct Affect {
 export struct UiDialogue {
     contents: [ContentLang],
     affects: [Affect],
+    events: [string],
 }
 
 // TODO: Event list
@@ -30,13 +31,16 @@ export component DialogueBox inherits Rectangle {
     in property <[string]> lang_list;
     in property <[string]> class_list;
     in property <[string]> state_list;
+    in property <[string]> event_list;
     property <int> content_selecting;
 
-    callback new_lang_content(string, string);
-    callback new_affect(string, string);
+    callback add_lang_content(string, string);
+    callback add_affect(string, string);
+    callback add_event(string);
     callback update_content();
     callback delete_content(string);
     callback delete_affect(string);
+    callback delete_event(string);
 
     VerticalBox {
         VerticalBox {
@@ -98,7 +102,7 @@ export component DialogueBox inherits Rectangle {
                     text: "Add";
                     clicked => {
                         update_content();
-                        new_lang_content(new_lang.current-value, new_content.text);
+                        add_lang_content(new_lang.current-value, new_content.text);
                         new_content.text = "";
                     };
                 }
@@ -106,7 +110,6 @@ export component DialogueBox inherits Rectangle {
         }
 
         VerticalBox {
-
             Rectangle {
                 background: Palette.control-background;
                 ListView {
@@ -156,7 +159,41 @@ export component DialogueBox inherits Rectangle {
                     text: "Add";
                     clicked => {
                         update_content();
-                        new_affect(new_affect_class.current-value, new_affect_state.current-value);
+                        add_affect(new_affect_class.current-value, new_affect_state.current-value);
+                    };
+                }
+            }
+        }
+
+        VerticalBox {
+            Rectangle {
+                background: Palette.control-background;
+                ListView {
+                    for event[i] in dialogue.events: HorizontalBox {
+                        Text {
+                            text: event;
+                        }
+
+                        Button {
+                            text: "🗑️";
+                            clicked => {
+                                delete_event(event);
+                            }
+                        }
+                    }
+                }
+            }
+
+            HorizontalBox {
+                new_event := ComboBox {
+                    model: event_list;
+                }
+
+                Button {
+                    text: "Add";
+                    clicked => {
+                        update_content();
+                        add_event(new_event.current-value);
                     };
                 }
             }

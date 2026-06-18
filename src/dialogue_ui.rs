@@ -54,7 +54,7 @@ pub fn remove_dialogue(
     }
 }
 
-pub fn new_lang_content(
+pub fn add_lang_content(
     data: Rc<RefCell<AppData>>,
     config: Rc<RefCell<Config>>,
     ui_handle: Weak<AppWindow>,
@@ -75,7 +75,7 @@ pub fn new_lang_content(
     }
 }
 
-pub fn new_affect(
+pub fn add_affect(
     data: Rc<RefCell<AppData>>,
     config: Rc<RefCell<Config>>,
     cache: Rc<RefCell<DataCache>>,

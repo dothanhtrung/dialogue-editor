@@ -30,6 +30,7 @@ export component AppWindow inherits Window {
     in-out property <UiDialogue> dialogue;
     in-out property <[string]> lang_list;
     in-out property <[string]> state_list;
+    in-out property <[string]> event_list;
 
     in-out property <bool> is_saved: true;
 
@@ -56,11 +57,13 @@ export component AppWindow inherits Window {
     callback add-dialog();
     callback remove-dialog(int);
 
-    callback new_lang_content(string, string); // lang, content
-    callback new_affect(string, string); // affect_class, affect_state
+    callback add_lang_content(string, string); // lang, content
+    callback add_affect(string, string); // affect_class, affect_state
+    callback add_event(string);
     callback update_content(UiDialogue); // dialog
     callback delete_content(string);
     callback delete_affect(string);
+    callback delete_event(string);
 
     callback search(string, string);
     callback file_picker();
@@ -259,17 +262,22 @@ export component AppWindow inherits Window {
                                 lang_list: lang_list;
                                 class_list: classes;
                                 state_list: state_list;
+                                event_list: event_list;
 
                                 update_content => {
                                     root.update_content(self.dialogue);
                                     root.is_saved = false;
                                 };
-                                new_lang_content(lang, content) => {
-                                    root.new_lang_content(lang, content);
+                                add_lang_content(lang, content) => {
+                                    root.add_lang_content(lang, content);
                                     root.is_saved = false;
                                 };
-                                new_affect(class, state) => {
-                                    root.new_affect(class, state);
+                                add_affect(class, state) => {
+                                    root.add_affect(class, state);
+                                    root.is_saved = false;
+                                };
+                                add_event(event) => {
+                                    root.add_event(event);
                                     root.is_saved = false;
                                 };
                                 delete_content(lang) => {
@@ -279,6 +287,10 @@ export component AppWindow inherits Window {
                                 delete_affect(class) => {
                                     root.delete_affect(class);
                                     root.is_saved = false;
+                                }
+                                delete_event(event) => {
+                                    root.delete_event(event);
+                                    root.is_saved = false
                                 }
                             }
                         }

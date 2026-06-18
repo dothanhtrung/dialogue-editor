@@ -1,8 +1,17 @@
 use crate::{
-    Affect, AppData, AppWindow, Config, ContentLang, DataCache, UiDialogue
+    Affect,
+    AppData,
+    AppWindow,
+    Config,
+    ContentLang,
+    DataCache,
+    UiDialogue,
 };
 use regex_lite::Regex;
-use slint::SharedString;
+use slint::{
+    SharedString,
+    ToSharedString,
+};
 use xxhash_rust::xxh3::xxh3_64;
 
 pub fn reload_all(data: &AppData, ui: &AppWindow, config: &Config, search_class: &str, search_state: &str) {
@@ -16,11 +25,12 @@ pub fn reload_all(data: &AppData, ui: &AppWindow, config: &Config, search_class:
 pub fn reload_class(data: &AppData, ui: &AppWindow, search_class: &str) {
     let mut classes: Vec<SharedString> = Vec::new();
     let re = Regex::new(search_class);
-    for (_, name) in data.class_name_map.iter() {
+    for id in data.dialogues.keys() {
+        let name = if let Some(name) = data.class_name_map.get(id) { name.clone() } else { id.to_string() };
         if search_class.is_empty() {
             classes.push(name.into());
         } else if let Ok(re) = re.as_ref()
-            && re.is_match(name)
+            && re.is_match(&name)
         {
             classes.push(name.into());
         }
@@ -80,6 +90,7 @@ pub fn reload_dialogue_detail(data: &AppData, ui: &AppWindow, config: &Config) {
     {
         let mut contents: Vec<ContentLang> = Vec::new();
         let mut affects: Vec<Affect> = Vec::new();
+        let mut events: Vec<SharedString> = Vec::new();
         for (lang, content) in dialog.contents.iter() {
             contents.push(ContentLang {
                 language: lang.to_639_3().to_string().into(),
@@ -87,19 +98,25 @@ pub fn reload_dialogue_detail(data: &AppData, ui: &AppWindow, config: &Config) {
             });
         }
         for (class, state) in dialog.affects.iter() {
-            if let Some(class_name) = data.class_name_map.get(class)
-                && let Some(state_name) = data.state_name_map.get(state)
-            {
-                affects.push(Affect {
-                    class: class_name.into(),
-                    state: state_name.into(),
-                });
-            }
+            let class_name =
+                if let Some(name) = data.class_name_map.get(class) { name.into() } else { class.to_shared_string() };
+            let state_name =
+                if let Some(name) = data.state_name_map.get(state) { name.into() } else { class.to_shared_string() };
+            affects.push(Affect {
+                class: class_name,
+                state: state_name,
+            });
+        }
+        for event in dialog.events.iter() {
+            let event =
+                if let Some(name) = data.event_name_map.get(event) { name.into() } else { event.to_shared_string() };
+            events.push(event);
         }
 
         let ui_dialogue = UiDialogue {
             contents: contents.as_slice().into(),
             affects: affects.as_slice().into(),
+            events: events.as_slice().into(),
         };
         ui.set_dialogue(ui_dialogue);
 
@@ -116,7 +133,6 @@ pub fn reload_dialogue_detail(data: &AppData, ui: &AppWindow, config: &Config) {
         ui.set_state_list(state_list.as_slice().into());
     }
 }
-
 
 // TODO: Allow to manually set id of string without hashing
 pub fn string_to_id(name: &str, cache: &mut DataCache) -> u64 {

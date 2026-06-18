@@ -18,8 +18,8 @@ use crate::{
         add_dialogue,
         delete_affect,
         delete_content,
-        new_affect,
-        new_lang_content,
+        add_affect,
+        add_lang_content,
         remove_dialogue,
         select_dialogue,
         update_content,
@@ -154,8 +154,8 @@ fn main() -> Result<(), Box<dyn Error>> {
     ui.on_add_dialog(add_dialogue(data.clone(), config.clone(), ui.as_weak()));
     ui.on_select_dialog(select_dialogue(data.clone(), config.clone(), ui.as_weak()));
     ui.on_remove_dialog(remove_dialogue(data.clone(), config.clone(), ui.as_weak()));
-    ui.on_new_lang_content(new_lang_content(data.clone(), config.clone(), ui.as_weak()));
-    ui.on_new_affect(new_affect(data.clone(), config.clone(), cache.clone(), ui.as_weak()));
+    ui.on_add_lang_content(add_lang_content(data.clone(), config.clone(), ui.as_weak()));
+    ui.on_add_affect(add_affect(data.clone(), config.clone(), cache.clone(), ui.as_weak()));
     ui.on_update_content(update_content(data.clone(), config.clone(), ui.as_weak()));
     ui.on_delete_content(delete_content(data.clone(), config.clone(), ui.as_weak()));
     ui.on_delete_affect(delete_affect(data.clone(), config.clone(), cache.clone(), ui.as_weak()));
