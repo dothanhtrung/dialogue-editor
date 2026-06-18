@@ -2,6 +2,7 @@
 #![cfg_attr(not(debug_assertions), windows_subsystem = "windows")]
 
 mod class_ui;
+mod dialogue_ui;
 mod file_handle;
 mod reload_ui;
 mod state_ui;
@@ -12,6 +13,16 @@ use crate::{
         remove_class,
         rename_class,
         select_class,
+    },
+    dialogue_ui::{
+        add_dialogue,
+        delete_affect,
+        delete_content,
+        new_affect,
+        new_lang_content,
+        remove_dialogue,
+        select_dialogue,
+        update_content,
     },
     state_ui::{
         add_state,
@@ -140,162 +151,14 @@ fn main() -> Result<(), Box<dyn Error>> {
     ui.on_remove_state(remove_state(data.clone(), config.clone(), cache.clone(), ui.as_weak()));
     ui.on_rename_state(rename_state(data.clone(), config.clone(), cache.clone(), ui.as_weak()));
 
-    ui.on_add_dialog({
-        let ui_handle = ui.as_weak();
-        let data = data.clone();
-        let config = config.clone();
-        move || {
-            let ui = ui_handle.unwrap();
-            let mut data = data.borrow_mut();
-            let mut config = config.borrow_mut();
-
-            if let Some(state_list) = data.dialogues.get_mut(&config.selected_class)
-                && let Some(dialogues) = state_list.get_mut(&config.selected_state)
-            {
-                dialogues.push(Dialogue::default());
-                config.selected_dialog = dialogues.len() - 1;
-                reload_dialogue(&data, &ui, &config);
-            }
-        }
-    });
-
-    ui.on_select_dialog({
-        let ui_handle = ui.as_weak();
-        let data = data.clone();
-        let config = config.clone();
-        move |dialog_id| {
-            let ui = ui_handle.unwrap();
-            let data = data.borrow_mut();
-            let mut config = config.borrow_mut();
-
-            config.selected_dialog = dialog_id as usize;
-            reload_dialogue_detail(&data, &ui, &config);
-        }
-    });
-
-    ui.on_remove_dialog({
-        let ui_handle = ui.as_weak();
-        let data = data.clone();
-        let config = config.clone();
-        move |dialog_id| {
-            let dialog_id = dialog_id as usize;
-            let ui = ui_handle.unwrap();
-            let mut data = data.borrow_mut();
-            let config = config.borrow();
-            if let Some(class) = data.dialogues.get_mut(&config.selected_class)
-                && let Some(state) = class.get_mut(&config.selected_state)
-                && dialog_id < state.len()
-            {
-                state.remove(dialog_id);
-                reload_dialogue(&data, &ui, &config);
-            }
-        }
-    });
-
-    ui.on_new_lang_content({
-        let ui_handle = ui.as_weak();
-        let data = data.clone();
-        let config = config.clone();
-        move |lang, content| {
-            let ui = ui_handle.unwrap();
-            let mut data = data.borrow_mut();
-            let config = config.borrow();
-
-            if let Some(class) = data.dialogues.get_mut(&config.selected_class)
-                && let Some(state) = class.get_mut(&config.selected_state)
-                && let Some(dialogue) = state.get_mut(config.selected_dialog)
-            {
-                let lang = Language::from_639_3(lang.as_str()).unwrap_or_default();
-                dialogue.contents.insert(lang, content.to_string());
-                reload_dialogue_detail(&data, &ui, &config);
-            }
-        }
-    });
-
-    ui.on_new_affect({
-        let ui_handle = ui.as_weak();
-        let data = data.clone();
-        let config = config.clone();
-        let cache = cache.clone();
-        move |class_name, state_name| {
-            let ui = ui_handle.unwrap();
-            let mut data = data.borrow_mut();
-            let config = config.borrow();
-            let mut cache = cache.borrow_mut();
-            if let Some(class) = data.dialogues.get_mut(&config.selected_class)
-                && let Some(state) = class.get_mut(&config.selected_state)
-                && let Some(dialogue) = state.get_mut(config.selected_dialog)
-            {
-                let class_id = string_to_id(class_name.as_str(), &mut cache);
-                let state_id = string_to_id(state_name.as_str(), &mut cache);
-
-                dialogue.affects.insert(class_id, state_id);
-                reload_dialogue_detail(&data, &ui, &config);
-            }
-        }
-    });
-
-    ui.on_update_content({
-        let ui_handle = ui.as_weak();
-        let data = data.clone();
-        let config = config.clone();
-        move |ui_dialogue| {
-            let ui = ui_handle.unwrap();
-            let mut data = data.borrow_mut();
-            let config = config.borrow();
-
-            if let Some(class) = data.dialogues.get_mut(&config.selected_class)
-                && let Some(state) = class.get_mut(&config.selected_state)
-                && let Some(dialogue) = state.get_mut(config.selected_dialog)
-            {
-                *dialogue = Dialogue::from(ui_dialogue);
-                reload_dialogue_detail(&data, &ui, &config);
-            }
-        }
-    });
-
-    ui.on_delete_content({
-        let ui_handle = ui.as_weak();
-        let data = data.clone();
-        let config = config.clone();
-        move |lang| {
-            let ui = ui_handle.unwrap();
-            let mut data = data.borrow_mut();
-            let config = config.borrow();
-
-            if let Some(class) = data.dialogues.get_mut(&config.selected_class)
-                && let Some(state) = class.get_mut(&config.selected_state)
-                && let Some(dialogue) = state.get_mut(config.selected_dialog)
-            {
-                dialogue
-                    .contents
-                    .remove(&Language::from_639_3(lang.to_string().as_str()).unwrap_or_default());
-            }
-            reload_dialogue_detail(&data, &ui, &config);
-        }
-    });
-
-    ui.on_delete_affect({
-        let ui_handle = ui.as_weak();
-        let data = data.clone();
-        let config = config.clone();
-        let cache = cache.clone();
-        move |class_name| {
-            let ui = ui_handle.unwrap();
-            let mut data = data.borrow_mut();
-            let config = config.borrow();
-            let mut cache = cache.borrow_mut();
-
-            if let Some(class) = data.dialogues.get_mut(&config.selected_class)
-                && let Some(state) = class.get_mut(&config.selected_state)
-                && let Some(dialogue) = state.get_mut(config.selected_dialog)
-            {
-                let class_id = string_to_id(class_name.as_str(), &mut cache);
-                dialogue.affects.remove(&class_id);
-            }
-            reload_dialogue_detail(&data, &ui, &config);
-        }
-    });
+    ui.on_add_dialog(add_dialogue(data.clone(), config.clone(), ui.as_weak()));
+    ui.on_select_dialog(select_dialogue(data.clone(), config.clone(), ui.as_weak()));
+    ui.on_remove_dialog(remove_dialogue(data.clone(), config.clone(), ui.as_weak()));
+    ui.on_new_lang_content(new_lang_content(data.clone(), config.clone(), ui.as_weak()));
+    ui.on_new_affect(new_affect(data.clone(), config.clone(), cache.clone(), ui.as_weak()));
+    ui.on_update_content(update_content(data.clone(), config.clone(), ui.as_weak()));
+    ui.on_delete_content(delete_content(data.clone(), config.clone(), ui.as_weak()));
+    ui.on_delete_affect(delete_affect(data.clone(), config.clone(), cache.clone(), ui.as_weak()));
 
     ui.on_search({
         let ui_handle = ui.as_weak();
