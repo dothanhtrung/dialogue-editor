@@ -5,7 +5,11 @@ use crate::{
     AppData,
     AppWindow,
     Config,
-    reload_ui::reload_all,
+    NotiLevel,
+    common::{
+        reload_all,
+        show_noti,
+    },
 };
 use rfd::FileDialog;
 use serde::{
@@ -16,7 +20,6 @@ use slint::{
     SharedString,
     Weak,
 };
-use tracing::error;
 use std::{
     cell::RefCell,
     path::{
@@ -97,10 +100,21 @@ pub fn request_load(
         config.save();
 
         if config.file_path.is_file() {
-            // TODO: Noti if fail to load
             *data = match config.file_format {
-                FileFormat::Bin => bin_file::load_from(&config.file_path, &config.encrypt_key).unwrap_or_default(),
-                FileFormat::Ron => ron_file::load_from(&config.file_path).unwrap_or_default(),
+                FileFormat::Bin => match bin_file::load_from(&config.file_path, &config.encrypt_key) {
+                    Ok(ret) => ret,
+                    Err(e) => {
+                        show_noti(&ui, NotiLevel::Error, format!("Failed to load: {}", e).as_str());
+                        AppData::default()
+                    }
+                },
+                FileFormat::Ron => match ron_file::load_from(&config.file_path) {
+                    Ok(ret) => ret,
+                    Err(e) => {
+                        show_noti(&ui, NotiLevel::Error, format!("Failed to load: {}", e).as_str());
+                        AppData::default()
+                    }
+                },
             };
             if (config.selected_class == 0 || !data.class_name_map.contains_key(&config.selected_class))
                 && let Some(first_class) = data.dialogues.keys().next()
@@ -136,18 +150,17 @@ pub fn request_save(
         config.file_path = PathBuf::from(file_path.as_str());
         config.save();
 
-        // TODO: Noti if fail to save
         match config.file_format {
             FileFormat::Bin => {
                 if let Err(e) = bin_file::save_to::<AppData>(&data, &config.file_path, &config.encrypt_key) {
-                    error!("Failed to save: {:?}", e);
+                    show_noti(&ui, NotiLevel::Error, format!("Failed to save: {:?}", e).as_str());
                 } else {
                     ui.set_is_saved(true);
                 }
             }
             FileFormat::Ron => {
                 if let Err(e) = ron_file::save_to::<AppData>(&data, &config.file_path) {
-                    error!("Failed to save: {:?}", e);
+                    show_noti(&ui, NotiLevel::Error, format!("Failed to save: {:?}", e).as_str());
                 } else {
                     ui.set_is_saved(true);
                 }

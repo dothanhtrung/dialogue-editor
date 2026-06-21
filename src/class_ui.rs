@@ -3,7 +3,7 @@ use crate::{
     AppWindow,
     Config,
     DataCache,
-    reload_ui::{
+    common::{
         reload_all,
         reload_class,
         reload_state,

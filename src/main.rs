@@ -4,7 +4,7 @@
 mod class_ui;
 mod dialogue_ui;
 mod file_handle;
-mod reload_ui;
+mod common;
 mod state_ui;
 
 use crate::{
@@ -15,15 +15,16 @@ use crate::{
         select_class,
     },
     dialogue_ui::{
+        add_affect,
         add_dialogue,
+        add_lang_content,
         delete_affect,
         delete_content,
-        add_affect,
-        add_lang_content,
         remove_dialogue,
         select_dialogue,
         update_content,
     },
+    common::*,
     state_ui::{
         add_state,
         remove_state,
@@ -33,7 +34,6 @@ use crate::{
 };
 use file_handle::*;
 use isolang::Language;
-use reload_ui::*;
 use serde::{
     Deserialize,
     Serialize,
@@ -109,6 +109,13 @@ impl Config {
 #[derive(Default)]
 struct DataCache {
     name_map: HashMap<String, u64>,
+}
+
+#[repr(i32)]
+enum NotiLevel {
+    Error = 0,
+    Warn,
+    Info
 }
 
 // TODO: Warning to save before exit

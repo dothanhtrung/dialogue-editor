@@ -5,12 +5,21 @@ use crate::{
     Config,
     ContentLang,
     DataCache,
+    Noti,
+    NotiContent,
+    NotiLevel,
     UiDialogue,
 };
 use regex_lite::Regex;
 use slint::{
+    ComponentHandle,
     SharedString,
     ToSharedString,
+};
+use tracing::{
+    error,
+    info,
+    warn,
 };
 use xxhash_rust::xxh3::xxh3_64;
 
@@ -132,6 +141,20 @@ pub fn reload_dialogue_detail(data: &AppData, ui: &AppWindow, config: &Config) {
         }
         ui.set_state_list(state_list.as_slice().into());
     }
+}
+
+pub fn show_noti(ui: &AppWindow, level: NotiLevel, message: &str) {
+    match level {
+        NotiLevel::Error => error!(message),
+        NotiLevel::Warn => warn!(message),
+        NotiLevel::Info => info!(message),
+    }
+
+    ui.global::<NotiContent>().set_noti(Noti {
+        level: level as i32,
+        message: message.into(),
+    });
+    ui.invoke_show_notification();
 }
 
 // TODO: Allow to manually set id of string without hashing

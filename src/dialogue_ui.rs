@@ -1,7 +1,7 @@
 use std::{cell::RefCell, rc::Rc};
 use isolang::Language;
 use slint::{SharedString, Weak};
-use crate::{AppData, AppWindow, Config, DataCache, Dialogue, UiDialogue, reload_ui::{reload_dialogue, reload_dialogue_detail, string_to_id}};
+use crate::{AppData, AppWindow, Config, DataCache, Dialogue, UiDialogue, common::{reload_dialogue, reload_dialogue_detail, string_to_id}};
 
 pub fn add_dialogue(data: Rc<RefCell<AppData>>, config: Rc<RefCell<Config>>, ui_handle: Weak<AppWindow>) -> impl Fn() {
     move || {
