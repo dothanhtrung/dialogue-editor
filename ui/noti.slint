@@ -1,0 +1,34 @@
+
+import { VerticalBox } from "std-widgets.slint";
+
+export struct Noti {
+    level: int, // error, warning, info
+    message: string,
+}
+
+export global NotiContent {
+    in-out property <Noti> noti;
+}
+
+export component NotiBox inherits PopupWindow {
+
+    // TODO: stack notifications
+    VerticalBox {
+        padding: 2px;
+
+        Rectangle {
+            Text {
+                text: NotiContent.noti.message;
+                color: {
+                    if (NotiContent.noti.level == 0) {
+                        red
+                    } else if (NotiContent.noti.level == 1) {
+                        orange
+                    } else {
+                        green
+                    }
+                };
+            }
+        }
+    }
+}
