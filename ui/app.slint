@@ -7,6 +7,7 @@ import {
     ComboBox,
     LineEdit,
     Palette,
+    TabWidget,
 } from "std-widgets.slint";
 import {
     EditableTextBox,
@@ -64,231 +65,233 @@ export component AppWindow inherits Window {
     callback search(string, string);
     callback file_picker();
 
+    tooltip := PopupWindow {
+        in-out property <string> text;
+        Rectangle {
+            Text {
+                text: text;
+            }
+        }
+    }
+
     VerticalBox {
-        HorizontalBox {
-            // Class actor
-            Rectangle {
-                width: 20%;
 
-                VerticalBox {
-                    LineEdit {
-                        placeholder-text: "Search...";
-                        accepted(text) => {
-                            search(text, "");
-                        }
-                    }
+        TabWidget {
+            orientation: Orientation.vertical;
 
-                    TouchArea {
-                        clicked => {
-                        // root.selecting_class = -1;
-                    }
+            Tab {
+                title: "C";
 
-                        ListView {
-                            for class_name[i] in classes: EditableTextBox {
-                                value: class_name;
-                                selected: {
-                                    root.selecting_class == i
-                                };
-                                background: {
-                                    if (root.selecting_class == i) {
-                                        Palette.selection-background
-                                    } else {
-                                        Palette.background
-                                    }
-                                };
-                                select => {
-                                    select-class(class_name);
-                                    root.selecting_class = i;
-                                    root.selecting_state = -1;
-                                    root.selecting_dialog = -1;
-                                };
-                                submit(new_name) => {
-                                    rename-class(class_name, new_name);
-                                    root.is_saved = false;
-                                };
-                                delete => {
-                                    remove-class(class_name);
-                                    root.is_saved = false;
-                                };
+                HorizontalBox {
+                    Rectangle {
+                        width: 20%;
+
+                        VerticalBox {
+                            LineEdit {
+                                placeholder-text: "Search...";
+                                accepted(text) => {
+                                    search(text, "");
+                                }
+                            }
+
+                            ListView {
+                                for class_name[i] in classes: EditableTextBox {
+                                    value: class_name;
+                                    selected: {
+                                        root.selecting_class == i
+                                    };
+                                    background: {
+                                        if (root.selecting_class == i) {
+                                            Palette.selection-background
+                                        } else {
+                                            Palette.background
+                                        }
+                                    };
+                                    select => {
+                                        select-class(class_name);
+                                        root.selecting_class = i;
+                                        root.selecting_state = -1;
+                                        root.selecting_dialog = -1;
+                                    };
+                                    submit(new_name) => {
+                                        rename-class(class_name, new_name);
+                                        root.is_saved = false;
+                                    };
+                                    delete => {
+                                        remove-class(class_name);
+                                        root.is_saved = false;
+                                    };
+                                }
+                            }
+
+                            HorizontalBox {
+                                new_class := LineEdit {
+                                    placeholder-text: "New class";
+                                }
+
+                                Button {
+                                    text: "Add";
+                                    clicked => {
+                                        root.add-class(new_class.text);
+                                        new_class.text = "";
+                                        root.is_saved = false;
+                                    };
+                                }
                             }
                         }
                     }
 
-                    HorizontalBox {
-                        new_class := LineEdit {
-                            placeholder-text: "New class";
-                        }
+                    Rectangle {
+                        width: 20%;
 
-                        Button {
-                            text: "Add";
-                            clicked => {
-                                root.add-class(new_class.text);
-                                new_class.text = "";
-                                root.is_saved = false;
-                            };
+                        VerticalBox {
+
+                            LineEdit {
+                                placeholder-text: "Search...";
+                                accepted(text) => {
+                                    search("", text);
+                                }
+                            }
+
+                            ListView {
+                                for state_name[i] in states: EditableTextBox {
+                                    value: state_name;
+                                    selected: {
+                                        root.selecting_state == i
+                                    };
+                                    background: {
+                                        if (root.selecting_state == i) {
+                                            Palette.selection-background
+                                        } else {
+                                            Palette.background
+                                        }
+                                    };
+                                    select => {
+                                        select-state(state_name);
+                                        root.selecting_state = i;
+                                        root.selecting_dialog = -1;
+                                    };
+                                    submit(new_name) => {
+                                        rename-state(state_name, new_name);
+                                        root.is_saved = false;
+                                    };
+                                    delete => {
+                                        remove-state(state_name);
+                                        root.is_saved = false;
+                                    };
+                                }
+                            }
+
+                            HorizontalBox {
+                                visible: {
+                                    root.selecting_class >= 0
+                                };
+                                new_state := LineEdit {
+                                    placeholder-text: "New state";
+                                }
+
+                                Button {
+                                    text: "Add";
+                                    clicked => {
+                                        root.add-state(new_state.text);
+                                        root.is_saved = false;
+                                        new_state.text = "";
+                                    }
+                                }
+                            }
+                        }
+                    }
+
+                    Rectangle {
+                        width: 20%;
+
+                        VerticalBox {
+
+                            LineEdit {
+                                placeholder-text: "Search...";
+                                visible: false;
+                            }
+
+                            ListView {
+                                for dialog[i] in dialogues: SelectableBox {
+                                    value: dialog;
+                                    selected: {
+                                        root.selecting_dialog == i
+                                    };
+                                    background: {
+                                        if (root.selecting_dialog == i) {
+                                            Palette.selection-background
+                                        } else {
+                                            Palette.background
+                                        }
+                                    };
+                                    select => {
+                                        select-dialog(i);
+                                        root.selecting_dialog = i;
+                                    };
+                                    delete_dialog => {
+                                        remove-dialog(i);
+                                        root.is_saved = false;
+                                    };
+                                }
+                            }
+
+                            Button {
+                                visible: {
+                                    root.selecting_state >= 0
+                                };
+                                text: "Add";
+                                clicked => {
+                                    root.add-dialog();
+                                    root.is_saved = false;
+                                }
+                            }
+                        }
+                    }
+
+                    Rectangle {
+                        VerticalBox {
+                            DialogueBox {
+                                visible: {
+                                    root.selecting_dialog >= 0
+                                };
+                                dialogue: dialogue;
+                                lang_list: lang_list;
+                                class_list: classes;
+                                state_list: state_list;
+
+                                update_content => {
+                                    root.update_content(self.dialogue);
+                                    root.is_saved = false;
+                                };
+                                new_lang_content(lang, content) => {
+                                    root.new_lang_content(lang, content);
+                                    root.is_saved = false;
+                                };
+                                new_affect(class, state) => {
+                                    root.new_affect(class, state);
+                                    root.is_saved = false;
+                                };
+                                delete_content(lang) => {
+                                    root.delete_content(lang);
+                                    root.is_saved = false;
+                                }
+                                delete_affect(class) => {
+                                    root.delete_affect(class);
+                                    root.is_saved = false;
+                                }
+                            }
                         }
                     }
                 }
             }
 
-            // Dialogue State
-            Rectangle {
-                width: 20%;
-
-                VerticalBox {
-
-                    LineEdit {
-                        placeholder-text: "Search...";
-                        accepted(text) => {
-                            search("", text);
-                        }
-                    }
-
-                    TouchArea {
-                        // Unselect when click outside
-                        // clicked => {
-                        //      root.selecting_state = -1;
-                        // }
-
-                        ListView {
-                            for state_name[i] in states: EditableTextBox {
-                                value: state_name;
-                                selected: {
-                                    root.selecting_state == i
-                                };
-                                background: {
-                                    if (root.selecting_state == i) {
-                                        Palette.selection-background
-                                    } else {
-                                        Palette.background
-                                    }
-                                };
-                                select => {
-                                    select-state(state_name);
-                                    root.selecting_state = i;
-                                    root.selecting_dialog = -1;
-                                };
-                                submit(new_name) => {
-                                    rename-state(state_name, new_name);
-                                    root.is_saved = false;
-                                };
-                                delete => {
-                                    remove-state(state_name);
-                                    root.is_saved = false;
-                                };
-                            }
-                        }
-                    }
-
-                    HorizontalBox {
-                        visible: {
-                            root.selecting_class >= 0
-                        };
-                        new_state := LineEdit {
-                            placeholder-text: "New state";
-                        }
-
-                        Button {
-                            text: "Add";
-                            clicked => {
-                                root.add-state(new_state.text);
-                                root.is_saved = false;
-                                new_state.text = "";
-                            }
-                        }
-                    }
-                }
+            Tab {
+                title: "E";
             }
 
-            // Dialogue list
-            Rectangle {
-                width: 20%;
-
-                VerticalBox {
-
-                    // Just to keep consistent position with other columns
-                LineEdit {
-                        placeholder-text: "Search...";
-                        visible: false;
-                    }
-
-                    TouchArea {
-                        clicked => {
-                        // root.selecting_dialog = -1;
-                        }
-
-                        ListView {
-                            for dialog[i] in dialogues: SelectableBox {
-                                value: dialog;
-                                selected: {
-                                    root.selecting_dialog == i
-                                };
-                                background: {
-                                    if (root.selecting_dialog == i) {
-                                        Palette.selection-background
-                                    } else {
-                                        Palette.background
-                                    }
-                                };
-                                select => {
-                                    select-dialog(i);
-                                    root.selecting_dialog = i;
-                                };
-                                delete_dialog => {
-                                    remove-dialog(i);
-                                    root.is_saved = false;
-                                };
-                            }
-                        }
-                    }
-
-                    Button {
-                        visible: {
-                            root.selecting_state >= 0
-                        };
-                        text: "Add";
-                        clicked => {
-                            root.add-dialog();
-                            root.is_saved = false;
-                        }
-                    }
-                }
-            }
-
-            // Dialog detail
-            Rectangle {
-                VerticalBox {
-                    DialogueBox {
-                        visible: {
-                            root.selecting_dialog >= 0
-                        };
-                        dialogue: dialogue;
-                        lang_list: lang_list;
-                        class_list: classes;
-                        state_list: state_list;
-
-                        update_content => {
-                            root.update_content(self.dialogue);
-                            root.is_saved = false;
-                        };
-                        new_lang_content(lang, content) => {
-                            root.new_lang_content(lang, content);
-                            root.is_saved = false;
-                        };
-                        new_affect(class, state) => {
-                            root.new_affect(class, state);
-                            root.is_saved = false;
-                        };
-                        delete_content(lang) => {
-                            root.delete_content(lang);
-                            root.is_saved = false;
-                        }
-                        delete_affect(class) => {
-                            root.delete_affect(class);
-                            root.is_saved = false;
-                        }
-                    }
-                }
+            Tab {
+                title: "S";
             }
         }
 
