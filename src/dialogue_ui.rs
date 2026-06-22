@@ -1,7 +1,25 @@
-use std::{cell::RefCell, rc::Rc};
+use crate::{
+    AppData,
+    AppWindow,
+    Config,
+    Dialogue,
+    UiDialogue,
+    common::{
+        class_to_id,
+        reload_dialogue,
+        reload_dialogue_detail,
+        state_to_id,
+    },
+};
 use isolang::Language;
-use slint::{SharedString, Weak};
-use crate::{AppData, AppWindow, Config, DataCache, Dialogue, UiDialogue, common::{reload_dialogue, reload_dialogue_detail, string_to_id}};
+use slint::{
+    SharedString,
+    Weak,
+};
+use std::{
+    cell::RefCell,
+    rc::Rc,
+};
 
 pub fn add_dialogue(data: Rc<RefCell<AppData>>, config: Rc<RefCell<Config>>, ui_handle: Weak<AppWindow>) -> impl Fn() {
     move || {
@@ -78,21 +96,20 @@ pub fn add_lang_content(
 pub fn add_affect(
     data: Rc<RefCell<AppData>>,
     config: Rc<RefCell<Config>>,
-    cache: Rc<RefCell<DataCache>>,
     ui_handle: Weak<AppWindow>,
 ) -> impl Fn(SharedString, SharedString) {
     move |class_name, state_name| {
         let ui = ui_handle.unwrap();
         let mut data = data.borrow_mut();
         let config = config.borrow();
-        let mut cache = cache.borrow_mut();
+
+        let class_id = class_to_id(class_name.as_str(), &mut data);
+        let state_id = state_to_id(state_name.as_str(), &mut data);
+
         if let Some(class) = data.dialogues.get_mut(&config.selected_class)
             && let Some(state) = class.get_mut(&config.selected_state)
             && let Some(dialogue) = state.get_mut(config.selected_dialog)
         {
-            let class_id = string_to_id(class_name.as_str(), &mut cache);
-            let state_id = string_to_id(state_name.as_str(), &mut cache);
-
             dialogue.affects.insert(class_id, state_id);
             reload_dialogue_detail(&data, &ui, &config);
         }
@@ -108,12 +125,13 @@ pub fn update_content(
         let ui = ui_handle.unwrap();
         let mut data = data.borrow_mut();
         let config = config.borrow();
+        let ui_dialogue = Dialogue::from(ui_dialogue, &mut data);
 
         if let Some(class) = data.dialogues.get_mut(&config.selected_class)
             && let Some(state) = class.get_mut(&config.selected_state)
             && let Some(dialogue) = state.get_mut(config.selected_dialog)
         {
-            *dialogue = Dialogue::from(ui_dialogue);
+            *dialogue = ui_dialogue;
             reload_dialogue_detail(&data, &ui, &config);
         }
     }
@@ -144,20 +162,19 @@ pub fn delete_content(
 pub fn delete_affect(
     data: Rc<RefCell<AppData>>,
     config: Rc<RefCell<Config>>,
-    cache: Rc<RefCell<DataCache>>,
     ui_handle: Weak<AppWindow>,
 ) -> impl Fn(SharedString) {
     move |class_name| {
         let ui = ui_handle.unwrap();
         let mut data = data.borrow_mut();
         let config = config.borrow();
-        let mut cache = cache.borrow_mut();
+
+        let class_id = class_to_id(class_name.as_str(), &mut data);
 
         if let Some(class) = data.dialogues.get_mut(&config.selected_class)
             && let Some(state) = class.get_mut(&config.selected_state)
             && let Some(dialogue) = state.get_mut(config.selected_dialog)
         {
-            let class_id = string_to_id(class_name.as_str(), &mut cache);
             dialogue.affects.remove(&class_id);
         }
         reload_dialogue_detail(&data, &ui, &config);

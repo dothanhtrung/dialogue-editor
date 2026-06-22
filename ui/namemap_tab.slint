@@ -1,0 +1,105 @@
+import {
+    HorizontalBox,
+    VerticalBox,
+    LineEdit,
+    Button,
+    GridBox,
+    ScrollView,
+} from "std-widgets.slint";
+
+
+export struct StringId {
+    name: string,
+    id: string, // Do not use int, since it is just i32
+}
+
+export global NameMap {
+    in-out property <[StringId]> classes;
+    in-out property <[StringId]> states;
+    in-out property <[StringId]> events;
+
+    callback delete_class(int);
+    callback delete_state(int);
+    callback delete_event(int);
+    callback update_class_id(int, string); // index, id
+    callback update_state_id(int, string);
+    callback update_event_id(int, string);
+}
+
+
+export component StringIdContainer inherits Rectangle {
+    in-out property <[StringId]> values;
+
+    callback delete(int);
+    callback update(int, string); // index, id
+
+    ScrollView {
+        GridBox {
+            for value[i] in values: Row {
+                Text {
+                    text: value.name;
+                }
+
+                edit := LineEdit {
+                    text: value.id;
+                    input-type: number;
+                    accepted(text) => {
+                        update(i, self.text);
+                    }
+                }
+
+                Button {
+                    text: "";
+                    clicked => {
+                        update(i, edit.text);
+                    }
+                }
+
+                Button {
+                    text: "Del";
+                    clicked => {
+                        delete(i);
+                    }
+                }
+            }
+        }
+    }
+}
+
+
+export component NameMapContainer inherits Rectangle {
+    HorizontalBox {
+        StringIdContainer {
+            width: 30%;
+            values: NameMap.classes;
+            delete(index) => {
+                NameMap.delete_class(index);
+            }
+            update(index, id) => {
+                NameMap.update_class_id(index, id);
+            }
+        }
+
+        StringIdContainer {
+            width: 30%;
+            values: NameMap.states;
+            delete(index) => {
+                NameMap.delete_state(index);
+            }
+            update(index, id) => {
+                NameMap.update_state_id(index, id);
+            }
+        }
+
+        StringIdContainer {
+            width: 30%;
+            values: NameMap.events;
+            delete(index) => {
+                NameMap.delete_event(index);
+            }
+            update(index, id) => {
+                NameMap.update_event_id(index, id);
+            }
+        }
+    }
+}

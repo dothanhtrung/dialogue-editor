@@ -18,8 +18,9 @@ import {
 import { StatusBar } from "status_bar.slint";
 import { FileSection } from "file_section.slint";
 import { NotiBox, NotiContent } from "noti.slint";
+import { StringId, NameMap, NameMapContainer } from "namemap_tab.slint";
 
-export { NotiContent }
+export { NotiContent, NameMap }
 
 // TODO: Config UI
 
@@ -312,6 +313,8 @@ export component AppWindow inherits Window {
 
             Tab {
                 title: "E";
+
+                NameMapContainer { }
             }
 
             Tab {

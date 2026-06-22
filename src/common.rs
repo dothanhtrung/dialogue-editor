@@ -4,17 +4,17 @@ use crate::{
     AppWindow,
     Config,
     ContentLang,
-    DataCache,
+    NameMap,
     Noti,
     NotiContent,
     NotiLevel,
+    StringId,
     UiDialogue,
 };
 use regex_lite::Regex;
 use slint::{
     ComponentHandle,
     SharedString,
-    ToSharedString,
 };
 use tracing::{
     error,
@@ -32,10 +32,19 @@ pub fn reload_all(data: &AppData, ui: &AppWindow, config: &Config, search_class:
 
 /// Reload class section and clear state/dialogue section
 pub fn reload_class(data: &AppData, ui: &AppWindow, search_class: &str) {
-    let mut classes: Vec<SharedString> = Vec::new();
+    let mut classes: Vec<SharedString> = Vec::new(); // For content tab
+    let mut class_map: Vec<StringId> = Vec::new(); // For namemap tab
+
     let re = Regex::new(search_class);
     for id in data.dialogues.keys() {
-        let name = if let Some(name) = data.class_name_map.get(id) { name.clone() } else { id.to_string() };
+        let name = id_to_class(*id, data).unwrap_or(id.to_string());
+
+        // TODO: Search for name map
+        class_map.push(StringId {
+            id: id.to_string().into(),
+            name: name.clone().into(),
+        });
+
         if search_class.is_empty() {
             classes.push(name.into());
         } else if let Ok(re) = re.as_ref()
@@ -49,6 +58,8 @@ pub fn reload_class(data: &AppData, ui: &AppWindow, search_class: &str) {
     ui.set_states([].into());
     ui.set_dialogues([].into());
     ui.set_dialogue(UiDialogue::default());
+
+    ui.global::<NameMap>().set_classes(class_map.as_slice().into());
 }
 
 /// Reload state section and clear dialogue section
@@ -58,8 +69,7 @@ pub fn reload_state(data: &AppData, ui: &AppWindow, config: &Config, search_stat
     if let Some(class) = data.dialogues.get(&config.selected_class) {
         let mut states: Vec<SharedString> = Vec::new();
         for state_id in class.keys() {
-            let state_name =
-                if let Some(ret) = data.state_name_map.get(state_id) { ret.clone() } else { state_id.to_string() };
+            let state_name = id_to_state(*state_id, data).unwrap_or(state_id.to_string());
             if search_state.is_empty() {
                 states.push(state_name.into());
             } else if let Ok(re) = re.as_ref()
@@ -107,19 +117,16 @@ pub fn reload_dialogue_detail(data: &AppData, ui: &AppWindow, config: &Config) {
             });
         }
         for (class, state) in dialog.affects.iter() {
-            let class_name =
-                if let Some(name) = data.class_name_map.get(class) { name.into() } else { class.to_shared_string() };
-            let state_name =
-                if let Some(name) = data.state_name_map.get(state) { name.into() } else { class.to_shared_string() };
+            let class_name = id_to_class(*class, data).unwrap_or(class.to_string());
+            let state_name = id_to_state(*state, data).unwrap_or(state.to_string());
             affects.push(Affect {
-                class: class_name,
-                state: state_name,
+                class: class_name.into(),
+                state: state_name.into(),
             });
         }
         for event in dialog.events.iter() {
-            let event =
-                if let Some(name) = data.event_name_map.get(event) { name.into() } else { event.to_shared_string() };
-            events.push(event);
+            let event = id_to_event(*event, data).unwrap_or(event.to_string());
+            events.push(event.into());
         }
 
         let ui_dialogue = UiDialogue {
@@ -136,7 +143,7 @@ pub fn reload_dialogue_detail(data: &AppData, ui: &AppWindow, config: &Config) {
         ui.set_lang_list(lang_list.as_slice().into());
 
         let mut state_list: Vec<SharedString> = Vec::new();
-        for (_, state) in data.state_name_map.iter() {
+        for (state, _) in data.state_name_map.iter() {
             state_list.push(state.into());
         }
         ui.set_state_list(state_list.as_slice().into());
@@ -157,14 +164,65 @@ pub fn show_noti(ui: &AppWindow, level: NotiLevel, message: &str) {
     ui.invoke_show_notification();
 }
 
-// TODO: Allow to manually set id of string without hashing
-pub fn string_to_id(name: &str, cache: &mut DataCache) -> u64 {
-    let lower = name.to_lowercase();
-    if let Some(id) = cache.name_map.get(lower.as_str()) {
+pub fn class_to_id(name: &str, data: &mut AppData) -> u64 {
+    name_to_id(name, data, NameType::Class)
+}
+
+pub fn state_to_id(name: &str, data: &mut AppData) -> u64 {
+    name_to_id(name, data, NameType::State)
+}
+
+pub fn event_to_id(name: &str, data: &mut AppData) -> u64 {
+    name_to_id(name, data, NameType::Event)
+}
+
+pub fn id_to_class(id: u64, data: &AppData) -> Option<String> {
+    id_to_name(id, data, NameType::Class)
+}
+
+pub fn id_to_state(id: u64, data: &AppData) -> Option<String> {
+    id_to_name(id, data, NameType::State)
+}
+
+pub fn id_to_event(id: u64, data: &AppData) -> Option<String> {
+    id_to_name(id, data, NameType::Event)
+}
+
+enum NameType {
+    Class,
+    State,
+    Event,
+}
+
+fn name_to_id(name: &str, data: &mut AppData, name_type: NameType) -> u64 {
+    let data = match name_type {
+        NameType::Class => &mut data.class_name_map,
+        NameType::State => &mut data.state_name_map,
+        NameType::Event => &mut data.event_name_map,
+    };
+
+    if let Some(id) = data.get(name) {
         *id
     } else {
+        let lower = name.to_lowercase();
         let id = xxh3_64(lower.as_bytes());
-        cache.name_map.insert(lower, id);
+        data.insert(name.to_string(), id);
         id
     }
+}
+
+fn id_to_name(id: u64, data: &AppData, name_type: NameType) -> Option<String> {
+    let data = match name_type {
+        NameType::Class => &data.class_name_map,
+        NameType::State => &data.state_name_map,
+        NameType::Event => &data.event_name_map,
+    };
+
+    for (name, i) in data.iter() {
+        if id == *i {
+            return Some(name.clone());
+        }
+    }
+
+    None
 }

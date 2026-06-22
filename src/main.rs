@@ -2,9 +2,9 @@
 #![cfg_attr(not(debug_assertions), windows_subsystem = "windows")]
 
 mod class_ui;
+mod common;
 mod dialogue_ui;
 mod file_handle;
-mod common;
 mod state_ui;
 
 use crate::{
@@ -14,6 +14,7 @@ use crate::{
         rename_class,
         select_class,
     },
+    common::*,
     dialogue_ui::{
         add_affect,
         add_dialogue,
@@ -24,7 +25,6 @@ use crate::{
         select_dialogue,
         update_content,
     },
-    common::*,
     state_ui::{
         add_state,
         remove_state,
@@ -73,11 +73,11 @@ struct AppData {
     #[serde(default)]
     dialogues: HashMap<u64, BTreeMap<u64, Vec<Dialogue>>>,
     #[serde(default)]
-    class_name_map: HashMap<u64, String>,
+    class_name_map: HashMap<String, u64>,
     #[serde(default)]
-    state_name_map: HashMap<u64, String>,
+    state_name_map: HashMap<String, u64>,
     #[serde(default)]
-    event_name_map: HashMap<u64, String>,
+    event_name_map: HashMap<String, u64>,
 }
 
 // TODO: Config UI
@@ -106,16 +106,11 @@ impl Config {
     }
 }
 
-#[derive(Default)]
-struct DataCache {
-    name_map: HashMap<String, u64>,
-}
-
 #[repr(i32)]
 enum NotiLevel {
     Error = 0,
     Warn,
-    Info
+    Info,
 }
 
 // TODO: Warning to save before exit
@@ -128,7 +123,6 @@ fn main() -> Result<(), Box<dyn Error>> {
     tracing::subscriber::set_global_default(subscriber)?;
 
     let ui = AppWindow::new()?;
-    let cache = DataCache::default();
     let config: Config = ron_file::load_from(Path::new("./dialog-editor.ron")).unwrap_or_default();
 
     let data = AppData::default();
@@ -140,7 +134,6 @@ fn main() -> Result<(), Box<dyn Error>> {
     #[cfg(feature = "crypt")]
     ui.set_enable_crypt(true);
 
-    let cache = Rc::new(RefCell::new(cache));
     let config = Rc::new(RefCell::new(config));
     let data = Rc::new(RefCell::new(data));
 
@@ -148,24 +141,24 @@ fn main() -> Result<(), Box<dyn Error>> {
     ui.on_request_load(request_load(data.clone(), config.clone(), ui.as_weak()));
     ui.on_request_save(request_save(data.clone(), config.clone(), ui.as_weak()));
 
-    ui.on_add_class(add_class(data.clone(), config.clone(), cache.clone(), ui.as_weak()));
-    ui.on_rename_class(rename_class(data.clone(), config.clone(), cache.clone(), ui.as_weak()));
-    ui.on_remove_class(remove_class(data.clone(), cache.clone(), ui.as_weak()));
-    ui.on_select_class(select_class(data.clone(), config.clone(), cache.clone(), ui.as_weak()));
+    ui.on_add_class(add_class(data.clone(), config.clone(), ui.as_weak()));
+    ui.on_rename_class(rename_class(data.clone(), config.clone(), ui.as_weak()));
+    ui.on_remove_class(remove_class(data.clone(), ui.as_weak()));
+    ui.on_select_class(select_class(data.clone(), config.clone(), ui.as_weak()));
 
-    ui.on_add_state(add_state(data.clone(), config.clone(), cache.clone(), ui.as_weak()));
-    ui.on_select_state(select_state(data.clone(), config.clone(), cache.clone(), ui.as_weak()));
-    ui.on_remove_state(remove_state(data.clone(), config.clone(), cache.clone(), ui.as_weak()));
-    ui.on_rename_state(rename_state(data.clone(), config.clone(), cache.clone(), ui.as_weak()));
+    ui.on_add_state(add_state(data.clone(), config.clone(), ui.as_weak()));
+    ui.on_select_state(select_state(data.clone(), config.clone(), ui.as_weak()));
+    ui.on_remove_state(remove_state(data.clone(), config.clone(), ui.as_weak()));
+    ui.on_rename_state(rename_state(data.clone(), config.clone(), ui.as_weak()));
 
     ui.on_add_dialog(add_dialogue(data.clone(), config.clone(), ui.as_weak()));
     ui.on_select_dialog(select_dialogue(data.clone(), config.clone(), ui.as_weak()));
     ui.on_remove_dialog(remove_dialogue(data.clone(), config.clone(), ui.as_weak()));
     ui.on_add_lang_content(add_lang_content(data.clone(), config.clone(), ui.as_weak()));
-    ui.on_add_affect(add_affect(data.clone(), config.clone(), cache.clone(), ui.as_weak()));
+    ui.on_add_affect(add_affect(data.clone(), config.clone(), ui.as_weak()));
     ui.on_update_content(update_content(data.clone(), config.clone(), ui.as_weak()));
     ui.on_delete_content(delete_content(data.clone(), config.clone(), ui.as_weak()));
-    ui.on_delete_affect(delete_affect(data.clone(), config.clone(), cache.clone(), ui.as_weak()));
+    ui.on_delete_affect(delete_affect(data.clone(), config.clone(), ui.as_weak()));
 
     ui.on_search({
         let ui_handle = ui.as_weak();
@@ -191,12 +184,12 @@ fn main() -> Result<(), Box<dyn Error>> {
     Ok(())
 }
 
-impl From<UiDialogue> for Dialogue {
-    fn from(ui_dialog: UiDialogue) -> Self {
+impl Dialogue {
+    pub fn from(ui_dialog: UiDialogue, data: &mut AppData) -> Self {
         let mut ret = Self::default();
         for affect in ui_dialog.affects.iter() {
-            let class_id = xxh3_64(affect.class.to_lowercase().as_bytes());
-            let state_id = xxh3_64(affect.state.to_lowercase().as_bytes());
+            let class_id = class_to_id(affect.class.as_str(), data);
+            let state_id = state_to_id(affect.state.as_str(), data);
             ret.affects.insert(class_id, state_id);
         }
         for content in ui_dialog.contents.iter() {

@@ -7,8 +7,7 @@ use crate::{
     Config,
     NotiLevel,
     common::{
-        reload_all,
-        show_noti,
+        id_to_class, id_to_state, reload_all, show_noti
     },
 };
 use rfd::FileDialog;
@@ -116,13 +115,13 @@ pub fn request_load(
                     }
                 },
             };
-            if (config.selected_class == 0 || !data.class_name_map.contains_key(&config.selected_class))
+            if (config.selected_class == 0 || id_to_class(config.selected_class, &data).is_none())
                 && let Some(first_class) = data.dialogues.keys().next()
             {
                 config.selected_class = *first_class;
             }
 
-            if (config.selected_state == 0 || !data.state_name_map.contains_key(&config.selected_state))
+            if (config.selected_state == 0 || id_to_state(config.selected_state, &data).is_none())
                 && let Some(selected_class) = data.dialogues.get(&config.selected_class)
                 && let Some((first_state, _)) = selected_class.first_key_value()
             {
@@ -163,6 +162,7 @@ pub fn request_save(
                     show_noti(&ui, NotiLevel::Error, format!("Failed to save: {:?}", e).as_str());
                 } else {
                     ui.set_is_saved(true);
+                    show_noti(&ui, NotiLevel::Info, format!("Success save {}", &config.file_path.display()).as_str());
                 }
             }
         }
