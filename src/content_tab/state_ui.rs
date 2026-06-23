@@ -2,7 +2,7 @@ use crate::{
     AppData,
     AppWindow,
     Config,
-    common::{
+    content_tab::{
         reload_all,
         reload_dialogue,
         reload_state,

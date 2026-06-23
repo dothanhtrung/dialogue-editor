@@ -6,7 +6,7 @@ use crate::{
     AppWindow,
     Config,
     NotiLevel,
-    common::{
+    content_tab::{
         id_to_class, id_to_state, reload_all, show_noti
     },
 };

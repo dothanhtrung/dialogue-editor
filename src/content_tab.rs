@@ -1,14 +1,16 @@
+pub mod class_ui;
+pub mod dialogue_ui;
+pub mod state_ui;
+
 use crate::{
     Affect,
     AppData,
     AppWindow,
     Config,
     ContentLang,
-    NameMap,
     Noti,
     NotiContent,
     NotiLevel,
-    StringId,
     UiDialogue,
 };
 use regex_lite::Regex;
@@ -59,16 +61,6 @@ pub fn reload_class(data: &mut AppData, ui: &AppWindow, search_class: &str) {
     ui.set_states([].into());
     ui.set_dialogues([].into());
     ui.set_dialogue(UiDialogue::default());
-
-    // TODO: Search for name map
-    let mut class_map: Vec<StringId> = Vec::new(); // For namemap tab
-    for (name, id) in data.class_name_map.iter() {
-        class_map.push(StringId {
-            id: id.to_string().into(),
-            name: name.into(),
-        });
-    }
-    ui.global::<NameMap>().set_classes(class_map.as_slice().into());
 }
 
 /// Reload state section and clear dialogue section
@@ -99,15 +91,6 @@ pub fn reload_state(data: &mut AppData, ui: &AppWindow, config: &Config, search_
     }
     ui.set_dialogues([].into());
     ui.set_dialogue(UiDialogue::default());
-
-    let mut state_map: Vec<StringId> = Vec::new();
-    for (name, id) in data.state_name_map.iter() {
-        state_map.push(StringId {
-            id: id.to_string().into(),
-            name: name.into(),
-        });
-    }
-    ui.global::<NameMap>().set_states(state_map.as_slice().into());
 }
 
 pub fn reload_dialogue(data: &AppData, ui: &AppWindow, config: &Config) {

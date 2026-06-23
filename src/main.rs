@@ -1,37 +1,14 @@
 // Prevent console window in addition to Slint window in Windows release builds when, e.g., starting the app via file manager. Ignored on other platforms.
 #![cfg_attr(not(debug_assertions), windows_subsystem = "windows")]
 
-mod class_ui;
-mod common;
-mod dialogue_ui;
+mod content_tab;
 mod file_handle;
-mod state_ui;
+mod namemap_tab;
 
-use crate::{
-    class_ui::{
-        add_class,
-        remove_class,
-        rename_class,
-        select_class,
-    },
-    common::*,
-    dialogue_ui::{
-        add_affect,
-        add_dialogue,
-        add_lang_content,
-        delete_affect,
-        delete_content,
-        remove_dialogue,
-        select_dialogue,
-        update_content,
-    },
-    state_ui::{
-        add_state,
-        remove_state,
-        rename_state,
-        select_state,
-    },
-};
+use content_tab::class_ui::*;
+use content_tab::dialogue_ui::*;
+use content_tab::state_ui::*;
+use content_tab::*;
 use file_handle::*;
 use isolang::Language;
 use serde::{
@@ -53,7 +30,6 @@ use std::{
     rc::Rc,
 };
 use tracing_subscriber::EnvFilter;
-use xxhash_rust::xxh3::xxh3_64;
 
 slint::include_modules!();
 

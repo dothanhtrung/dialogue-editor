@@ -3,7 +3,7 @@ use crate::{
     AppWindow,
     Config,
     NotiLevel,
-    common::{
+    content_tab::{
         class_to_id,
         reload_all,
         reload_class,

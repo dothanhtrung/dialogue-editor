@@ -4,7 +4,7 @@ use crate::{
     Config,
     Dialogue,
     UiDialogue,
-    common::{
+    content_tab::{
         class_to_id,
         reload_dialogue,
         reload_dialogue_detail,
