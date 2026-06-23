@@ -32,16 +32,15 @@ pub fn add_state(
 
         config.selected_state = state_id;
         if let Some(class) = data.dialogues.get_mut(&config.selected_class) {
-            if class.contains_key(&state_id) {
+            class.entry(state_id).or_insert_with(|| {
                 show_noti(
                     &ui,
                     crate::NotiLevel::Warn,
                     format!("State {} already exists", &state_name).as_str(),
                 );
-            } else {
-                class.insert(state_id, Vec::new());
-            }
-            reload_state(&data, &ui, &config, "");
+                Vec::new()
+            });
+            reload_state(&mut data, &ui, &config, "");
         }
     }
 }
@@ -73,7 +72,7 @@ pub fn remove_state(
         let state_id = state_to_id(state_name.as_str(), &mut data);
         if let Some(class) = data.dialogues.get_mut(&config.selected_class) {
             class.remove(&state_id);
-            reload_state(&data, &ui, &config, "");
+            reload_state(&mut data, &ui, &config, "");
         }
     }
 }
@@ -95,7 +94,7 @@ pub fn rename_state(
             if let Some(dialog) = data.dialogues.remove(&old_id) {
                 data.dialogues.insert(new_id, dialog);
                 config.selected_state = new_id;
-                reload_all(&data, &ui, &config, "", "");
+                reload_all(&mut data, &ui, &config, "", "");
             }
         } else {
             show_noti(

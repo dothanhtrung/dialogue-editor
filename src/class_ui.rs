@@ -43,7 +43,7 @@ pub fn add_class(
         }
         config.selected_class = class_id;
         config.selected_state = 0;
-        reload_class(&data, &ui, "");
+        reload_class(&mut data, &ui, "");
     }
 }
 
@@ -63,7 +63,7 @@ pub fn rename_class(
             if let Some(value) = data.dialogues.remove(&old_class_id) {
                 data.dialogues.insert(new_class_id, value);
                 config.selected_class = new_class_id;
-                reload_all(&data, &ui, &config, "", "");
+                reload_all(&mut data, &ui, &config, "", "");
             }
         } else {
             show_noti(&ui, NotiLevel::Error, format!("Duplicated class {}", new_name).as_str());
@@ -80,7 +80,7 @@ pub fn remove_class(data: Rc<RefCell<AppData>>, ui_handle: Weak<AppWindow>) -> i
         // data.class_name_map.remove(&class_name.to_string());
         // TODO: Add clean function to remove orphan classs/states/events
         data.dialogues.remove(&class_id);
-        reload_class(&data, &ui, "");
+        reload_class(&mut data, &ui, "");
     }
 }
 
@@ -95,6 +95,6 @@ pub fn select_class(
         let mut config = config.borrow_mut();
         let class_id = class_to_id(class_name.as_str(), &mut data);
         config.selected_class = class_id;
-        reload_state(&data, &ui, &config, "");
+        reload_state(&mut data, &ui, &config, "");
     }
 }

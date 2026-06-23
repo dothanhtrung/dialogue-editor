@@ -23,7 +23,7 @@ use tracing::{
 };
 use xxhash_rust::xxh3::xxh3_64;
 
-pub fn reload_all(data: &AppData, ui: &AppWindow, config: &Config, search_class: &str, search_state: &str) {
+pub fn reload_all(data: &mut AppData, ui: &AppWindow, config: &Config, search_class: &str, search_state: &str) {
     reload_class(data, ui, search_class);
     reload_state(data, ui, config, search_state);
     reload_dialogue(data, ui, config);
@@ -31,19 +31,20 @@ pub fn reload_all(data: &AppData, ui: &AppWindow, config: &Config, search_class:
 }
 
 /// Reload class section and clear state/dialogue section
-pub fn reload_class(data: &AppData, ui: &AppWindow, search_class: &str) {
+pub fn reload_class(data: &mut AppData, ui: &AppWindow, search_class: &str) {
     let mut classes: Vec<SharedString> = Vec::new(); // For content tab
-    let mut class_map: Vec<StringId> = Vec::new(); // For namemap tab
 
     let re = Regex::new(search_class);
     for id in data.dialogues.keys() {
-        let name = id_to_class(*id, data).unwrap_or(id.to_string());
-
-        // TODO: Search for name map
-        class_map.push(StringId {
-            id: id.to_string().into(),
-            name: name.clone().into(),
-        });
+        let name = id_to_class(*id, data);
+        let name = match name {
+            Some(ret) => ret,
+            None => {
+                let id_string = id.to_string();
+                data.class_name_map.insert(id_string.clone(), *id);
+                id_string
+            }
+        };
 
         if search_class.is_empty() {
             classes.push(name.into());
@@ -59,17 +60,33 @@ pub fn reload_class(data: &AppData, ui: &AppWindow, search_class: &str) {
     ui.set_dialogues([].into());
     ui.set_dialogue(UiDialogue::default());
 
+    // TODO: Search for name map
+    let mut class_map: Vec<StringId> = Vec::new(); // For namemap tab
+    for (name, id) in data.class_name_map.iter() {
+        class_map.push(StringId {
+            id: id.to_string().into(),
+            name: name.into(),
+        });
+    }
     ui.global::<NameMap>().set_classes(class_map.as_slice().into());
 }
 
 /// Reload state section and clear dialogue section
-pub fn reload_state(data: &AppData, ui: &AppWindow, config: &Config, search_state: &str) {
+pub fn reload_state(data: &mut AppData, ui: &AppWindow, config: &Config, search_state: &str) {
     let re = Regex::new(search_state);
 
     if let Some(class) = data.dialogues.get(&config.selected_class) {
         let mut states: Vec<SharedString> = Vec::new();
         for state_id in class.keys() {
-            let state_name = id_to_state(*state_id, data).unwrap_or(state_id.to_string());
+            let state_name = match id_to_state(*state_id, data) {
+                Some(ret) => ret,
+                None => {
+                    let id_string = state_id.to_string();
+                    data.state_name_map.insert(id_string.clone(), *state_id);
+                    id_string
+                }
+            };
+
             if search_state.is_empty() {
                 states.push(state_name.into());
             } else if let Ok(re) = re.as_ref()
@@ -82,6 +99,15 @@ pub fn reload_state(data: &AppData, ui: &AppWindow, config: &Config, search_stat
     }
     ui.set_dialogues([].into());
     ui.set_dialogue(UiDialogue::default());
+
+    let mut state_map: Vec<StringId> = Vec::new();
+    for (name, id) in data.state_name_map.iter() {
+        state_map.push(StringId {
+            id: id.to_string().into(),
+            name: name.into(),
+        });
+    }
+    ui.global::<NameMap>().set_states(state_map.as_slice().into());
 }
 
 pub fn reload_dialogue(data: &AppData, ui: &AppWindow, config: &Config) {

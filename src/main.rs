@@ -166,9 +166,9 @@ fn main() -> Result<(), Box<dyn Error>> {
         let config = config.clone();
         move |search_class, search_state| {
             let ui = ui_handle.unwrap();
-            let data = data.borrow();
+            let mut data = data.borrow_mut();
             let mut config = config.borrow_mut();
-            reload_all(&data, &ui, &config, search_class.as_str(), search_state.as_str());
+            reload_all(&mut data, &ui, &config, search_class.as_str(), search_state.as_str());
 
             if !search_class.is_empty() {
                 config.selected_class = 0;

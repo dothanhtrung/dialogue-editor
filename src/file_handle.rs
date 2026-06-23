@@ -128,7 +128,7 @@ pub fn request_load(
                 config.selected_class = *first_state;
             }
 
-            reload_all(&data, &ui, &config, "", "");
+            reload_all(&mut data, &ui, &config, "", "");
             ui.set_is_saved(true);
         }
     }
