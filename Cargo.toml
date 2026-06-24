@@ -4,7 +4,7 @@ version = "0.1.0"
 edition = "2024"
 
 [dependencies]
-slint = {version = "1.16", default-features = false, features = ["backend-default", "renderer-femtovg", "renderer-software", "compat-1-2", "std"]}
+slint = {version = "1.17", default-features = false, features = ["backend-default", "renderer-femtovg", "renderer-software", "compat-1-2", "std"]}
 serde = { version="1.0", default-features = false }
 postcard = { version = "1.1", features = ["alloc"], default-features = false }
 simple_crypt = { version = "0.2", default-features = false, optional = true }
@@ -18,7 +18,7 @@ regex-lite = {version = "0.1", default-features = false, features = ["std", "str
 rfd = {version = "0.17.2", default-features = false, features = ["wayland", "xdg-portal"]}
 
 [build-dependencies]
-slint-build = "1.16"
+slint-build = "1.17"
 
 [features]
 default = []
