@@ -5,7 +5,9 @@ import {
     Button,
     GridBox,
     ScrollView,
+    Palette,
 } from "std-widgets.slint";
+import { TabReload } from "app_widgets.slint";
 
 
 export struct StringId {
@@ -13,11 +15,12 @@ export struct StringId {
     id: string, // Do not use int, since it is just i32 while we need id is u64
 }
 
-export global NameMap {
+export global GNameMap {
     in-out property <[StringId]> classes;
     in-out property <[StringId]> states;
     in-out property <[StringId]> events;
 
+    pure callback reload();
     callback delete_class(int);
     callback delete_state(int);
     callback delete_event(int);
@@ -67,38 +70,43 @@ export component StringIdContainer inherits Rectangle {
 }
 
 
-export component NameMapContainer inherits Rectangle {
+export component NameMapContainer inherits TabReload {
+    reload() => {
+        GNameMap.reload();
+        Palette.background;
+    }
+
     HorizontalBox {
         StringIdContainer {
             width: 30%;
-            values: NameMap.classes;
+            values: GNameMap.classes;
             delete(index) => {
-                NameMap.delete_class(index);
+                GNameMap.delete_class(index);
             }
             update(index, id) => {
-                NameMap.update_class_id(index, id);
+                GNameMap.update_class_id(index, id);
             }
         }
 
         StringIdContainer {
             width: 30%;
-            values: NameMap.states;
+            values: GNameMap.states;
             delete(index) => {
-                NameMap.delete_state(index);
+                GNameMap.delete_state(index);
             }
             update(index, id) => {
-                NameMap.update_state_id(index, id);
+                GNameMap.update_state_id(index, id);
             }
         }
 
         StringIdContainer {
             width: 30%;
-            values: NameMap.events;
+            values: GNameMap.events;
             delete(index) => {
-                NameMap.delete_event(index);
+                GNameMap.delete_event(index);
             }
             update(index, id) => {
-                NameMap.update_event_id(index, id);
+                GNameMap.update_event_id(index, id);
             }
         }
     }

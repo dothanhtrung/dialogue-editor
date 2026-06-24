@@ -2,11 +2,14 @@ use crate::{
     AppData,
     AppWindow,
     Config,
+    common::{
+        NotiLevel,
+        show_noti,
+    },
     content_tab::{
         reload_all,
         reload_dialogue,
         reload_state,
-        show_noti,
         state_to_id,
     },
 };
@@ -35,7 +38,7 @@ pub fn add_state(
             class.entry(state_id).or_insert_with(|| {
                 show_noti(
                     &ui,
-                    crate::NotiLevel::Warn,
+                    NotiLevel::Warn,
                     format!("State {} already exists", &state_name).as_str(),
                 );
                 Vec::new()
@@ -99,7 +102,7 @@ pub fn rename_state(
         } else {
             show_noti(
                 &ui,
-                crate::NotiLevel::Error,
+                NotiLevel::Error,
                 format!("Duplicated state {}", new_name).as_str(),
             );
         }

@@ -1,0 +1,468 @@
+import {
+    TabReload,
+    EditableTextBox,
+    SelectableBox,
+} from "app_widgets.slint";
+import {
+    HorizontalBox,
+    VerticalBox,
+    Palette,
+    LineEdit,
+    ListView,
+    Button, ComboBox, TextEdit,
+} from "std-widgets.slint";
+
+
+export struct ContentLang {
+    language: string,
+    content: string,
+}
+
+export struct Affect {
+    class: string,
+    state: string,
+}
+
+export struct UiDialogue {
+    contents: [ContentLang],
+    affects: [Affect],
+    events: [string],
+}
+
+export global GContent {
+    in-out property <[string]> classes;
+    in-out property <[string]> states;
+    in-out property <[string]> dialogues;
+    in-out property <UiDialogue> dialogue;
+    in-out property <[string]> lang_list;
+    in-out property <[string]> state_list;
+    in-out property <[string]> event_list;
+
+    callback select-class(string);
+    callback remove-class(string);
+    callback add-class(string);
+    callback rename-class(string, string); // old name, new name
+
+    callback select-state(string);
+    callback remove-state(string);
+    callback add-state(string);
+    callback rename-state(string, string); // old name, new name
+
+    callback select-dialog(int);
+    callback add-dialog();
+    callback remove-dialog(int);
+
+    callback add_lang_content(string, string); // lang, content
+    callback add_affect(string, string); // affect_class, affect_state
+    callback add_event(string);
+    callback update_content(UiDialogue); // dialog
+    callback delete_content(string);
+    callback delete_affect(string);
+    callback delete_event(string);
+
+    callback search(string, string);
+}
+
+export component DialogueBox inherits Rectangle {
+    in-out property <UiDialogue> dialogue;
+    in property <[string]> lang_list;
+    in property <[string]> class_list;
+    in property <[string]> state_list;
+    in property <[string]> event_list;
+    property <int> content_selecting;
+
+    callback add_lang_content(string, string);
+    callback add_affect(string, string);
+    callback add_event(string);
+    callback update_content();
+    callback delete_content(string);
+    callback delete_affect(string);
+    callback delete_event(string);
+
+    VerticalBox {
+        VerticalBox {
+            height: 70%;
+
+            Rectangle {
+                background: Palette.control-background;
+
+                ListView {
+                    for dialog[i] in dialogue.contents: HorizontalBox {
+                        height: 25%;
+                        lang_view := ComboBox {
+                            width: 20%;
+                            model: lang_list;
+                            current-value: dialog.language;
+                            enabled: {
+                                root.content_selecting == i
+                            };
+                            selected(current-value) => {
+                                root.dialogue.contents[i].language = current-value;
+                                submit_btn.visible = true;
+                            }
+                        }
+
+                        content_view := TextEdit {
+                            text: dialog.content;
+                            enabled: {
+                                root.content_selecting == i
+                            };
+                            edited(value) => {
+                                root.dialogue.contents[i].content = value;
+                                submit_btn.visible = true;
+                            }
+                        }
+
+                        Button {
+                            text: "🗑️";
+                            clicked => {
+                                delete_content(dialog.language);
+                            }
+                        }
+                    }
+                }
+            }
+
+            HorizontalBox {
+                height: 20%;
+                new_lang := ComboBox {
+                    width: 20%;
+                    model: lang_list;
+                    current-index: 0;
+                }
+
+                new_content := TextEdit {
+                    text: "new dialog";
+                }
+
+                Button {
+                    text: "Add";
+                    clicked => {
+                        update_content();
+                        add_lang_content(new_lang.current-value, new_content.text);
+                        new_content.text = "";
+                    };
+                }
+            }
+        }
+
+        VerticalBox {
+            Rectangle {
+                background: Palette.control-background;
+                ListView {
+                    // TODO: Add "Go to" the affected state
+                    for affect[i] in dialogue.affects: HorizontalBox {
+                        ComboBox {
+                            model: class_list;
+                            current-value: affect.class;
+                            selected(current-value) => {
+                                dialogue.affects[i].class = current-value;
+                                submit_btn.visible = true;
+                            }
+                        }
+
+                        ComboBox {
+                            // TODO: Filter state by class
+                            model: state_list;
+                            current-value: affect.state;
+                            selected(current-value) => {
+                                dialogue.affects[i].state = current-value;
+                                submit_btn.visible = true;
+                            }
+                        }
+
+                        Button {
+                            text: "🗑️";
+                            clicked => {
+                                delete_affect(affect.class);
+                            }
+                        }
+                    }
+                }
+            }
+
+            HorizontalBox {
+                new_affect_class := ComboBox {
+                    model: class_list;
+                    current-index: 0;
+                }
+
+                new_affect_state := ComboBox {
+                    model: state_list;
+                    current-index: 0;
+                }
+
+                Button {
+                    text: "Add";
+                    clicked => {
+                        update_content();
+                        add_affect(new_affect_class.current-value, new_affect_state.current-value);
+                    };
+                }
+            }
+        }
+
+        VerticalBox {
+            Rectangle {
+                background: Palette.control-background;
+                ListView {
+                    for event[i] in dialogue.events: HorizontalBox {
+                        Text {
+                            text: event;
+                        }
+
+                        Button {
+                            text: "🗑️";
+                            clicked => {
+                                delete_event(event);
+                            }
+                        }
+                    }
+                }
+            }
+
+            HorizontalBox {
+                new_event := ComboBox {
+                    model: event_list;
+                }
+
+                Button {
+                    text: "Add";
+                    clicked => {
+                        update_content();
+                        add_event(new_event.current-value);
+                    };
+                }
+            }
+        }
+
+        submit_btn := Button {
+            text: "✅";
+            visible: false;
+            clicked => {
+                root.update_content();
+                self.visible = false;
+            };
+        }
+    }
+}
+
+export component ContentContainer inherits TabReload {
+    in-out property <bool> is_saved;
+    property <int> selecting_class: -1;
+    property <int> selecting_state: -1;
+    property <int> selecting_dialog: -1;
+
+    HorizontalBox {
+        Rectangle {
+            width: 20%;
+
+            VerticalBox {
+                LineEdit {
+                    placeholder-text: "Search...";
+                    accepted(text) => {
+                        GContent.search(text, "");
+                    }
+                }
+
+                ListView {
+                    for class_name[i] in GContent.classes: EditableTextBox {
+                        value: class_name;
+                        selected: {
+                            root.selecting_class == i
+                        };
+                        background: {
+                            if (root.selecting_class == i) {
+                                Palette.selection-background
+                            } else {
+                                Palette.background
+                            }
+                        };
+                        select => {
+                            GContent.select-class(class_name);
+                            root.selecting_class = i;
+                            root.selecting_state = -1;
+                            root.selecting_dialog = -1;
+                        };
+                        submit(new_name) => {
+                            GContent.rename-class(class_name, new_name);
+                            root.is_saved = false;
+                        };
+                        delete => {
+                            GContent.remove-class(class_name);
+                            root.is_saved = false;
+                        };
+                    }
+                }
+
+                HorizontalBox {
+                    new_class := LineEdit {
+                        placeholder-text: "New class";
+                    }
+
+                    Button {
+                        text: "Add";
+                        clicked => {
+                            GContent.add-class(new_class.text);
+                            new_class.text = "";
+                            root.is_saved = false;
+                        };
+                    }
+                }
+            }
+        }
+
+        Rectangle {
+            width: 20%;
+
+            VerticalBox {
+
+                LineEdit {
+                    placeholder-text: "Search...";
+                    accepted(text) => {
+                        // TODO: Separate class search and state search
+                        GContent.search("", text);
+                    }
+                }
+
+                ListView {
+                    for state_name[i] in GContent.states: EditableTextBox {
+                        value: state_name;
+                        selected: {
+                            root.selecting_state == i
+                        };
+                        background: {
+                            if (root.selecting_state == i) {
+                                Palette.selection-background
+                            } else {
+                                Palette.background
+                            }
+                        };
+                        select => {
+                            GContent.select-state(state_name);
+                            root.selecting_state = i;
+                            root.selecting_dialog = -1;
+                        };
+                        submit(new_name) => {
+                            GContent.rename-state(state_name, new_name);
+                            root.is_saved = false;
+                        };
+                        delete => {
+                            GContent.remove-state(state_name);
+                            root.is_saved = false;
+                        };
+                    }
+                }
+
+                HorizontalBox {
+                    visible: {
+                        root.selecting_class >= 0
+                    };
+                    new_state := LineEdit {
+                        placeholder-text: "New state";
+                    }
+
+                    Button {
+                        text: "Add";
+                        clicked => {
+                            GContent.add-state(new_state.text);
+                            root.is_saved = false;
+                            new_state.text = "";
+                        }
+                    }
+                }
+            }
+        }
+
+        Rectangle {
+            width: 20%;
+
+            VerticalBox {
+
+                LineEdit {
+                    placeholder-text: "Search...";
+                    visible: false;
+                }
+
+                ListView {
+                    for dialog[i] in GContent.dialogues: SelectableBox {
+                        value: dialog;
+                        selected: {
+                            root.selecting_dialog == i
+                        };
+                        background: {
+                            if (root.selecting_dialog == i) {
+                                Palette.selection-background
+                            } else {
+                                Palette.background
+                            }
+                        };
+                        select => {
+                            GContent.select-dialog(i);
+                            root.selecting_dialog = i;
+                        };
+                        delete_dialog => {
+                            GContent.remove-dialog(i);
+                            root.is_saved = false;
+                        };
+                    }
+                }
+
+                Button {
+                    visible: {
+                        root.selecting_state >= 0
+                    };
+                    text: "Add";
+                    clicked => {
+                        GContent.add-dialog();
+                        root.is_saved = false;
+                    }
+                }
+            }
+        }
+
+        Rectangle {
+            VerticalBox {
+                DialogueBox {
+                    visible: {
+                        root.selecting_dialog >= 0
+                    };
+                    dialogue: GContent.dialogue;
+                    lang_list: GContent.lang_list;
+                    class_list: GContent.classes;
+                    state_list: GContent.state_list;
+                    event_list: GContent.event_list;
+
+                    update_content => {
+                        GContent.update_content(self.dialogue);
+                        root.is_saved = false;
+                    };
+                    add_lang_content(lang, content) => {
+                        GContent.add_lang_content(lang, content);
+                        root.is_saved = false;
+                    };
+                    add_affect(class, state) => {
+                        GContent.add_affect(class, state);
+                        root.is_saved = false;
+                    };
+                    add_event(event) => {
+                        GContent.add_event(event);
+                        root.is_saved = false;
+                    };
+                    delete_content(lang) => {
+                        GContent.delete_content(lang);
+                        root.is_saved = false;
+                    }
+                    delete_affect(class) => {
+                        GContent.delete_affect(class);
+                        root.is_saved = false;
+                    }
+                    delete_event(event) => {
+                        GContent.delete_event(event);
+                        root.is_saved = false
+                    }
+                }
+            }
+        }
+    }
+}

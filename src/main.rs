@@ -1,6 +1,7 @@
 // Prevent console window in addition to Slint window in Windows release builds when, e.g., starting the app via file manager. Ignored on other platforms.
 #![cfg_attr(not(debug_assertions), windows_subsystem = "windows")]
 
+mod common;
 mod content_tab;
 mod file_handle;
 mod namemap_tab;
@@ -30,6 +31,8 @@ use std::{
     rc::Rc,
 };
 use tracing_subscriber::EnvFilter;
+
+use crate::namemap_tab::reload_all_map;
 
 slint::include_modules!();
 
@@ -82,13 +85,6 @@ impl Config {
     }
 }
 
-#[repr(i32)]
-enum NotiLevel {
-    Error = 0,
-    Warn,
-    Info,
-}
-
 // TODO: Warning to save before exit
 
 fn main() -> Result<(), Box<dyn Error>> {
@@ -117,26 +113,43 @@ fn main() -> Result<(), Box<dyn Error>> {
     ui.on_request_load(request_load(data.clone(), config.clone(), ui.as_weak()));
     ui.on_request_save(request_save(data.clone(), config.clone(), ui.as_weak()));
 
-    ui.on_add_class(add_class(data.clone(), config.clone(), ui.as_weak()));
-    ui.on_rename_class(rename_class(data.clone(), config.clone(), ui.as_weak()));
-    ui.on_remove_class(remove_class(data.clone(), ui.as_weak()));
-    ui.on_select_class(select_class(data.clone(), config.clone(), ui.as_weak()));
+    // TODO: Move these to content_tab internally
+    ui.global::<GContent>()
+        .on_add_class(add_class(data.clone(), config.clone(), ui.as_weak()));
+    ui.global::<GContent>()
+        .on_rename_class(rename_class(data.clone(), config.clone(), ui.as_weak()));
+    ui.global::<GContent>()
+        .on_remove_class(remove_class(data.clone(), ui.as_weak()));
+    ui.global::<GContent>()
+        .on_select_class(select_class(data.clone(), config.clone(), ui.as_weak()));
 
-    ui.on_add_state(add_state(data.clone(), config.clone(), ui.as_weak()));
-    ui.on_select_state(select_state(data.clone(), config.clone(), ui.as_weak()));
-    ui.on_remove_state(remove_state(data.clone(), config.clone(), ui.as_weak()));
-    ui.on_rename_state(rename_state(data.clone(), config.clone(), ui.as_weak()));
+    ui.global::<GContent>()
+        .on_add_state(add_state(data.clone(), config.clone(), ui.as_weak()));
+    ui.global::<GContent>()
+        .on_select_state(select_state(data.clone(), config.clone(), ui.as_weak()));
+    ui.global::<GContent>()
+        .on_remove_state(remove_state(data.clone(), config.clone(), ui.as_weak()));
+    ui.global::<GContent>()
+        .on_rename_state(rename_state(data.clone(), config.clone(), ui.as_weak()));
 
-    ui.on_add_dialog(add_dialogue(data.clone(), config.clone(), ui.as_weak()));
-    ui.on_select_dialog(select_dialogue(data.clone(), config.clone(), ui.as_weak()));
-    ui.on_remove_dialog(remove_dialogue(data.clone(), config.clone(), ui.as_weak()));
-    ui.on_add_lang_content(add_lang_content(data.clone(), config.clone(), ui.as_weak()));
-    ui.on_add_affect(add_affect(data.clone(), config.clone(), ui.as_weak()));
-    ui.on_update_content(update_content(data.clone(), config.clone(), ui.as_weak()));
-    ui.on_delete_content(delete_content(data.clone(), config.clone(), ui.as_weak()));
-    ui.on_delete_affect(delete_affect(data.clone(), config.clone(), ui.as_weak()));
+    ui.global::<GContent>()
+        .on_add_dialog(add_dialogue(data.clone(), config.clone(), ui.as_weak()));
+    ui.global::<GContent>()
+        .on_select_dialog(select_dialogue(data.clone(), config.clone(), ui.as_weak()));
+    ui.global::<GContent>()
+        .on_remove_dialog(remove_dialogue(data.clone(), config.clone(), ui.as_weak()));
+    ui.global::<GContent>()
+        .on_add_lang_content(add_lang_content(data.clone(), config.clone(), ui.as_weak()));
+    ui.global::<GContent>()
+        .on_add_affect(add_affect(data.clone(), config.clone(), ui.as_weak()));
+    ui.global::<GContent>()
+        .on_update_content(update_content(data.clone(), config.clone(), ui.as_weak()));
+    ui.global::<GContent>()
+        .on_delete_content(delete_content(data.clone(), config.clone(), ui.as_weak()));
+    ui.global::<GContent>()
+        .on_delete_affect(delete_affect(data.clone(), config.clone(), ui.as_weak()));
 
-    ui.on_search({
+    ui.global::<GContent>().on_search({
         let ui_handle = ui.as_weak();
         let data = data.clone();
         let config = config.clone();
@@ -154,6 +167,10 @@ fn main() -> Result<(), Box<dyn Error>> {
             }
         }
     });
+
+    // --------------------- Namemap Tab -------------------------
+    ui.global::<GNameMap>()
+        .on_reload(reload_all_map(data.clone(), ui.as_weak()));
 
     ui.run()?;
 

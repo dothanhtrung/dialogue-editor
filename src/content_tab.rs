@@ -8,20 +8,13 @@ use crate::{
     AppWindow,
     Config,
     ContentLang,
-    Noti,
-    NotiContent,
-    NotiLevel,
+    GContent,
     UiDialogue,
 };
 use regex_lite::Regex;
 use slint::{
     ComponentHandle,
     SharedString,
-};
-use tracing::{
-    error,
-    info,
-    warn,
 };
 use xxhash_rust::xxh3::xxh3_64;
 
@@ -57,10 +50,10 @@ pub fn reload_class(data: &mut AppData, ui: &AppWindow, search_class: &str) {
         }
     }
 
-    ui.set_classes(classes.as_slice().into());
-    ui.set_states([].into());
-    ui.set_dialogues([].into());
-    ui.set_dialogue(UiDialogue::default());
+    ui.global::<GContent>().set_classes(classes.as_slice().into());
+    ui.global::<GContent>().set_states([].into());
+    ui.global::<GContent>().set_dialogues([].into());
+    ui.global::<GContent>().set_dialogue(UiDialogue::default());
 }
 
 /// Reload state section and clear dialogue section
@@ -87,10 +80,10 @@ pub fn reload_state(data: &mut AppData, ui: &AppWindow, config: &Config, search_
                 states.push(state_name.into());
             }
         }
-        ui.set_states(states.as_slice().into());
+        ui.global::<GContent>().set_states(states.as_slice().into());
     }
-    ui.set_dialogues([].into());
-    ui.set_dialogue(UiDialogue::default());
+    ui.global::<GContent>().set_dialogues([].into());
+    ui.global::<GContent>().set_dialogue(UiDialogue::default());
 }
 
 pub fn reload_dialogue(data: &AppData, ui: &AppWindow, config: &Config) {
@@ -106,8 +99,8 @@ pub fn reload_dialogue(data: &AppData, ui: &AppWindow, config: &Config) {
             }
         }
 
-        ui.set_dialogues(dialogues.as_slice().into());
-        ui.set_dialogue(UiDialogue::default());
+        ui.global::<GContent>().set_dialogues(dialogues.as_slice().into());
+        ui.global::<GContent>().set_dialogue(UiDialogue::default());
     }
 }
 
@@ -143,34 +136,20 @@ pub fn reload_dialogue_detail(data: &AppData, ui: &AppWindow, config: &Config) {
             affects: affects.as_slice().into(),
             events: events.as_slice().into(),
         };
-        ui.set_dialogue(ui_dialogue);
+        ui.global::<GContent>().set_dialogue(ui_dialogue);
 
         let mut lang_list: Vec<SharedString> = Vec::new();
         for lang in config.langs.iter() {
             lang_list.push(lang.to_639_3().to_string().into());
         }
-        ui.set_lang_list(lang_list.as_slice().into());
+        ui.global::<GContent>().set_lang_list(lang_list.as_slice().into());
 
         let mut state_list: Vec<SharedString> = Vec::new();
         for (state, _) in data.state_name_map.iter() {
             state_list.push(state.into());
         }
-        ui.set_state_list(state_list.as_slice().into());
+        ui.global::<GContent>().set_state_list(state_list.as_slice().into());
     }
-}
-
-pub fn show_noti(ui: &AppWindow, level: NotiLevel, message: &str) {
-    match level {
-        NotiLevel::Error => error!(message),
-        NotiLevel::Warn => warn!(message),
-        NotiLevel::Info => info!(message),
-    }
-
-    ui.global::<NotiContent>().set_noti(Noti {
-        level: level as i32,
-        message: message.into(),
-    });
-    ui.invoke_show_notification();
 }
 
 pub fn class_to_id(name: &str, data: &mut AppData) -> u64 {

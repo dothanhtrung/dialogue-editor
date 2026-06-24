@@ -1,15 +1,10 @@
 use crate::{
-    AppData,
-    AppWindow,
-    Config,
-    NotiLevel,
-    content_tab::{
+    AppData, AppWindow, Config, common::{NotiLevel, show_noti}, content_tab::{
         class_to_id,
         reload_all,
         reload_class,
         reload_state,
-        show_noti,
-    },
+    }
 };
 use slint::{
     SharedString,
@@ -35,7 +30,7 @@ pub fn add_class(
         if data.dialogues.contains_key(&class_id) {
             show_noti(
                 &ui,
-                crate::NotiLevel::Warn,
+                NotiLevel::Warn,
                 format!("Dialogue for class {} already exists", class_name).as_str(),
             );
         } else {

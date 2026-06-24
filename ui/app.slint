@@ -11,16 +11,15 @@ import {
 } from "std-widgets.slint";
 import {
     EditableTextBox,
-    UiDialogue,
-    DialogueBox,
     SelectableBox,
 } from "app_widgets.slint";
 import { StatusBar } from "status_bar.slint";
 import { FileSection } from "file_section.slint";
-import { NotiBox, NotiContent } from "noti.slint";
-import { StringId, NameMap, NameMapContainer } from "namemap_tab.slint";
+import { NotiBox, GNoti } from "noti.slint";
+import { StringId, GNameMap, NameMapContainer } from "namemap_tab.slint";
+import { ContentContainer, GContent } from "content_tab.slint";
 
-export { NotiContent, NameMap }
+export { GNoti, GNameMap, GContent }
 
 // TODO: Config UI
 
@@ -28,48 +27,12 @@ export component AppWindow inherits Window {
     in-out property <string> file_path;
     in-out property <int> file_format;
     in-out property <string> encrypt_key;
-    in-out property <[string]> classes;
-    in-out property <[string]> states;
-    in-out property <[string]> dialogues;
-    in-out property <UiDialogue> dialogue;
-    in-out property <[string]> lang_list;
-    in-out property <[string]> state_list;
-    in-out property <[string]> event_list;
-
-    in-out property <bool> is_saved: true;
-
     in-out property <bool> enable_crypt: false;
-
-    property <int> selecting_class: -1;
-    property <int> selecting_state: -1;
-    property <int> selecting_dialog: -1;
+    in-out property <bool> is_saved: true;
 
     callback request-save(string, int, string);
     callback request-load(string, int, string);
 
-    callback select-class(string);
-    callback remove-class(string);
-    callback add-class(string);
-    callback rename-class(string, string); // old name, new name
-    
-    callback select-state(string);
-    callback remove-state(string);
-    callback add-state(string);
-    callback rename-state(string, string); // old name, new name
-
-    callback select-dialog(int);
-    callback add-dialog();
-    callback remove-dialog(int);
-
-    callback add_lang_content(string, string); // lang, content
-    callback add_affect(string, string); // affect_class, affect_state
-    callback add_event(string);
-    callback update_content(UiDialogue); // dialog
-    callback delete_content(string);
-    callback delete_affect(string);
-    callback delete_event(string);
-
-    callback search(string, string);
     callback file_picker();
 
     noti_box := NotiBox {
@@ -81,233 +44,15 @@ export component AppWindow inherits Window {
         noti_box.show();
     }
 
-    tooltip := PopupWindow {
-        in-out property <string> text;
-        Rectangle {
-            Text {
-                text: text;
-            }
-        }
-    }
-
     VerticalBox {
-
         TabWidget {
             orientation: Orientation.vertical;
 
             Tab {
                 title: "C";
 
-                HorizontalBox {
-                    Rectangle {
-                        width: 20%;
-
-                        VerticalBox {
-                            LineEdit {
-                                placeholder-text: "Search...";
-                                accepted(text) => {
-                                    search(text, "");
-                                }
-                            }
-
-                            ListView {
-                                for class_name[i] in classes: EditableTextBox {
-                                    value: class_name;
-                                    selected: {
-                                        root.selecting_class == i
-                                    };
-                                    background: {
-                                        if (root.selecting_class == i) {
-                                            Palette.selection-background
-                                        } else {
-                                            Palette.background
-                                        }
-                                    };
-                                    select => {
-                                        select-class(class_name);
-                                        root.selecting_class = i;
-                                        root.selecting_state = -1;
-                                        root.selecting_dialog = -1;
-                                    };
-                                    submit(new_name) => {
-                                        rename-class(class_name, new_name);
-                                        root.is_saved = false;
-                                    };
-                                    delete => {
-                                        remove-class(class_name);
-                                        root.is_saved = false;
-                                    };
-                                }
-                            }
-
-                            HorizontalBox {
-                                new_class := LineEdit {
-                                    placeholder-text: "New class";
-                                }
-
-                                Button {
-                                    text: "Add";
-                                    clicked => {
-                                        root.add-class(new_class.text);
-                                        new_class.text = "";
-                                        root.is_saved = false;
-                                    };
-                                }
-                            }
-                        }
-                    }
-
-                    Rectangle {
-                        width: 20%;
-
-                        VerticalBox {
-
-                            LineEdit {
-                                placeholder-text: "Search...";
-                                accepted(text) => {
-                                    search("", text);
-                                }
-                            }
-
-                            ListView {
-                                for state_name[i] in states: EditableTextBox {
-                                    value: state_name;
-                                    selected: {
-                                        root.selecting_state == i
-                                    };
-                                    background: {
-                                        if (root.selecting_state == i) {
-                                            Palette.selection-background
-                                        } else {
-                                            Palette.background
-                                        }
-                                    };
-                                    select => {
-                                        select-state(state_name);
-                                        root.selecting_state = i;
-                                        root.selecting_dialog = -1;
-                                    };
-                                    submit(new_name) => {
-                                        rename-state(state_name, new_name);
-                                        root.is_saved = false;
-                                    };
-                                    delete => {
-                                        remove-state(state_name);
-                                        root.is_saved = false;
-                                    };
-                                }
-                            }
-
-                            HorizontalBox {
-                                visible: {
-                                    root.selecting_class >= 0
-                                };
-                                new_state := LineEdit {
-                                    placeholder-text: "New state";
-                                }
-
-                                Button {
-                                    text: "Add";
-                                    clicked => {
-                                        root.add-state(new_state.text);
-                                        root.is_saved = false;
-                                        new_state.text = "";
-                                    }
-                                }
-                            }
-                        }
-                    }
-
-                    Rectangle {
-                        width: 20%;
-
-                        VerticalBox {
-
-                            LineEdit {
-                                placeholder-text: "Search...";
-                                visible: false;
-                            }
-
-                            ListView {
-                                for dialog[i] in dialogues: SelectableBox {
-                                    value: dialog;
-                                    selected: {
-                                        root.selecting_dialog == i
-                                    };
-                                    background: {
-                                        if (root.selecting_dialog == i) {
-                                            Palette.selection-background
-                                        } else {
-                                            Palette.background
-                                        }
-                                    };
-                                    select => {
-                                        select-dialog(i);
-                                        root.selecting_dialog = i;
-                                    };
-                                    delete_dialog => {
-                                        remove-dialog(i);
-                                        root.is_saved = false;
-                                    };
-                                }
-                            }
-
-                            Button {
-                                visible: {
-                                    root.selecting_state >= 0
-                                };
-                                text: "Add";
-                                clicked => {
-                                    root.add-dialog();
-                                    root.is_saved = false;
-                                }
-                            }
-                        }
-                    }
-
-                    Rectangle {
-                        VerticalBox {
-                            DialogueBox {
-                                visible: {
-                                    root.selecting_dialog >= 0
-                                };
-                                dialogue: dialogue;
-                                lang_list: lang_list;
-                                class_list: classes;
-                                state_list: state_list;
-                                event_list: event_list;
-
-                                update_content => {
-                                    root.update_content(self.dialogue);
-                                    root.is_saved = false;
-                                };
-                                add_lang_content(lang, content) => {
-                                    root.add_lang_content(lang, content);
-                                    root.is_saved = false;
-                                };
-                                add_affect(class, state) => {
-                                    root.add_affect(class, state);
-                                    root.is_saved = false;
-                                };
-                                add_event(event) => {
-                                    root.add_event(event);
-                                    root.is_saved = false;
-                                };
-                                delete_content(lang) => {
-                                    root.delete_content(lang);
-                                    root.is_saved = false;
-                                }
-                                delete_affect(class) => {
-                                    root.delete_affect(class);
-                                    root.is_saved = false;
-                                }
-                                delete_event(event) => {
-                                    root.delete_event(event);
-                                    root.is_saved = false
-                                }
-                            }
-                        }
-                    }
+                ContentContainer {
+                    is_saved <=> root.is_saved;
                 }
             }
 
@@ -342,7 +87,7 @@ export component AppWindow inherits Window {
         }
 
         StatusBar {
-            is_saved: root.is_saved;
+            is_saved <=> root.is_saved;
         }
     }
 }

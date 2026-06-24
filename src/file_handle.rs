@@ -5,9 +5,14 @@ use crate::{
     AppData,
     AppWindow,
     Config,
-    NotiLevel,
+    common::{
+        NotiLevel,
+        show_noti,
+    },
     content_tab::{
-        id_to_class, id_to_state, reload_all, show_noti
+        id_to_class,
+        id_to_state,
+        reload_all,
     },
 };
 use rfd::FileDialog;
@@ -162,7 +167,11 @@ pub fn request_save(
                     show_noti(&ui, NotiLevel::Error, format!("Failed to save: {:?}", e).as_str());
                 } else {
                     ui.set_is_saved(true);
-                    show_noti(&ui, NotiLevel::Info, format!("Success save {}", &config.file_path.display()).as_str());
+                    show_noti(
+                        &ui,
+                        NotiLevel::Info,
+                        format!("Success save {}", &config.file_path.display()).as_str(),
+                    );
                 }
             }
         }

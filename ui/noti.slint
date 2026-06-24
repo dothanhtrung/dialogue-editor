@@ -6,7 +6,7 @@ export struct Noti {
     message: string,
 }
 
-export global NotiContent {
+export global GNoti {
     in-out property <Noti> noti;
 }
 
@@ -18,11 +18,11 @@ export component NotiBox inherits PopupWindow {
 
         Rectangle {
             Text {
-                text: NotiContent.noti.message;
+                text: GNoti.noti.message;
                 color: {
-                    if (NotiContent.noti.level == 0) {
+                    if (GNoti.noti.level == 0) {
                         red
-                    } else if (NotiContent.noti.level == 1) {
+                    } else if (GNoti.noti.level == 1) {
                         orange
                     } else {
                         green
