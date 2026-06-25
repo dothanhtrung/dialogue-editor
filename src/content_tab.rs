@@ -9,7 +9,7 @@ use crate::{
     Config,
     ContentLang,
     GContent,
-    UiDialogue,
+    UiDialogue, common::NameType,
 };
 use regex_lite::Regex;
 use slint::{
@@ -174,12 +174,6 @@ pub fn id_to_state(id: u64, data: &AppData) -> Option<String> {
 
 pub fn id_to_event(id: u64, data: &AppData) -> Option<String> {
     id_to_name(id, data, NameType::Event)
-}
-
-enum NameType {
-    Class,
-    State,
-    Event,
 }
 
 fn name_to_id(name: &str, data: &mut AppData, name_type: NameType) -> u64 {

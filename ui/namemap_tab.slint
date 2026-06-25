@@ -21,20 +21,20 @@ export global GNameMap {
     in-out property <[StringId]> events;
 
     pure callback reload();
-    callback delete_class(int);
-    callback delete_state(int);
-    callback delete_event(int);
-    callback update_class_id(int, string); // index, id
-    callback update_state_id(int, string);
-    callback update_event_id(int, string);
+    callback delete_class(string);
+    callback delete_state(string);
+    callback delete_event(string);
+    callback update_class_id(string, string); // name, id
+    callback update_state_id(string, string);
+    callback update_event_id(string, string);
 }
 
 
 export component StringIdContainer inherits Rectangle {
     in-out property <[StringId]> values;
 
-    callback delete(int);
-    callback update(int, string); // index, id
+    callback delete(string);
+    callback update(string, string); // name, id
 
     ScrollView {
         GridBox {
@@ -47,21 +47,21 @@ export component StringIdContainer inherits Rectangle {
                     text: value.id;
                     input-type: number;
                     accepted(text) => {
-                        update(i, self.text);
+                        update(value.name, self.text);
                     }
                 }
 
                 Button {
                     text: "";
                     clicked => {
-                        update(i, edit.text);
+                        update(value.name, edit.text);
                     }
                 }
 
                 Button {
                     text: "Del";
                     clicked => {
-                        delete(i);
+                        delete(value.name);
                     }
                 }
             }
@@ -80,22 +80,22 @@ export component NameMapContainer inherits TabReload {
         StringIdContainer {
             width: 30%;
             values: GNameMap.classes;
-            delete(index) => {
-                GNameMap.delete_class(index);
+            delete(name) => {
+                GNameMap.delete_class(name);
             }
-            update(index, id) => {
-                GNameMap.update_class_id(index, id);
+            update(name, id) => {
+                GNameMap.update_class_id(name, id);
             }
         }
 
         StringIdContainer {
             width: 30%;
             values: GNameMap.states;
-            delete(index) => {
-                GNameMap.delete_state(index);
+            delete(name) => {
+                GNameMap.delete_state(name);
             }
-            update(index, id) => {
-                GNameMap.update_state_id(index, id);
+            update(name, id) => {
+                GNameMap.update_state_id(name, id);
             }
         }
 
@@ -105,8 +105,8 @@ export component NameMapContainer inherits TabReload {
             delete(index) => {
                 GNameMap.delete_event(index);
             }
-            update(index, id) => {
-                GNameMap.update_event_id(index, id);
+            update(name, id) => {
+                GNameMap.update_event_id(name, id);
             }
         }
     }

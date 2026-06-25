@@ -19,10 +19,7 @@ use serde::{
 use slint::Model;
 use std::{
     cell::RefCell,
-    collections::{
-        BTreeMap,
-        HashMap,
-    },
+    collections::BTreeMap,
     error::Error,
     path::{
         Path,
@@ -32,7 +29,13 @@ use std::{
 };
 use tracing_subscriber::EnvFilter;
 
+use crate::namemap_tab::delete_class_map;
+use crate::namemap_tab::delete_event_map;
+use crate::namemap_tab::delete_state_map;
 use crate::namemap_tab::reload_all_map;
+use crate::namemap_tab::update_class_id;
+use crate::namemap_tab::update_event_id;
+use crate::namemap_tab::update_state_id;
 
 slint::include_modules!();
 
@@ -47,16 +50,17 @@ struct Dialogue {
     events: Vec<u64>,
 }
 
+// TODO: Separate dialogues and name map
 #[derive(Serialize, Deserialize, Default, Clone)]
 struct AppData {
     #[serde(default)]
-    dialogues: HashMap<u64, BTreeMap<u64, Vec<Dialogue>>>,
+    dialogues: BTreeMap<u64, BTreeMap<u64, Vec<Dialogue>>>,
     #[serde(default)]
-    class_name_map: HashMap<String, u64>,
+    class_name_map: BTreeMap<String, u64>,
     #[serde(default)]
-    state_name_map: HashMap<String, u64>,
+    state_name_map: BTreeMap<String, u64>,
     #[serde(default)]
-    event_name_map: HashMap<String, u64>,
+    event_name_map: BTreeMap<String, u64>,
 }
 
 // TODO: Config UI
@@ -148,6 +152,10 @@ fn main() -> Result<(), Box<dyn Error>> {
         .on_delete_content(delete_content(data.clone(), config.clone(), ui.as_weak()));
     ui.global::<GContent>()
         .on_delete_affect(delete_affect(data.clone(), config.clone(), ui.as_weak()));
+    ui.global::<GContent>()
+        .on_add_event(add_event(data.clone(), config.clone(), ui.as_weak()));
+    ui.global::<GContent>()
+        .on_delete_event(delete_event(data.clone(), config.clone(), ui.as_weak()));
 
     ui.global::<GContent>().on_search({
         let ui_handle = ui.as_weak();
@@ -169,8 +177,21 @@ fn main() -> Result<(), Box<dyn Error>> {
     });
 
     // --------------------- Namemap Tab -------------------------
+
     ui.global::<GNameMap>()
         .on_reload(reload_all_map(data.clone(), ui.as_weak()));
+    ui.global::<GNameMap>()
+        .on_delete_class(delete_class_map(data.clone(), ui.as_weak()));
+    ui.global::<GNameMap>()
+        .on_delete_state(delete_state_map(data.clone(), ui.as_weak()));
+    ui.global::<GNameMap>()
+        .on_delete_event(delete_event_map(data.clone(), ui.as_weak()));
+    ui.global::<GNameMap>()
+        .on_update_class_id(update_class_id(data.clone(), ui.as_weak()));
+    ui.global::<GNameMap>()
+        .on_update_state_id(update_state_id(data.clone(), ui.as_weak()));
+    ui.global::<GNameMap>()
+        .on_update_event_id(update_event_id(data.clone(), ui.as_weak()));
 
     ui.run()?;
 

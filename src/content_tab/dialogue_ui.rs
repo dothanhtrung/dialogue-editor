@@ -6,6 +6,7 @@ use crate::{
     UiDialogue,
     content_tab::{
         class_to_id,
+        event_to_id,
         reload_dialogue,
         reload_dialogue_detail,
         state_to_id,
@@ -116,6 +117,27 @@ pub fn add_affect(
     }
 }
 
+pub fn add_event(
+    data: Rc<RefCell<AppData>>,
+    config: Rc<RefCell<Config>>,
+    ui_handle: Weak<AppWindow>,
+) -> impl Fn(SharedString) {
+    move |event_name| {
+        let ui = ui_handle.unwrap();
+        let mut data = data.borrow_mut();
+        let config = config.borrow();
+        let event_id = event_to_id(event_name.as_str(), &mut data);
+
+        if let Some(class) = data.dialogues.get_mut(&config.selected_class)
+            && let Some(state) = class.get_mut(&config.selected_state)
+            && let Some(dialogue) = state.get_mut(config.selected_dialog)
+        {
+            dialogue.events.push(event_id);
+            reload_dialogue_detail(&data, &ui, &config);
+        }
+    }
+}
+
 pub fn update_content(
     data: Rc<RefCell<AppData>>,
     config: Rc<RefCell<Config>>,
@@ -176,6 +198,26 @@ pub fn delete_affect(
             && let Some(dialogue) = state.get_mut(config.selected_dialog)
         {
             dialogue.affects.remove(&class_id);
+        }
+        reload_dialogue_detail(&data, &ui, &config);
+    }
+}
+
+pub fn delete_event(
+    data: Rc<RefCell<AppData>>,
+    config: Rc<RefCell<Config>>,
+    ui_handle: Weak<AppWindow>,
+) -> impl Fn(i32) {
+    move |index| {
+        let ui = ui_handle.unwrap();
+        let mut data = data.borrow_mut();
+        let config = config.borrow();
+
+        if let Some(class) = data.dialogues.get_mut(&config.selected_class)
+            && let Some(state) = class.get_mut(&config.selected_state)
+            && let Some(dialogue) = state.get_mut(config.selected_dialog)
+        {
+            dialogue.events.remove(index as usize);
         }
         reload_dialogue_detail(&data, &ui, &config);
     }

@@ -17,6 +17,12 @@ pub enum NotiLevel {
     Info,
 }
 
+pub enum NameType {
+    Class,
+    State,
+    Event,
+}
+
 pub fn show_noti(ui: &AppWindow, level: NotiLevel, message: &str) {
     match level {
         NotiLevel::Error => error!(message),
