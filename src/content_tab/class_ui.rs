@@ -1,10 +1,17 @@
 use crate::{
-    AppData, AppWindow, Config, common::{NotiLevel, show_noti}, content_tab::{
+    AppData,
+    AppWindow,
+    Config,
+    common::{
+        NotiLevel,
+        show_noti,
+    },
+    content_tab::{
         class_to_id,
         reload_all,
         reload_class,
         reload_state,
-    }
+    },
 };
 use slint::{
     SharedString,
@@ -48,9 +55,14 @@ pub fn rename_class(
     ui_handle: Weak<AppWindow>,
 ) -> impl Fn(SharedString, SharedString) {
     move |old_name, new_name| {
+        if old_name == new_name {
+            return;
+        }
+
         let ui = ui_handle.unwrap();
         let mut data = data.borrow_mut();
         let mut config = config.borrow_mut();
+
         let old_class_id = class_to_id(old_name.as_str(), &mut data);
         let new_class_id = class_to_id(new_name.as_str(), &mut data);
 
@@ -66,14 +78,12 @@ pub fn rename_class(
     }
 }
 
-// TODO: class should be removed from name_map tab, not from content tab
 pub fn remove_class(data: Rc<RefCell<AppData>>, ui_handle: Weak<AppWindow>) -> impl Fn(SharedString) {
     move |class_name| {
         let ui = ui_handle.unwrap();
         let mut data = data.borrow_mut();
         let class_id = class_to_id(class_name.as_str(), &mut data);
         // data.class_name_map.remove(&class_name.to_string());
-        // TODO: Add clean function to remove orphan classs/states/events
         data.dialogues.remove(&class_id);
         reload_class(&mut data, &ui, "");
     }

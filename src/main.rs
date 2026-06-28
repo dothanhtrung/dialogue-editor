@@ -50,7 +50,6 @@ struct Dialogue {
     events: Vec<u64>,
 }
 
-// TODO: Separate dialogues and name map
 #[derive(Serialize, Deserialize, Default, Clone)]
 struct AppData {
     #[serde(default)]

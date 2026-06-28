@@ -59,7 +59,8 @@ pub fn update_class_id(data: Rc<RefCell<AppData>>, ui: Weak<AppWindow>) -> impl 
         let mut data = data.borrow_mut();
         let ui = ui.unwrap();
         let old_id = class_to_id(name.as_str(), &mut data);
-        if let Ok(new_id) = update_id(&mut data, &ui, name.to_string(), id.as_str(), NameType::Class)
+
+        if let Ok(new_id) = update_id(&mut data, &ui, name.to_string(), old_id, id.as_str(), NameType::Class)
             && let Some(value) = data.dialogues.remove(&old_id)
         {
             data.dialogues.insert(new_id, value);
@@ -72,7 +73,7 @@ pub fn update_state_id(data: Rc<RefCell<AppData>>, ui: Weak<AppWindow>) -> impl 
         let mut data = data.borrow_mut();
         let ui = ui.unwrap();
         let old_id = state_to_id(name.as_str(), &mut data);
-        if let Ok(new_id) = update_id(&mut data, &ui, name.to_string(), id.as_str(), NameType::State) {
+        if let Ok(new_id) = update_id(&mut data, &ui, name.to_string(), old_id, id.as_str(), NameType::State) {
             for (_, class) in data.dialogues.iter_mut() {
                 if let Some(value) = class.remove(&old_id) {
                     class.insert(new_id, value);
@@ -87,7 +88,7 @@ pub fn update_event_id(data: Rc<RefCell<AppData>>, ui: Weak<AppWindow>) -> impl 
         let mut data = data.borrow_mut();
         let ui = ui.unwrap();
         let old_id = event_to_id(name.as_str(), &mut data);
-        if let Ok(new_id) = update_id(&mut data, &ui, name.to_string(), id.as_str(), NameType::Event) {
+        if let Ok(new_id) = update_id(&mut data, &ui, name.to_string(), old_id, id.as_str(), NameType::Event) {
             for (_, class) in data.dialogues.iter_mut() {
                 for (_, state) in class.iter_mut() {
                     for dialogue in state.iter_mut() {
@@ -103,7 +104,14 @@ pub fn update_event_id(data: Rc<RefCell<AppData>>, ui: Weak<AppWindow>) -> impl 
     }
 }
 
-fn update_id(data: &mut AppData, ui: &AppWindow, name: String, new_id: &str, name_type: NameType) -> Result<u64, ()> {
+fn update_id(
+    data: &mut AppData,
+    ui: &AppWindow,
+    name: String,
+    old_id: u64,
+    new_id: &str,
+    name_type: NameType,
+) -> Result<u64, ()> {
     let data = match name_type {
         NameType::Class => &mut data.class_name_map,
         NameType::State => &mut data.state_name_map,
@@ -111,6 +119,10 @@ fn update_id(data: &mut AppData, ui: &AppWindow, name: String, new_id: &str, nam
     };
 
     if let Ok(new_id) = new_id.parse::<u64>() {
+        if old_id == new_id {
+            return Err(());
+        }
+
         for (_, id) in data.iter() {
             if *id == new_id {
                 show_noti(ui, NotiLevel::Error, format!("Duplicated id: {}", new_id).as_str());

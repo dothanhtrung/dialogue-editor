@@ -86,6 +86,10 @@ pub fn rename_state(
     ui_handle: Weak<AppWindow>,
 ) -> impl Fn(SharedString, SharedString) {
     move |old_name, new_name| {
+        if old_name == new_name {
+            return;
+        }
+
         let ui = ui_handle.unwrap();
         let mut data = data.borrow_mut();
         let mut config = config.borrow_mut();
@@ -100,11 +104,7 @@ pub fn rename_state(
                 reload_all(&mut data, &ui, &config, "", "");
             }
         } else {
-            show_noti(
-                &ui,
-                NotiLevel::Error,
-                format!("Duplicated state {}", new_name).as_str(),
-            );
+            show_noti(&ui, NotiLevel::Error, format!("Duplicated state {}", new_name).as_str());
         }
     }
 }
