@@ -143,8 +143,8 @@ pub fn request_save(
     data: Rc<RefCell<AppData>>,
     config: Rc<RefCell<Config>>,
     ui_handle: Weak<AppWindow>,
-) -> impl Fn(SharedString, i32, SharedString) {
-    move |file_path, file_format, encrypt_key| {
+) -> impl Fn(SharedString, i32, SharedString, bool) {
+    move |file_path, file_format, encrypt_key, save_without_name| {
         let mut config = config.borrow_mut();
         let data = data.borrow();
         let ui = ui_handle.unwrap();
@@ -152,6 +152,7 @@ pub fn request_save(
         config.file_format = file_format.into();
         config.encrypt_key = encrypt_key.to_string();
         config.file_path = PathBuf::from(file_path.as_str());
+        config.save_without_name = save_without_name;
         config.save();
 
         match config.file_format {
@@ -159,13 +160,34 @@ pub fn request_save(
                 if let Err(e) = bin_file::save_to::<AppData>(&data, &config.file_path, &config.encrypt_key) {
                     show_noti(&ui, NotiLevel::Error, format!("Failed to save: {:?}", e).as_str());
                 } else {
+                    if save_without_name {
+                        let mut data_without_name = data.clone();
+                        data_without_name.clear_name_map();
+                        let file_path = config.file_path.with_extension("no_name.bin");
+                        if let Err(e) = bin_file::save_to(&data_without_name, &file_path, &config.encrypt_key) {
+                            show_noti(&ui, NotiLevel::Error, format!("Failed to save: {:?}", e).as_str());
+                        }
+                    }
+
                     ui.set_is_saved(true);
+                    show_noti(
+                        &ui,
+                        NotiLevel::Info,
+                        format!("Success save {}", &config.file_path.display()).as_str(),
+                    );
                 }
             }
             FileFormat::Ron => {
                 if let Err(e) = ron_file::save_to::<AppData>(&data, &config.file_path) {
                     show_noti(&ui, NotiLevel::Error, format!("Failed to save: {:?}", e).as_str());
                 } else {
+                    let mut data_without_name = data.clone();
+                    data_without_name.clear_name_map();
+                    let file_path = config.file_path.with_extension("no_name.ron");
+                    if let Err(e) = ron_file::save_to(&data_without_name, &file_path) {
+                        show_noti(&ui, NotiLevel::Error, format!("Failed to save: {:?}", e).as_str());
+                    }
+
                     ui.set_is_saved(true);
                     show_noti(
                         &ui,

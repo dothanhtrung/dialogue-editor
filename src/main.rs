@@ -63,13 +63,21 @@ struct AppData {
     event_name_map: BTreeMap<String, u64>,
 }
 
+impl AppData {
+    pub fn clear_name_map(&mut self) {
+        self.class_name_map.clear();
+        self.state_name_map.clear();
+        self.event_name_map.clear();
+    }
+}
+
 // TODO: Config UI
 #[derive(Serialize, Deserialize, Default)]
 struct Config {
     #[serde(default)]
     file_path: PathBuf,
     #[serde(default)]
-    selected_class: u64,
+    selected_class: u64, // TODO: Support history of select
     #[serde(default)]
     selected_state: u64,
     #[serde(default)]
@@ -79,6 +87,8 @@ struct Config {
     encrypt_key: String,
     #[serde(default)]
     file_format: FileFormat,
+    #[serde(default)]
+    save_without_name: bool,
     #[serde(default)]
     langs: Vec<Language>,
 }

@@ -1,15 +1,21 @@
 
-import { HorizontalBox, ComboBox, LineEdit, Button } from "std-widgets.slint";
+import {
+    HorizontalBox,
+    ComboBox,
+    LineEdit,
+    Button,
+    CheckBox,
+} from "std-widgets.slint";
 
 export component FileSection inherits Rectangle {
-    in property <int> file_format;
+    in-out property <int> file_format;
     in property <bool> enable_crypt;
     in property <string> encrypt_key;
     in-out property <string> file_path;
 
     callback browse_click();
     callback load(string, int, string);
-    callback save(string, int, string);
+    callback save(string, int, string, bool);
 
     VerticalLayout {
         height: 10%;
@@ -45,6 +51,10 @@ export component FileSection inherits Rectangle {
                 };
                 placeholder-text: "Encryption key";
             }
+
+            save_without_name := CheckBox {
+                text: "Save dialogue without name map";
+            }
         }
 
         HorizontalBox {
@@ -59,7 +69,7 @@ export component FileSection inherits Rectangle {
             Button {
                 text: "Save";
                 clicked => {
-                    save(file_path_input.text, ui_file_format.current-index, ui_encrypt_key.text);
+                    save(file_path_input.text, ui_file_format.current-index, ui_encrypt_key.text, save_without_name.checked);
                 }
             }
         }

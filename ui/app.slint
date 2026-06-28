@@ -30,7 +30,7 @@ export component AppWindow inherits Window {
     in-out property <bool> enable_crypt: false;
     in-out property <bool> is_saved: true;
 
-    callback request-save(string, int, string);
+    callback request-save(string, int, string, bool);
     callback request-load(string, int, string);
 
     callback file_picker();
@@ -81,8 +81,8 @@ export component AppWindow inherits Window {
                 root.request-load(path_str, type_int, encrypt_str);
             }
 
-            save(path_str, type_int, encrypt_str) => {
-                root.request-save(path_str, type_int, encrypt_str);
+            save(path_str, type_int, encrypt_str, save_without_name) => {
+                root.request-save(path_str, type_int, encrypt_str, save_without_name);
             }
         }
 
