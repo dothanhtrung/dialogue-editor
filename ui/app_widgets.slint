@@ -9,13 +9,10 @@ import {
     Palette,
 } from "std-widgets.slint";
 
-
 export component TabReload inherits Rectangle {
     pure callback reload() -> color;
     background: reload();
 }
-
-
 
 export component SelectableBox inherits Rectangle {
     in property <string> value;

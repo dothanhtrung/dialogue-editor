@@ -4,12 +4,14 @@ use crate::{
     Config,
     Dialogue,
     UiDialogue,
-    content_tab::{
+    common::{
         class_to_id,
         event_to_id,
+        state_to_id,
+    },
+    content_tab::{
         reload_dialogue,
         reload_dialogue_detail,
-        state_to_id,
     },
 };
 use isolang::Language;

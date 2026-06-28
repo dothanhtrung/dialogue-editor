@@ -5,9 +5,9 @@ use crate::{
     common::{
         NotiLevel,
         show_noti,
+        class_to_id,
     },
     content_tab::{
-        class_to_id,
         reload_all,
         reload_class,
         reload_state,

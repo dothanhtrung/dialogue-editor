@@ -5,12 +5,12 @@ use crate::{
     common::{
         NotiLevel,
         show_noti,
+        state_to_id,
     },
     content_tab::{
         reload_all,
         reload_dialogue,
         reload_state,
-        state_to_id,
     },
 };
 use slint::{

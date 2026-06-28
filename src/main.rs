@@ -6,11 +6,13 @@ mod content_tab;
 mod file_handle;
 mod namemap_tab;
 
-use content_tab::class_ui::*;
-use content_tab::dialogue_ui::*;
-use content_tab::state_ui::*;
-use content_tab::*;
-use file_handle::*;
+use crate::common::*;
+use crate::content_tab::class_ui::*;
+use crate::content_tab::dialogue_ui::*;
+use crate::content_tab::state_ui::*;
+use crate::content_tab::*;
+use crate::file_handle::*;
+use crate::namemap_tab::*;
 use isolang::Language;
 use serde::{
     Deserialize,
@@ -28,14 +30,6 @@ use std::{
     rc::Rc,
 };
 use tracing_subscriber::EnvFilter;
-
-use crate::namemap_tab::delete_class_map;
-use crate::namemap_tab::delete_event_map;
-use crate::namemap_tab::delete_state_map;
-use crate::namemap_tab::reload_all_map;
-use crate::namemap_tab::update_class_id;
-use crate::namemap_tab::update_event_id;
-use crate::namemap_tab::update_state_id;
 
 slint::include_modules!();
 
@@ -201,6 +195,12 @@ fn main() -> Result<(), Box<dyn Error>> {
         .on_update_state_id(update_state_id(data.clone(), ui.as_weak()));
     ui.global::<GNameMap>()
         .on_update_event_id(update_event_id(data.clone(), ui.as_weak()));
+    ui.global::<GNameMap>()
+        .on_new_class(add_new_class(data.clone(), ui.as_weak()));
+    ui.global::<GNameMap>()
+        .on_new_state(add_new_state(data.clone(), ui.as_weak()));
+    ui.global::<GNameMap>()
+        .on_new_event(add_new_event(data.clone(), ui.as_weak()));
 
     ui.run()?;
 

@@ -6,6 +6,7 @@ import {
     GridBox,
     ScrollView,
     Palette,
+    ListView,
 } from "std-widgets.slint";
 import { TabReload } from "app_widgets.slint";
 
@@ -27,6 +28,9 @@ export global GNameMap {
     callback update_class_id(string, string); // name, id
     callback update_state_id(string, string);
     callback update_event_id(string, string);
+    callback new_class(string, string); // name ,id
+    callback new_state(string, string); // name ,id
+    callback new_event(string, string); // name ,id
 }
 
 
@@ -35,10 +39,11 @@ export component StringIdContainer inherits Rectangle {
 
     callback delete(string);
     callback update(string, string); // name, id
+    callback new(string, string);
 
-    ScrollView {
-        GridBox {
-            for value[i] in values: Row {
+    VerticalBox {
+        ListView {
+            for value[i] in values: HorizontalBox {
                 Text {
                     text: value.name;
                 }
@@ -66,6 +71,36 @@ export component StringIdContainer inherits Rectangle {
                 }
             }
         }
+
+        HorizontalBox {
+            new_name := LineEdit {
+                placeholder-text: "New name";
+
+                accepted(text) => {
+                    submit()
+                }
+            }
+
+            new_id := LineEdit {
+                placeholder-text: "New id";
+                accepted(text) => {
+                    submit()
+                }
+            }
+
+            Button {
+                text: "Add";
+                clicked => {
+                    submit();
+                }
+            }
+        }
+
+        function submit() {
+            new(new_name.text, new_id.text);
+            new_name.text = "";
+            new_id.text = "";
+        }
     }
 }
 
@@ -86,6 +121,9 @@ export component NameMapContainer inherits TabReload {
             update(name, id) => {
                 GNameMap.update_class_id(name, id);
             }
+            new(name, id) => {
+                GNameMap.new_class(name, id);
+            }
         }
 
         StringIdContainer {
@@ -97,6 +135,9 @@ export component NameMapContainer inherits TabReload {
             update(name, id) => {
                 GNameMap.update_state_id(name, id);
             }
+            new(name, id) => {
+                GNameMap.new_state(name, id);
+            }
         }
 
         StringIdContainer {
@@ -107,6 +148,9 @@ export component NameMapContainer inherits TabReload {
             }
             update(name, id) => {
                 GNameMap.update_event_id(name, id);
+            }
+            new(name, id) => {
+                GNameMap.new_event(name, id);
             }
         }
     }

@@ -1,6 +1,5 @@
 use std::{
     cell::RefCell,
-    collections::BTreeMap,
     rc::Rc,
 };
 
@@ -12,11 +11,9 @@ use crate::{
     common::{
         NameType,
         NotiLevel,
-        show_noti,
-    },
-    content_tab::{
         class_to_id,
         event_to_id,
+        show_noti,
         state_to_id,
     },
 };
@@ -26,6 +23,7 @@ use slint::{
     SharedString,
     Weak,
 };
+use xxhash_rust::xxh3::xxh3_64;
 
 pub fn delete_class_map(data: Rc<RefCell<AppData>>, ui: Weak<AppWindow>) -> impl Fn(SharedString) {
     move |name| {
@@ -102,6 +100,71 @@ pub fn update_event_id(data: Rc<RefCell<AppData>>, ui: Weak<AppWindow>) -> impl 
             }
         }
     }
+}
+
+pub fn add_new_class(data: Rc<RefCell<AppData>>, ui: Weak<AppWindow>) -> impl Fn(SharedString, SharedString) {
+    move |name, id| {
+        let mut data = data.borrow_mut();
+        let ui = ui.unwrap();
+
+        let _ = add_new(&mut data, &ui, name.to_string(), id.as_str(), NameType::Class);
+        // TODO: Reload data
+    }
+}
+
+pub fn add_new_state(data: Rc<RefCell<AppData>>, ui: Weak<AppWindow>) -> impl Fn(SharedString, SharedString) {
+    move |name, id| {
+        let mut data = data.borrow_mut();
+        let ui = ui.unwrap();
+
+        let _ = add_new(&mut data, &ui, name.to_string(), id.as_str(), NameType::State);
+    }
+}
+
+pub fn add_new_event(data: Rc<RefCell<AppData>>, ui: Weak<AppWindow>) -> impl Fn(SharedString, SharedString) {
+    move |name, id| {
+        let mut data = data.borrow_mut();
+        let ui = ui.unwrap();
+
+        let _ = add_new(&mut data, &ui, name.to_string(), id.as_str(), NameType::Event);
+    }
+}
+
+fn add_new(data: &mut AppData, ui: &AppWindow, new_name: String, new_id: &str, name_type: NameType) -> Result<u64, ()> {
+    let data = match name_type {
+        NameType::Class => &mut data.class_name_map,
+        NameType::State => &mut data.state_name_map,
+        NameType::Event => &mut data.event_name_map,
+    };
+
+    if data.contains_key(&new_name) {
+        show_noti(
+            ui,
+            NotiLevel::Error,
+            format!("Name already exists: {}", &new_name).as_str(),
+        );
+        return Err(());
+    }
+
+    let new_id = if new_id.is_empty() {
+        let lower = new_name.to_lowercase();
+        xxh3_64(lower.as_bytes())
+    } else {
+        new_id.parse::<u64>().unwrap_or_else(|_| {
+            show_noti(ui, NotiLevel::Warn, format!("Invalid id: {}", new_id).as_str());
+            xxh3_64(new_id.as_bytes())
+        })
+    };
+
+    for (_, old_id) in data.iter() {
+        if *old_id == new_id {
+            show_noti(ui, NotiLevel::Error, format!("Id already exists: {}", new_id).as_str());
+            return Err(());
+        }
+    }
+
+    data.insert(new_name, new_id);
+    Ok(new_id)
 }
 
 fn update_id(
