@@ -4,13 +4,11 @@ use crate::{
     Config,
     common::{
         NotiLevel,
-        show_noti,
         class_to_id,
-    },
-    content_tab::{
         reload_all,
         reload_class,
         reload_state,
+        show_noti,
     },
 };
 use slint::{

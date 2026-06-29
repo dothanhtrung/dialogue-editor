@@ -44,7 +44,7 @@ export component AppWindow inherits Window {
         noti_box.show();
     }
 
-    VerticalBox {
+    VerticalLayout {
         TabWidget {
             orientation: Orientation.vertical;
 
@@ -73,6 +73,8 @@ export component AppWindow inherits Window {
             enable_crypt: root.enable_crypt;
             encrypt_key: root.encrypt_key;
 
+            height: 10%;
+
             browse_click => {
                 root.file_picker();
             }
@@ -87,6 +89,7 @@ export component AppWindow inherits Window {
         }
 
         StatusBar {
+            height: 5%;
             is_saved <=> root.is_saved;
         }
     }

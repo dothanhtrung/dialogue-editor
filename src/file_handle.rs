@@ -9,9 +9,9 @@ use crate::{
         NotiLevel,
         id_to_class,
         id_to_state,
+        reload_all,
         show_noti,
     },
-    content_tab::reload_all,
 };
 use rfd::FileDialog;
 use serde::{

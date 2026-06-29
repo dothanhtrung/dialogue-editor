@@ -1,7 +1,8 @@
 use crate::{
-    AppData, AppWindow, GNoti, Noti
+    Affect, AppData, AppWindow, Config, ContentLang, GContent, GNameMap, GNoti, Noti, StringId, UiDialogue
 };
-use slint::ComponentHandle;
+use regex_lite::Regex;
+use slint::{ComponentHandle, SharedString};
 use tracing::{
     error,
     info,
@@ -92,4 +93,211 @@ pub fn id_to_name(id: u64, data: &AppData, name_type: NameType) -> Option<String
     }
 
     None
+}
+
+pub fn reload_all(data: &mut AppData, ui: &AppWindow, config: &Config, search_class: &str, search_state: &str) {
+    reload_class(data, ui, search_class);
+    reload_state(data, ui, config, search_state);
+    reload_dialogue(data, ui, config);
+    reload_dialogue_detail(data, ui, config);
+}
+
+pub fn reload_class_map(data: &AppData, ui: &AppWindow, search_class: &str) {
+    let mut class_map: Vec<StringId> = Vec::new();
+    let re = Regex::new(search_class);
+    for (name, id) in data.class_name_map.iter() {
+        if search_class.is_empty() {
+            class_map.push(StringId {
+                id: id.to_string().into(),
+                name: name.into(),
+            });
+        } else if let Ok(re) = re.as_ref()
+            && re.is_match(name.as_str())
+        {
+            class_map.push(StringId {
+                id: id.to_string().into(),
+                name: name.into(),
+            });
+        }
+    }
+    ui.global::<GNameMap>().set_classes(class_map.as_slice().into());
+}
+
+pub fn reload_state_map(data: &AppData, ui: &AppWindow, search_state: &str) {
+    let re = Regex::new(search_state);
+    let mut state_map: Vec<StringId> = Vec::new();
+
+    for (name, id) in data.state_name_map.iter() {
+        if search_state.is_empty() {
+            state_map.push(StringId {
+                id: id.to_string().into(),
+                name: name.into(),
+            });
+        } else if let Ok(re) = re.as_ref()
+            && re.is_match(name.as_str())
+        {
+            state_map.push(StringId {
+                id: id.to_string().into(),
+                name: name.into(),
+            });
+        }
+    }
+    ui.global::<GNameMap>().set_states(state_map.as_slice().into());
+}
+
+pub fn reload_event_map(data: &AppData, ui: &AppWindow, search_event: &str) {
+    let re = Regex::new(search_event);
+    let mut event_map: Vec<StringId> = Vec::new();
+
+    for (name, id) in data.event_name_map.iter() {
+        if search_event.is_empty() {
+            event_map.push(StringId {
+                id: id.to_string().into(),
+                name: name.into(),
+            });
+        } else if let Ok(re) = re.as_ref()
+            && re.is_match(name.as_str())
+        {
+            event_map.push(StringId {
+                id: id.to_string().into(),
+                name: name.into(),
+            });
+        }
+    }
+    ui.global::<GNameMap>().set_events(event_map.as_slice().into());
+}
+
+/// Reload class section and clear state/dialogue section
+pub fn reload_class(data: &mut AppData, ui: &AppWindow, search_class: &str) {
+    let mut classes: Vec<SharedString> = Vec::new(); // For content tab
+
+    let re = Regex::new(search_class);
+    for id in data.dialogues.keys() {
+        let name = id_to_class(*id, data);
+        let name = match name {
+            Some(ret) => ret,
+            None => {
+                let id_string = id.to_string();
+                data.class_name_map.insert(id_string.clone(), *id);
+                id_string
+            }
+        };
+
+        if search_class.is_empty() {
+            classes.push(name.into());
+        } else if let Ok(re) = re.as_ref()
+            && re.is_match(&name)
+        {
+            classes.push(name.into());
+        }
+    }
+
+    reload_class_map(data, ui, search_class);
+
+    ui.global::<GContent>().set_classes(classes.as_slice().into());
+    ui.global::<GContent>().set_states([].into());
+    ui.global::<GContent>().set_dialogues([].into());
+    ui.global::<GContent>().set_dialogue(UiDialogue::default());
+}
+
+/// Reload state section and clear dialogue section
+pub fn reload_state(data: &mut AppData, ui: &AppWindow, config: &Config, search_state: &str) {
+    let re = Regex::new(search_state);
+
+    if let Some(class) = data.dialogues.get(&config.selected_class) {
+        let mut states: Vec<SharedString> = Vec::new();
+        for state_id in class.keys() {
+            let state_name = match id_to_state(*state_id, data) {
+                Some(ret) => ret,
+                None => {
+                    let id_string = state_id.to_string();
+                    data.state_name_map.insert(id_string.clone(), *state_id);
+                    id_string
+                }
+            };
+
+            if search_state.is_empty() {
+                states.push(state_name.into());
+            } else if let Ok(re) = re.as_ref()
+                && re.is_match(state_name.as_str())
+            {
+                states.push(state_name.into());
+            }
+        }
+        ui.global::<GContent>().set_states(states.as_slice().into());
+    }
+
+    reload_state_map(data, ui, search_state);
+
+    ui.global::<GContent>().set_dialogues([].into());
+    ui.global::<GContent>().set_dialogue(UiDialogue::default());
+}
+
+pub fn reload_dialogue(data: &AppData, ui: &AppWindow, config: &Config) {
+    if let Some(state) = data.dialogues.get(&config.selected_class)
+        && let Some(state_dialogs) = state.get(&config.selected_state)
+    {
+        let mut dialogues: Vec<SharedString> = Vec::new();
+        for dialog in state_dialogs {
+            if let Some((_, content)) = dialog.contents.first_key_value() {
+                dialogues.push(content.into());
+            } else {
+                dialogues.push(SharedString::new());
+            }
+        }
+
+        ui.global::<GContent>().set_dialogues(dialogues.as_slice().into());
+        ui.global::<GContent>().set_dialogue(UiDialogue::default());
+    }
+}
+
+pub fn reload_dialogue_detail(data: &AppData, ui: &AppWindow, config: &Config) {
+    if let Some(state) = data.dialogues.get(&config.selected_class)
+        && let Some(dialog_list) = state.get(&config.selected_state)
+        && let Some(dialog) = dialog_list.get(config.selected_dialog)
+    {
+        let mut contents: Vec<ContentLang> = Vec::new();
+        let mut affects: Vec<Affect> = Vec::new();
+        let mut events: Vec<SharedString> = Vec::new();
+        for (lang, content) in dialog.contents.iter() {
+            contents.push(ContentLang {
+                language: lang.to_639_3().to_string().into(),
+                content: content.into(),
+            });
+        }
+        for (class, state) in dialog.affects.iter() {
+            let class_name = id_to_class(*class, data).unwrap_or(class.to_string());
+            let state_name = id_to_state(*state, data).unwrap_or(state.to_string());
+            affects.push(Affect {
+                class: class_name.into(),
+                state: state_name.into(),
+            });
+        }
+        for event in dialog.events.iter() {
+            let event = id_to_event(*event, data).unwrap_or(event.to_string());
+            events.push(event.into());
+        }
+
+        let ui_dialogue = UiDialogue {
+            contents: contents.as_slice().into(),
+            affects: affects.as_slice().into(),
+            events: events.as_slice().into(),
+        };
+        ui.global::<GContent>().set_dialogue(ui_dialogue);
+
+        let mut lang_list: Vec<SharedString> = Vec::new();
+        for lang in config.langs.iter() {
+            lang_list.push(lang.to_639_3().to_string().into());
+        }
+        ui.global::<GContent>().set_lang_list(lang_list.as_slice().into());
+
+        let mut state_list: Vec<SharedString> = Vec::new();
+        for (state, _) in data.state_name_map.iter() {
+            state_list.push(state.into());
+        }
+        ui.global::<GContent>().set_state_list(state_list.as_slice().into());
+
+        reload_event_map(data, ui, "");
+        // TODO: event list
+    }
 }
