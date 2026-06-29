@@ -7,27 +7,20 @@ use crate::{
     AppData,
     AppWindow,
     Config,
-    GNameMap,
-    StringId,
     common::{
         NameType,
         NotiLevel,
         class_to_id,
         event_to_id,
         reload_all,
-        reload_class,
         reload_class_map,
-        reload_dialogue_detail,
         reload_event_map,
-        reload_state,
         reload_state_map,
         show_noti,
         state_to_id,
     },
 };
-use regex_lite::Regex;
 use slint::{
-    ComponentHandle,
     SharedString,
     Weak,
 };
@@ -217,13 +210,6 @@ fn add_new(data: &mut AppData, ui: &AppWindow, new_name: String, new_id: &str, n
         })
     };
 
-    for (_, old_id) in data.iter() {
-        if *old_id == new_id {
-            show_noti(ui, NotiLevel::Error, format!("Id already exists: {}", new_id).as_str());
-            return Err(());
-        }
-    }
-
     data.insert(new_name, new_id);
     Ok(new_id)
 }
@@ -262,9 +248,9 @@ fn update_id(
     }
 }
 
-pub fn reload_all_map(data: Rc<RefCell<AppData>>, config: Rc<RefCell<Config>>, ui: Weak<AppWindow>) -> impl Fn() {
+pub fn reload_all_map(data: Rc<RefCell<AppData>>, ui: Weak<AppWindow>) -> impl Fn() {
     move || {
-        let mut data = data.borrow_mut();
+        let data = data.borrow();
         let ui = ui.unwrap();
         reload_class_map(&data, &ui, "");
         reload_state_map(&data, &ui, "");

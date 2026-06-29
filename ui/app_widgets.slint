@@ -14,6 +14,32 @@ export component TabReload inherits Rectangle {
     background: reload();
 }
 
+export component SearchableComboBox inherits Rectangle {
+    in-out property <[string]> model;
+
+    callback filter(string);
+    callback submit(string);
+    
+    VerticalLayout {
+        edit := LineEdit {
+            edited(text) => {
+                filter(text);
+            }
+
+            accepted(text) => {
+                submit(text);
+            }
+        }
+
+        list := ComboBox {
+            model: model;
+            selected(current-value) => {
+                edit.text = current-value;
+            }
+        }
+    }
+}
+
 export component SelectableBox inherits Rectangle {
     in property <string> value;
     in property <bool> selected;

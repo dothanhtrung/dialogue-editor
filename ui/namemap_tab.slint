@@ -8,7 +8,7 @@ import {
     Palette,
     ListView,
 } from "std-widgets.slint";
-import { TabReload } from "app_widgets.slint";
+import { TabReload, EditableTextBox } from "app_widgets.slint";
 
 
 export struct StringId {
@@ -44,6 +44,7 @@ export component StringIdContainer inherits Rectangle {
     VerticalBox {
         ListView {
             for value[i] in values: HorizontalBox {
+                // TODO: Allow rename
                 Text {
                     text: value.name;
                 }

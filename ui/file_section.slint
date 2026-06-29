@@ -22,7 +22,7 @@ export component FileSection inherits Rectangle {
             ui_file_format := ComboBox {
                 width: 80px;
                 model: ["RON", "BIN"];
-                current-index: file_format; // FIXME: If this is manual changed from UI, it can't be changed from backend anymore
+                current-index <=> file_format; // FIXME: If this is manual changed from UI, it can't be changed from backend anymore
             }
 
             file_path_input := LineEdit {

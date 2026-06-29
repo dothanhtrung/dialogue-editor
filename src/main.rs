@@ -182,7 +182,7 @@ fn main() -> Result<(), Box<dyn Error>> {
     // --------------------- Namemap Tab -------------------------
 
     ui.global::<GNameMap>()
-        .on_reload(reload_all_map(data.clone(), config.clone(), ui.as_weak()));
+        .on_reload(reload_all_map(data.clone(), ui.as_weak()));
     ui.global::<GNameMap>()
         .on_delete_class(delete_class_map(data.clone(), config.clone(), ui.as_weak()));
     ui.global::<GNameMap>()
