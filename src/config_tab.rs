@@ -19,19 +19,13 @@ use std::{
     rc::Rc,
 };
 
-
 // TODO: Why is this delay?
 pub fn reload_config_ui(config: Rc<RefCell<Config>>, ui: Weak<AppWindow>) -> impl Fn() {
     move || {
         let config = config.borrow();
         let ui = ui.unwrap();
 
-        let mut lang_list: Vec<SharedString> = Vec::new();
-        for lang in config.langs.iter() {
-            lang_list.push(lang.to_string().into());
-        }
-
-        ui.global::<GConfig>().set_lang_list(lang_list.as_slice().into());
+        reload_lang_list(&config, &ui);
     }
 }
 
@@ -43,6 +37,7 @@ pub fn add_lang(config: Rc<RefCell<Config>>, ui: Weak<AppWindow>) -> impl Fn(Sha
         if let Some(lang) = Language::from_639_3(lang.as_str()) {
             if !config.langs.contains(&lang) {
                 config.langs.insert(lang);
+                reload_lang_list(&config, &ui);
             }
         } else {
             show_noti(
@@ -76,6 +71,7 @@ pub fn delete_lang(
                 }
             }
             config.langs.remove(&lang);
+            reload_lang_list(&config, &ui);
         } else {
             show_noti(
                 &ui,
@@ -84,4 +80,13 @@ pub fn delete_lang(
             );
         }
     }
+}
+
+pub fn reload_lang_list(config: &Config, ui: &AppWindow) {
+    let mut lang_list: Vec<SharedString> = Vec::new();
+    for lang in config.langs.iter() {
+        lang_list.push(lang.to_string().into());
+    }
+
+    ui.global::<GConfig>().set_lang_list(lang_list.as_slice().into());
 }

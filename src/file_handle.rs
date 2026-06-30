@@ -9,9 +9,9 @@ use crate::{
         NotiLevel,
         id_to_class,
         id_to_state,
-        reload_all,
         show_noti,
     },
+    content_tab::reload_content, namemap_tab::{reload_all_map, reload_namemap_tab},
 };
 use rfd::FileDialog;
 use serde::{
@@ -131,7 +131,8 @@ pub fn request_load(
                 config.selected_class = *first_state;
             }
 
-            reload_all(&mut data, &ui, &config, "", "");
+            reload_content(&mut data, &ui, &config, "", "");
+            reload_all_map(&data, &ui);
             ui.set_is_saved(true);
         }
     }

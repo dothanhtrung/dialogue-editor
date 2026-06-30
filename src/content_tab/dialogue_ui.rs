@@ -1,19 +1,24 @@
 use crate::{
+    Affect,
     AppData,
     AppWindow,
     Config,
+    ContentLang,
     Dialogue,
+    GContent,
     UiDialogue,
     common::{
         class_to_id,
         event_to_id,
-        reload_dialogue,
-        reload_dialogue_detail,
+        id_to_class,
+        id_to_event,
+        id_to_state,
         state_to_id,
     },
 };
 use isolang::Language;
 use slint::{
+    ComponentHandle,
     SharedString,
     Weak,
 };
@@ -220,5 +225,59 @@ pub fn delete_event(
             dialogue.events.remove(index as usize);
         }
         reload_dialogue_detail(&data, &ui, &config);
+    }
+}
+
+pub fn reload_dialogue(data: &AppData, ui: &AppWindow, config: &Config) {
+    if let Some(state) = data.dialogues.get(&config.selected_class)
+        && let Some(state_dialogs) = state.get(&config.selected_state)
+    {
+        let mut dialogues: Vec<SharedString> = Vec::new();
+        for dialog in state_dialogs {
+            if let Some((_, content)) = dialog.contents.first_key_value() {
+                dialogues.push(content.into());
+            } else {
+                dialogues.push(SharedString::new());
+            }
+        }
+
+        ui.global::<GContent>().set_dialogues(dialogues.as_slice().into());
+        ui.global::<GContent>().set_dialogue(UiDialogue::default());
+    }
+}
+
+pub fn reload_dialogue_detail(data: &AppData, ui: &AppWindow, config: &Config) {
+    if let Some(state) = data.dialogues.get(&config.selected_class)
+        && let Some(dialog_list) = state.get(&config.selected_state)
+        && let Some(dialog) = dialog_list.get(config.selected_dialog)
+    {
+        let mut contents: Vec<ContentLang> = Vec::new();
+        let mut affects: Vec<Affect> = Vec::new();
+        let mut events: Vec<SharedString> = Vec::new();
+        for (lang, content) in dialog.contents.iter() {
+            contents.push(ContentLang {
+                language: lang.to_639_3().to_string().into(),
+                content: content.into(),
+            });
+        }
+        for (class, state) in dialog.affects.iter() {
+            let class_name = id_to_class(*class, data).unwrap_or(class.to_string());
+            let state_name = id_to_state(*state, data).unwrap_or(state.to_string());
+            affects.push(Affect {
+                class: class_name.into(),
+                state: state_name.into(),
+            });
+        }
+        for event in dialog.events.iter() {
+            let event = id_to_event(*event, data).unwrap_or(event.to_string());
+            events.push(event.into());
+        }
+
+        let ui_dialogue = UiDialogue {
+            contents: contents.as_slice().into(),
+            affects: affects.as_slice().into(),
+            events: events.as_slice().into(),
+        };
+        ui.global::<GContent>().set_dialogue(ui_dialogue);
     }
 }

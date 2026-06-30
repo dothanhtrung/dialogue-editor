@@ -12,6 +12,7 @@ use crate::config_tab::*;
 use crate::content_tab::class_ui::*;
 use crate::content_tab::dialogue_ui::*;
 use crate::content_tab::state_ui::*;
+use crate::content_tab::*;
 use crate::file_handle::*;
 use crate::namemap_tab::*;
 use isolang::Language;
@@ -115,6 +116,8 @@ fn main() -> Result<(), Box<dyn Error>> {
     #[cfg(feature = "crypt")]
     ui.set_enable_crypt(true);
 
+    reload_lang_list(&config, &ui);
+
     let config = Rc::new(RefCell::new(config));
     let data = Rc::new(RefCell::new(data));
 
@@ -170,7 +173,7 @@ fn main() -> Result<(), Box<dyn Error>> {
             let ui = ui_handle.unwrap();
             let mut data = data.borrow_mut();
             let mut config = config.borrow_mut();
-            reload_all(&mut data, &ui, &config, search_class.as_str(), search_state.as_str());
+            reload_content(&mut data, &ui, &config, search_class.as_str(), search_state.as_str());
 
             if !search_class.is_empty() {
                 config.selected_class = 0;
@@ -184,25 +187,25 @@ fn main() -> Result<(), Box<dyn Error>> {
     // --------------------- Namemap Tab -------------------------
 
     ui.global::<GNameMap>()
-        .on_reload(reload_all_map(data.clone(), ui.as_weak()));
+        .on_reload(reload_namemap_tab(data.clone(), ui.as_weak()));
     ui.global::<GNameMap>()
-        .on_delete_class(delete_class_map(data.clone(), config.clone(), ui.as_weak()));
+        .on_delete_class(delete_class_map(data.clone(), ui.as_weak()));
     ui.global::<GNameMap>()
-        .on_delete_state(delete_state_map(data.clone(), config.clone(), ui.as_weak()));
+        .on_delete_state(delete_state_map(data.clone(), ui.as_weak()));
     ui.global::<GNameMap>()
-        .on_delete_event(delete_event_map(data.clone(), config.clone(), ui.as_weak()));
+        .on_delete_event(delete_event_map(data.clone(), ui.as_weak()));
     ui.global::<GNameMap>()
-        .on_update_class_id(update_class_id(data.clone(), config.clone(), ui.as_weak()));
+        .on_update_class_id(update_class_id(data.clone(), ui.as_weak()));
     ui.global::<GNameMap>()
-        .on_update_state_id(update_state_id(data.clone(), config.clone(), ui.as_weak()));
+        .on_update_state_id(update_state_id(data.clone(), ui.as_weak()));
     ui.global::<GNameMap>()
-        .on_update_event_id(update_event_id(data.clone(), config.clone(), ui.as_weak()));
+        .on_update_event_id(update_event_id(data.clone(), ui.as_weak()));
     ui.global::<GNameMap>()
-        .on_new_class(add_new_class(data.clone(), config.clone(), ui.as_weak()));
+        .on_new_class(add_new_class(data.clone(), ui.as_weak()));
     ui.global::<GNameMap>()
-        .on_new_state(add_new_state(data.clone(), config.clone(), ui.as_weak()));
+        .on_new_state(add_new_state(data.clone(), ui.as_weak()));
     ui.global::<GNameMap>()
-        .on_new_event(add_new_event(data.clone(), config.clone(), ui.as_weak()));
+        .on_new_event(add_new_event(data.clone(), ui.as_weak()));
 
     // ----------------------- Config Tab ---------------------------
     ui.global::<GConfig>()

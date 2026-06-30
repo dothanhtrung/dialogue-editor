@@ -2,16 +2,18 @@ use crate::{
     AppData,
     AppWindow,
     Config,
+    GContent,
+    UiDialogue,
     common::{
         NotiLevel,
         class_to_id,
-        reload_all,
-        reload_class,
-        reload_state,
+        id_to_class,
         show_noti,
-    },
+    }, content_tab::{reload_content, state_ui::reload_state},
 };
+use regex_lite::Regex;
 use slint::{
+    ComponentHandle,
     SharedString,
     Weak,
 };
@@ -68,7 +70,7 @@ pub fn rename_class(
             if let Some(value) = data.dialogues.remove(&old_class_id) {
                 data.dialogues.insert(new_class_id, value);
                 config.selected_class = new_class_id;
-                reload_all(&mut data, &ui, &config, "", "");
+                reload_content(&mut data, &ui, &config, "", "");
             }
         } else {
             show_noti(&ui, NotiLevel::Error, format!("Duplicated class {}", new_name).as_str());
@@ -100,4 +102,35 @@ pub fn select_class(
         config.selected_class = class_id;
         reload_state(&mut data, &ui, &config, "");
     }
+}
+
+/// Reload class section and clear state/dialogue section
+pub fn reload_class(data: &mut AppData, ui: &AppWindow, search_class: &str) {
+    let mut classes: Vec<SharedString> = Vec::new(); // For content tab
+
+    let re = Regex::new(search_class);
+    for id in data.dialogues.keys() {
+        let name = id_to_class(*id, data);
+        let name = match name {
+            Some(ret) => ret,
+            None => {
+                let id_string = id.to_string();
+                data.class_name_map.insert(id_string.clone(), *id);
+                id_string
+            }
+        };
+
+        if search_class.is_empty() {
+            classes.push(name.into());
+        } else if let Ok(re) = re.as_ref()
+            && re.is_match(&name)
+        {
+            classes.push(name.into());
+        }
+    }
+
+    ui.global::<GContent>().set_classes(classes.as_slice().into());
+    ui.global::<GContent>().set_states([].into());
+    ui.global::<GContent>().set_dialogues([].into());
+    ui.global::<GContent>().set_dialogue(UiDialogue::default());
 }
