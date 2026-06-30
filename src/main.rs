@@ -2,15 +2,16 @@
 #![cfg_attr(not(debug_assertions), windows_subsystem = "windows")]
 
 mod common;
+mod config_tab;
 mod content_tab;
 mod file_handle;
 mod namemap_tab;
 
 use crate::common::*;
+use crate::config_tab::*;
 use crate::content_tab::class_ui::*;
 use crate::content_tab::dialogue_ui::*;
 use crate::content_tab::state_ui::*;
-use crate::content_tab::*;
 use crate::file_handle::*;
 use crate::namemap_tab::*;
 use isolang::Language;
@@ -19,6 +20,7 @@ use serde::{
     Serialize,
 };
 use slint::Model;
+use std::collections::BTreeSet;
 use std::{
     cell::RefCell,
     collections::BTreeMap,
@@ -83,7 +85,7 @@ struct Config {
     #[serde(default)]
     save_without_name: bool,
     #[serde(default)]
-    langs: Vec<Language>,
+    langs: BTreeSet<Language>,
 }
 
 impl Config {
@@ -201,6 +203,14 @@ fn main() -> Result<(), Box<dyn Error>> {
         .on_new_state(add_new_state(data.clone(), config.clone(), ui.as_weak()));
     ui.global::<GNameMap>()
         .on_new_event(add_new_event(data.clone(), config.clone(), ui.as_weak()));
+
+    // ----------------------- Config Tab ---------------------------
+    ui.global::<GConfig>()
+        .on_reload(reload_config_ui(config.clone(), ui.as_weak()));
+    ui.global::<GConfig>()
+        .on_add_lang(add_lang(config.clone(), ui.as_weak()));
+    ui.global::<GConfig>()
+        .on_delete_lang(delete_lang(data.clone(), config.clone(), ui.as_weak()));
 
     ui.run()?;
 

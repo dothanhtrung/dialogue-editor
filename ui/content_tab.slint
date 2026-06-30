@@ -114,6 +114,15 @@ export component DialogueBox inherits Rectangle {
                 }
             }
 
+            submit_btn := Button {
+                text: "✅";
+                visible: false;
+                clicked => {
+                    GContent.update_content(GContent.dialogue);
+                    self.visible = false;
+                };
+            }
+
             HorizontalBox {
                 height: 20%;
                 new_lang := ComboBox {
@@ -143,23 +152,12 @@ export component DialogueBox inherits Rectangle {
                 ListView {
                     // TODO: Add "Go to" the affected state
                     for affect[i] in GContent.dialogue.affects: HorizontalBox {
-                        ComboBox {
-                            model: class_list;
-                            current-value: affect.class;
-                            selected(current-value) => {
-                                GContent.dialogue.affects[i].class = current-value;
-                                submit_btn.visible = true;
-                            }
+                        Text {
+                            text: affect.class;
                         }
 
-                        ComboBox {
-                            // TODO: Filter state by class
-                            model: GContent.state_list;
-                            current-value: affect.state;
-                            selected(current-value) => {
-                                GContent.dialogue.affects[i].state = current-value;
-                                submit_btn.visible = true;
-                            }
+                        Text {
+                            text: affect.state;
                         }
 
                         Button {
@@ -177,7 +175,7 @@ export component DialogueBox inherits Rectangle {
                     model: class_list;
                     current-index: 0;
                 }
-
+                // TODO: Filter state by class
                 new_affect_state := ComboBox {
                     model: GContent.state_list;
                     current-index: 0;
@@ -226,20 +224,11 @@ export component DialogueBox inherits Rectangle {
                 }
             }
         }
-
-        submit_btn := Button {
-            text: "✅";
-            visible: false;
-            clicked => {
-                GContent.update_content(GContent.dialogue);
-                self.visible = false;
-            };
-        }
     }
 }
 
 // TODO: Reload on change tab
-export component ContentContainer inherits TabReload {
+export component ContentTab inherits TabReload {
     in-out property <bool> is_saved;
     property <int> selecting_class: -1;
     property <int> selecting_state: -1;

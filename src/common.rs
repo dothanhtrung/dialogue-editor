@@ -1,8 +1,21 @@
 use crate::{
-    Affect, AppData, AppWindow, Config, ContentLang, GContent, GNameMap, GNoti, Noti, StringId, UiDialogue
+    Affect,
+    AppData,
+    AppWindow,
+    Config,
+    ContentLang,
+    GContent,
+    GNameMap,
+    GNoti,
+    Noti,
+    StringId,
+    UiDialogue,
 };
 use regex_lite::Regex;
-use slint::{ComponentHandle, SharedString};
+use slint::{
+    ComponentHandle,
+    SharedString,
+};
 use tracing::{
     error,
     info,
@@ -126,6 +139,7 @@ pub fn reload_class_map(data: &AppData, ui: &AppWindow, search_class: &str) {
 pub fn reload_state_map(data: &AppData, ui: &AppWindow, search_state: &str) {
     let re = Regex::new(search_state);
     let mut state_map: Vec<StringId> = Vec::new();
+    let mut state_list: Vec<SharedString> = Vec::new();
 
     for (name, id) in data.state_name_map.iter() {
         if search_state.is_empty() {
@@ -141,13 +155,18 @@ pub fn reload_state_map(data: &AppData, ui: &AppWindow, search_state: &str) {
                 name: name.into(),
             });
         }
+
+        state_list.push(name.into());
     }
+
+    ui.global::<GContent>().set_state_list(state_list.as_slice().into());
     ui.global::<GNameMap>().set_states(state_map.as_slice().into());
 }
 
 pub fn reload_event_map(data: &AppData, ui: &AppWindow, search_event: &str) {
     let re = Regex::new(search_event);
     let mut event_map: Vec<StringId> = Vec::new();
+    let mut event_list: Vec<SharedString> = Vec::new();
 
     for (name, id) in data.event_name_map.iter() {
         if search_event.is_empty() {
@@ -163,7 +182,11 @@ pub fn reload_event_map(data: &AppData, ui: &AppWindow, search_event: &str) {
                 name: name.into(),
             });
         }
+
+        event_list.push(name.into());
     }
+
+    ui.global::<GContent>().set_event_list(event_list.as_slice().into());
     ui.global::<GNameMap>().set_events(event_map.as_slice().into());
 }
 
@@ -290,14 +313,6 @@ pub fn reload_dialogue_detail(data: &AppData, ui: &AppWindow, config: &Config) {
             lang_list.push(lang.to_639_3().to_string().into());
         }
         ui.global::<GContent>().set_lang_list(lang_list.as_slice().into());
-
-        let mut state_list: Vec<SharedString> = Vec::new();
-        for (state, _) in data.state_name_map.iter() {
-            state_list.push(state.into());
-        }
-        ui.global::<GContent>().set_state_list(state_list.as_slice().into());
-
-        reload_event_map(data, ui, "");
         // TODO: event list
     }
 }

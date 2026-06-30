@@ -1,0 +1,68 @@
+
+import { TabReload } from "app_widgets.slint";
+import {
+    Palette,
+    VerticalBox,
+    Button,
+    LineEdit,
+    ListView,
+} from "std-widgets.slint";
+
+export global GConfig {
+    in-out property <[string]> lang_list;
+    in-out property <[string]> all_langs;
+
+    pure callback reload();
+    callback delete_lang(string);
+    callback add_lang(string);
+}
+
+export component Tag inherits Rectangle {
+    in property <string> value;
+    callback delete();
+
+    HorizontalLayout {
+        Text {
+            text <=> value;
+        }
+
+        Button {
+            text: "x";
+            clicked => {
+                delete();
+            }
+        }
+    }
+}
+
+export component ConfigTab inherits TabReload {
+    reload => {
+        GConfig.reload();
+        Palette.background
+    }
+
+    VerticalBox {
+        Text {
+            text: "Supported languages";
+        }
+
+        ListView {
+            for lang[i] in GConfig.lang_list: Tag {
+                value: lang;
+
+                delete => { GConfig.delete_lang(lang); }
+            }
+        }
+
+        new_lang := LineEdit {
+            placeholder-text: "Language code in ISO-639-3";
+        }
+
+        Button {
+            text: "Add";
+            clicked => {
+                GConfig.add_lang(new_lang.text);
+            }
+        }
+    }
+}

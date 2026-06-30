@@ -16,10 +16,11 @@ import {
 import { StatusBar } from "status_bar.slint";
 import { FileSection } from "file_section.slint";
 import { NotiBox, GNoti } from "noti.slint";
-import { StringId, GNameMap, NameMapContainer } from "namemap_tab.slint";
-import { ContentContainer, GContent } from "content_tab.slint";
+import { StringId, GNameMap, NameMapTab } from "namemap_tab.slint";
+import { ContentTab, GContent } from "content_tab.slint";
+import {ConfigTab, GConfig} from "config_tab.slint";
 
-export { GNoti, GNameMap, GContent }
+export { GNoti, GNameMap, GContent, GConfig }
 
 // TODO: Config UI
 
@@ -51,7 +52,7 @@ export component AppWindow inherits Window {
             Tab {
                 title: "C";
 
-                ContentContainer {
+                ContentTab {
                     is_saved <=> root.is_saved;
                 }
             }
@@ -59,11 +60,13 @@ export component AppWindow inherits Window {
             Tab {
                 title: "E";
 
-                NameMapContainer { }
+                NameMapTab { }
             }
 
             Tab {
                 title: "S";
+
+                ConfigTab {}
             }
         }
 
