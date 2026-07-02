@@ -6,6 +6,7 @@ use std::{
 use crate::{
     AppData,
     AppWindow,
+    GContent,
     GNameMap,
     StringId,
     common::{
@@ -24,6 +25,8 @@ use slint::{
     Weak,
 };
 use xxhash_rust::xxh3::xxh3_64;
+
+// TODO: Update selected class, selected state
 
 pub fn delete_class_map(data: Rc<RefCell<AppData>>, ui: Weak<AppWindow>) -> impl Fn(SharedString) {
     move |name| {
@@ -213,27 +216,38 @@ pub fn reload_namemap_tab(data: Rc<RefCell<AppData>>, ui: Weak<AppWindow>) -> im
 }
 
 pub fn reload_all_map(data: &AppData, ui: &AppWindow) {
-    reload_class_map(&data, &ui, "");
-    reload_state_map(&data, &ui, "");
-    reload_event_map(&data, &ui, "");
+    reload_class_map(data, ui, "");
+    reload_state_map(data, ui, "");
+    reload_event_map(data, ui, "");
 }
 
 fn reload_class_map(data: &AppData, ui: &AppWindow, search: &str) {
-    let class_map = reload_map(&data, NameType::Class, search);
+    let class_map = reload_map(data, NameType::Class, search);
     ui.global::<GNameMap>().set_classes(class_map.as_slice().into());
 }
 
 fn reload_state_map(data: &AppData, ui: &AppWindow, search: &str) {
-    let class_map = reload_map(&data, NameType::State, search);
+    let class_map = reload_map(data, NameType::State, search);
     ui.global::<GNameMap>().set_states(class_map.as_slice().into());
+
+    let mut state_list: Vec<SharedString> = Vec::new();
+    for state in data.state_name_map.keys() {
+        state_list.push(state.into());
+    }
+    ui.global::<GContent>().set_state_list(state_list.as_slice().into());
 }
 
 // TODO: Why is this delay compare to reload_class_map and reload_state_map?
 fn reload_event_map(data: &AppData, ui: &AppWindow, search: &str) {
-    let event_map = reload_map(&data, NameType::Event, search);
+    let event_map = reload_map(data, NameType::Event, search);
 
-    // TODO: Where should event_list be updated?
     ui.global::<GNameMap>().set_events(event_map.as_slice().into());
+
+    let mut event_list: Vec<SharedString> = Vec::new();
+    for event in data.event_name_map.keys() {
+        event_list.push(event.into());
+    }
+    ui.global::<GContent>().set_event_list(event_list.as_slice().into());
 }
 
 fn reload_map(data: &AppData, name_type: NameType, search: &str) -> Vec<StringId> {

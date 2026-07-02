@@ -9,7 +9,11 @@ use crate::{
         class_to_id,
         id_to_class,
         show_noti,
-    }, content_tab::{reload_content, state_ui::reload_state},
+    },
+    content_tab::{
+        reload_content,
+        state_ui::reload_state,
+    },
 };
 use regex_lite::Regex;
 use slint::{
@@ -46,6 +50,10 @@ pub fn add_class(
         config.selected_class = class_id;
         config.selected_state = 0;
         reload_class(&mut data, &ui, "");
+
+        ui.global::<GContent>().set_states([].into());
+        ui.global::<GContent>().set_dialogues([].into());
+        ui.global::<GContent>().set_dialogue(UiDialogue::default());
     }
 }
 
@@ -70,7 +78,7 @@ pub fn rename_class(
             if let Some(value) = data.dialogues.remove(&old_class_id) {
                 data.dialogues.insert(new_class_id, value);
                 config.selected_class = new_class_id;
-                reload_content(&mut data, &ui, &config, "", "");
+                reload_class(&mut data, &ui, "");
             }
         } else {
             show_noti(&ui, NotiLevel::Error, format!("Duplicated class {}", new_name).as_str());
@@ -78,14 +86,24 @@ pub fn rename_class(
     }
 }
 
-pub fn remove_class(data: Rc<RefCell<AppData>>, ui_handle: Weak<AppWindow>) -> impl Fn(SharedString) {
+pub fn remove_class(
+    data: Rc<RefCell<AppData>>,
+    config: Rc<RefCell<Config>>,
+    ui_handle: Weak<AppWindow>,
+) -> impl Fn(SharedString) {
     move |class_name| {
         let ui = ui_handle.unwrap();
         let mut data = data.borrow_mut();
+        let mut config = config.borrow_mut();
         let class_id = class_to_id(class_name.as_str(), &mut data);
-        // data.class_name_map.remove(&class_name.to_string());
+
         data.dialogues.remove(&class_id);
+        config.selected_class = 0;
         reload_class(&mut data, &ui, "");
+
+        ui.global::<GContent>().set_states([].into());
+        ui.global::<GContent>().set_dialogues([].into());
+        ui.global::<GContent>().set_dialogue(UiDialogue::default());
     }
 }
 
@@ -104,7 +122,6 @@ pub fn select_class(
     }
 }
 
-/// Reload class section and clear state/dialogue section
 pub fn reload_class(data: &mut AppData, ui: &AppWindow, search_class: &str) {
     let mut classes: Vec<SharedString> = Vec::new(); // For content tab
 
@@ -130,7 +147,4 @@ pub fn reload_class(data: &mut AppData, ui: &AppWindow, search_class: &str) {
     }
 
     ui.global::<GContent>().set_classes(classes.as_slice().into());
-    ui.global::<GContent>().set_states([].into());
-    ui.global::<GContent>().set_dialogues([].into());
-    ui.global::<GContent>().set_dialogue(UiDialogue::default());
 }

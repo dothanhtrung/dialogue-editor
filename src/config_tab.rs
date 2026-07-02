@@ -1,12 +1,8 @@
 use crate::{
-    AppData,
-    AppWindow,
-    Config,
-    GConfig,
-    common::{
+    AppData, AppWindow, Config, GConfig, GContent, common::{
         NotiLevel,
         show_noti,
-    },
+    }
 };
 use isolang::Language;
 use slint::{
@@ -89,4 +85,10 @@ pub fn reload_lang_list(config: &Config, ui: &AppWindow) {
     }
 
     ui.global::<GConfig>().set_lang_list(lang_list.as_slice().into());
+
+    let mut lang_list: Vec<SharedString> = Vec::new();
+    for lang in config.langs.iter() {
+        lang_list.push(lang.to_639_3().to_string().into());
+    }
+    ui.global::<GContent>().set_lang_list(lang_list.as_slice().into());
 }

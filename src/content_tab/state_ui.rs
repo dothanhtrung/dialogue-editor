@@ -48,6 +48,9 @@ pub fn add_state(
                 Vec::new()
             });
             reload_state(&mut data, &ui, &config, "");
+
+            ui.global::<GContent>().set_dialogues([].into());
+            ui.global::<GContent>().set_dialogue(UiDialogue::default());
         }
     }
 }
@@ -75,11 +78,16 @@ pub fn remove_state(
     move |state_name| {
         let ui = ui_handle.unwrap();
         let mut data = data.borrow_mut();
-        let config = config.borrow();
+        let mut config = config.borrow_mut();
         let state_id = state_to_id(state_name.as_str(), &mut data);
+
         if let Some(class) = data.dialogues.get_mut(&config.selected_class) {
             class.remove(&state_id);
+            config.selected_state = 0;
             reload_state(&mut data, &ui, &config, "");
+
+            ui.global::<GContent>().set_dialogues([].into());
+            ui.global::<GContent>().set_dialogue(UiDialogue::default());
         }
     }
 }
@@ -105,7 +113,7 @@ pub fn rename_state(
             if let Some(dialog) = data.dialogues.remove(&old_id) {
                 data.dialogues.insert(new_id, dialog);
                 config.selected_state = new_id;
-                reload_content(&mut data, &ui, &config, "", "");
+                reload_state(&mut data, &ui, &config, "");
             }
         } else {
             show_noti(&ui, NotiLevel::Error, format!("Duplicated state {}", new_name).as_str());
@@ -139,7 +147,4 @@ pub fn reload_state(data: &mut AppData, ui: &AppWindow, config: &Config, search_
         }
         ui.global::<GContent>().set_states(states.as_slice().into());
     }
-
-    ui.global::<GContent>().set_dialogues([].into());
-    ui.global::<GContent>().set_dialogue(UiDialogue::default());
 }

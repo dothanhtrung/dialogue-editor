@@ -131,7 +131,7 @@ fn main() -> Result<(), Box<dyn Error>> {
     ui.global::<GContent>()
         .on_rename_class(rename_class(data.clone(), config.clone(), ui.as_weak()));
     ui.global::<GContent>()
-        .on_remove_class(remove_class(data.clone(), ui.as_weak()));
+        .on_remove_class(remove_class(data.clone(), config.clone(), ui.as_weak()));
     ui.global::<GContent>()
         .on_select_class(select_class(data.clone(), config.clone(), ui.as_weak()));
 

@@ -138,6 +138,7 @@ pub fn request_load(
     }
 }
 
+// TODO: Shortcut Ctrl-S
 pub fn request_save(
     data: Rc<RefCell<AppData>>,
     config: Rc<RefCell<Config>>,
