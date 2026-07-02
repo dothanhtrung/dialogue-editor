@@ -15,16 +15,6 @@ use std::{
     rc::Rc,
 };
 
-// TODO: Why is this delay?
-pub fn reload_config_ui(config: Rc<RefCell<Config>>, ui: Weak<AppWindow>) -> impl Fn() {
-    move || {
-        let config = config.borrow();
-        let ui = ui.unwrap();
-
-        reload_lang_list(&config, &ui);
-    }
-}
-
 pub fn add_lang(config: Rc<RefCell<Config>>, ui: Weak<AppWindow>) -> impl Fn(SharedString) {
     move |lang| {
         let mut config = config.borrow_mut();

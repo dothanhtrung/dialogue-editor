@@ -2,6 +2,7 @@ import {
     TabReload,
     EditableTextBox,
     SelectableBox,
+    SearchBox,
 } from "app_widgets.slint";
 import {
     HorizontalBox,
@@ -62,7 +63,10 @@ export global GContent {
     callback delete_affect(string);
     callback delete_event(int);
 
-    callback search(string, string);
+    // TODO: Search case-insensitive
+    callback search_class(string);
+    callback search_state(string);
+    callback search_dialogue(string);
 }
 
 // TODO: Add is_saved
@@ -239,11 +243,8 @@ export component ContentTab inherits TabReload {
             width: 20%;
 
             VerticalBox {
-                LineEdit {
-                    placeholder-text: "Search...";
-                    accepted(text) => {
-                        GContent.search(text, "");
-                    }
+                SearchBox {
+                    search(text) => { GContent.search_class(text); }
                 }
 
                 ListView {
@@ -297,13 +298,8 @@ export component ContentTab inherits TabReload {
             width: 20%;
 
             VerticalBox {
-
-                LineEdit {
-                    placeholder-text: "Search...";
-                    accepted(text) => {
-                        // TODO: Separate class search and state search
-                        GContent.search("", text);
-                    }
+                SearchBox {
+                    search(text) => { GContent.search_state(text); }
                 }
 
                 ListView {
@@ -359,10 +355,8 @@ export component ContentTab inherits TabReload {
             width: 20%;
 
             VerticalBox {
-
-                LineEdit {
-                    placeholder-text: "Search...";
-                    visible: false;
+                SearchBox {
+                    search(text) => { GContent.search_dialogue(text); }
                 }
 
                 ListView {

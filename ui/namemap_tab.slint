@@ -8,7 +8,7 @@ import {
     Palette,
     ListView,
 } from "std-widgets.slint";
-import { TabReload, EditableTextBox } from "app_widgets.slint";
+import { TabReload, EditableTextBox, SearchBox } from "app_widgets.slint";
 
 
 export struct StringId {
@@ -21,7 +21,6 @@ export global GNameMap {
     in-out property <[StringId]> states;
     in-out property <[StringId]> events;
 
-    pure callback reload();
     callback delete_class(string);
     callback delete_state(string);
     callback delete_event(string);
@@ -31,6 +30,9 @@ export global GNameMap {
     callback new_class(string, string); // name ,id
     callback new_state(string, string); // name ,id
     callback new_event(string, string); // name ,id
+    callback search_class(string);
+    callback search_state(string);
+    callback search_event(string);
 }
 
 
@@ -40,8 +42,13 @@ export component StringIdContainer inherits Rectangle {
     callback delete(string);
     callback update(string, string); // name, id
     callback new(string, string);
+    callback search(string);
 
     VerticalBox {
+        SearchBox {
+            search(text) => { root.search(text); }
+        }
+
         ListView {
             for value[i] in values: HorizontalBox {
                 // TODO: Allow rename
@@ -121,6 +128,9 @@ export component NameMapTab inherits TabReload {
             new(name, id) => {
                 GNameMap.new_class(name, id);
             }
+            search(text) => {
+                GNameMap.search_class(text);
+            }
         }
 
         StringIdContainer {
@@ -135,6 +145,7 @@ export component NameMapTab inherits TabReload {
             new(name, id) => {
                 GNameMap.new_state(name, id);
             }
+            search(text) => { GNameMap.search_state(text); }
         }
 
         StringIdContainer {
@@ -149,6 +160,7 @@ export component NameMapTab inherits TabReload {
             new(name, id) => {
                 GNameMap.new_event(name, id);
             }
+            search(text) => { GNameMap.search_event(text); }
         }
     }
 }

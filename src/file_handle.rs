@@ -11,7 +11,8 @@ use crate::{
         id_to_state,
         show_noti,
     },
-    content_tab::reload_content, namemap_tab::{reload_all_map, reload_namemap_tab},
+    content_tab::reload_content,
+    namemap_tab::reload_all_map,
 };
 use rfd::FileDialog;
 use serde::{
@@ -131,7 +132,7 @@ pub fn request_load(
                 config.selected_class = *first_state;
             }
 
-            reload_content(&mut data, &ui, &config, "", "");
+            reload_content(&mut data, &ui, &config);
             reload_all_map(&data, &ui);
             ui.set_is_saved(true);
         }

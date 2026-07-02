@@ -2,15 +2,29 @@ pub mod class_ui;
 pub mod dialogue_ui;
 pub mod state_ui;
 
-use slint::{ComponentHandle, SharedString};
 use crate::{
-    AppData, AppWindow, Config, GContent, content_tab::{class_ui::reload_class, dialogue_ui::{reload_dialogue, reload_dialogue_detail}, state_ui::reload_state}
+    AppData,
+    AppWindow,
+    Config,
+    GContent,
+    content_tab::{
+        class_ui::reload_class,
+        dialogue_ui::{
+            reload_dialogue,
+            reload_dialogue_detail,
+        },
+        state_ui::reload_state,
+    },
+};
+use slint::{
+    ComponentHandle,
+    SharedString,
 };
 
-pub fn reload_content(data: &mut AppData, ui: &AppWindow, config: &Config, search_class: &str, search_state: &str) {
-    reload_class(data, ui, search_class);
-    reload_state(data, ui, config, search_state);
-    reload_dialogue(data, ui, config);
+pub fn reload_content(data: &mut AppData, ui: &AppWindow, config: &Config) {
+    reload_class(data, ui, "");
+    reload_state(data, ui, config, "");
+    reload_dialogue(data, ui, config, "");
     reload_dialogue_detail(data, ui, config);
 
     let mut lang_list: Vec<SharedString> = Vec::new();

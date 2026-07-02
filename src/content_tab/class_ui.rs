@@ -10,10 +10,7 @@ use crate::{
         id_to_class,
         show_noti,
     },
-    content_tab::{
-        reload_content,
-        state_ui::reload_state,
-    },
+    content_tab::state_ui::reload_state,
 };
 use regex_lite::Regex;
 use slint::{
@@ -119,6 +116,17 @@ pub fn select_class(
         let class_id = class_to_id(class_name.as_str(), &mut data);
         config.selected_class = class_id;
         reload_state(&mut data, &ui, &config, "");
+    }
+}
+
+pub fn search_class(data: Rc<RefCell<AppData>>, ui_handle: Weak<AppWindow>) -> impl Fn(SharedString) {
+    move |search| {
+        let ui = ui_handle.unwrap();
+        let mut data = data.borrow_mut();
+        reload_class(&mut data, &ui, search.as_str());
+        ui.global::<GContent>().set_states([].into());
+        ui.global::<GContent>().set_dialogues([].into());
+        ui.global::<GContent>().set_dialogue(UiDialogue::default());
     }
 }
 

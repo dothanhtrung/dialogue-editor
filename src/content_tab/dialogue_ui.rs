@@ -17,6 +17,7 @@ use crate::{
     },
 };
 use isolang::Language;
+use regex_lite::Regex;
 use slint::{
     ComponentHandle,
     SharedString,
@@ -38,7 +39,7 @@ pub fn add_dialogue(data: Rc<RefCell<AppData>>, config: Rc<RefCell<Config>>, ui_
         {
             dialogues.push(Dialogue::default());
             config.selected_dialog = dialogues.len() - 1;
-            reload_dialogue(&data, &ui, &config);
+            reload_dialogue(&data, &ui, &config, "");
         }
     }
 }
@@ -73,7 +74,7 @@ pub fn remove_dialogue(
             && dialog_id < state.len()
         {
             state.remove(dialog_id);
-            reload_dialogue(&data, &ui, &config);
+            reload_dialogue(&data, &ui, &config, "");
         }
     }
 }
@@ -228,16 +229,39 @@ pub fn delete_event(
     }
 }
 
-pub fn reload_dialogue(data: &AppData, ui: &AppWindow, config: &Config) {
+pub fn search_dialogue(
+    data: Rc<RefCell<AppData>>,
+    config: Rc<RefCell<Config>>,
+    ui_handle: Weak<AppWindow>,
+) -> impl Fn(SharedString) {
+    move |search| {
+        let data = data.borrow();
+        let config = config.borrow();
+        let ui = ui_handle.unwrap();
+
+        reload_dialogue(&data, &ui, &config, search.as_str());
+    }
+}
+
+pub fn reload_dialogue(data: &AppData, ui: &AppWindow, config: &Config, search: &str) {
     if let Some(state) = data.dialogues.get(&config.selected_class)
         && let Some(state_dialogs) = state.get(&config.selected_state)
     {
         let mut dialogues: Vec<SharedString> = Vec::new();
+        let re = Regex::new(search);
         for dialog in state_dialogs {
-            if let Some((_, content)) = dialog.contents.first_key_value() {
-                dialogues.push(content.into());
+            let content = if !config.langs.is_empty()
+                && let Some(content) = dialog.contents.get(config.langs.first().unwrap())
+            {
+                content.into()
+            } else if let Some((_, content)) = dialog.contents.first_key_value() {
+                content.into()
             } else {
-                dialogues.push(SharedString::new());
+                SharedString::new()
+            };
+
+            if search.is_empty() || (re.is_ok() && re.as_ref().unwrap().is_match(&content)) {
+                dialogues.push(content);
             }
         }
 

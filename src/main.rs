@@ -164,30 +164,15 @@ fn main() -> Result<(), Box<dyn Error>> {
         .on_add_event(add_event(data.clone(), config.clone(), ui.as_weak()));
     ui.global::<GContent>()
         .on_delete_event(delete_event(data.clone(), config.clone(), ui.as_weak()));
-
-    ui.global::<GContent>().on_search({
-        let ui_handle = ui.as_weak();
-        let data = data.clone();
-        let config = config.clone();
-        move |search_class, search_state| {
-            let ui = ui_handle.unwrap();
-            let mut data = data.borrow_mut();
-            let mut config = config.borrow_mut();
-            reload_content(&mut data, &ui, &config, search_class.as_str(), search_state.as_str());
-
-            if !search_class.is_empty() {
-                config.selected_class = 0;
-                config.selected_state = 0;
-            } else if !search_state.is_empty() {
-                config.selected_state = 0;
-            }
-        }
-    });
+    ui.global::<GContent>()
+        .on_search_class(search_class(data.clone(), ui.as_weak()));
+    ui.global::<GContent>()
+        .on_search_state(search_state(data.clone(), config.clone(), ui.as_weak()));
+    ui.global::<GContent>()
+        .on_search_dialogue(search_dialogue(data.clone(), config.clone(), ui.as_weak()));
 
     // --------------------- Namemap Tab -------------------------
 
-    ui.global::<GNameMap>()
-        .on_reload(reload_namemap_tab(data.clone(), ui.as_weak()));
     ui.global::<GNameMap>()
         .on_delete_class(delete_class_map(data.clone(), ui.as_weak()));
     ui.global::<GNameMap>()
@@ -206,10 +191,14 @@ fn main() -> Result<(), Box<dyn Error>> {
         .on_new_state(add_new_state(data.clone(), ui.as_weak()));
     ui.global::<GNameMap>()
         .on_new_event(add_new_event(data.clone(), ui.as_weak()));
+    ui.global::<GNameMap>()
+        .on_search_class(search_class_map(data.clone(), ui.as_weak()));
+    ui.global::<GNameMap>()
+        .on_search_state(search_state_map(data.clone(), ui.as_weak()));
+    ui.global::<GNameMap>()
+        .on_search_event(search_event_map(data.clone(), ui.as_weak()));
 
     // ----------------------- Config Tab ---------------------------
-    ui.global::<GConfig>()
-        .on_reload(reload_config_ui(config.clone(), ui.as_weak()));
     ui.global::<GConfig>()
         .on_add_lang(add_lang(config.clone(), ui.as_weak()));
     ui.global::<GConfig>()

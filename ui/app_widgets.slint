@@ -9,15 +9,14 @@ import {
     Palette,
 } from "std-widgets.slint";
 
-export component TabReload inherits Rectangle {
-}
+export component TabReload inherits Rectangle { }
 
 export component SearchableComboBox inherits Rectangle {
     in-out property <[string]> model;
 
     callback filter(string);
     callback submit(string);
-    
+
     VerticalLayout {
         edit := LineEdit {
             edited(text) => {
@@ -122,5 +121,15 @@ export component EditableTextBox inherits Rectangle {
                 }
             }
         }
+    }
+}
+
+export component SearchBox inherits Rectangle {
+    callback search(string);
+
+    LineEdit {
+        placeholder-text: "Search...";
+        edited(text) => { search(text); }
+        accepted(text) => { search(text); }
     }
 }

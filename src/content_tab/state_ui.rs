@@ -10,10 +10,7 @@ use crate::{
         show_noti,
         state_to_id,
     },
-    content_tab::{
-        dialogue_ui::reload_dialogue,
-        reload_content,
-    },
+    content_tab::dialogue_ui::reload_dialogue,
 };
 use regex_lite::Regex;
 use slint::{
@@ -66,7 +63,7 @@ pub fn select_state(
         let mut config = config.borrow_mut();
         let state_id = state_to_id(state_name.as_str(), &mut data);
         config.selected_state = state_id;
-        reload_dialogue(&data, &ui, &config);
+        reload_dialogue(&data, &ui, &config, "");
     }
 }
 
@@ -118,6 +115,22 @@ pub fn rename_state(
         } else {
             show_noti(&ui, NotiLevel::Error, format!("Duplicated state {}", new_name).as_str());
         }
+    }
+}
+
+pub fn search_state(
+    data: Rc<RefCell<AppData>>,
+    config: Rc<RefCell<Config>>,
+    ui_handle: Weak<AppWindow>,
+) -> impl Fn(SharedString) {
+    move |search| {
+        let mut data = data.borrow_mut();
+        let config = config.borrow();
+        let ui = ui_handle.unwrap();
+
+        reload_state(&mut data, &ui, &config, search.as_str());
+        ui.global::<GContent>().set_dialogues([].into());
+        ui.global::<GContent>().set_dialogue(UiDialogue::default());
     }
 }
 

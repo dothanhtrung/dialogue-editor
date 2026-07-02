@@ -143,6 +143,29 @@ pub fn add_new_event(data: Rc<RefCell<AppData>>, ui: Weak<AppWindow>) -> impl Fn
     }
 }
 
+pub fn search_class_map(data: Rc<RefCell<AppData>>, ui: Weak<AppWindow>) -> impl Fn(SharedString) {
+    move |search| {
+        let data = data.borrow();
+        let ui = ui.unwrap();
+        reload_class_map(&data, &ui, search.as_str());
+    }
+}
+
+pub fn search_state_map(data: Rc<RefCell<AppData>>, ui: Weak<AppWindow>) -> impl Fn(SharedString) {
+    move |search| {
+        let data = data.borrow();
+        let ui = ui.unwrap();
+        reload_state_map(&data, &ui, search.as_str());
+    }
+}
+pub fn search_event_map(data: Rc<RefCell<AppData>>, ui: Weak<AppWindow>) -> impl Fn(SharedString) {
+    move |search| {
+        let data = data.borrow();
+        let ui = ui.unwrap();
+        reload_event_map(&data, &ui, search.as_str());
+    }
+}
+
 fn add_new(data: &mut AppData, ui: &AppWindow, new_name: String, new_id: &str, name_type: NameType) -> Result<u64, ()> {
     let data = match name_type {
         NameType::Class => &mut data.class_name_map,
@@ -204,14 +227,6 @@ fn update_id(
     } else {
         show_noti(ui, NotiLevel::Error, format!("Invalid id: {}", new_id).as_str());
         Err(())
-    }
-}
-
-pub fn reload_namemap_tab(data: Rc<RefCell<AppData>>, ui: Weak<AppWindow>) -> impl Fn() {
-    move || {
-        let data = data.borrow();
-        let ui = ui.unwrap();
-        reload_all_map(&data, &ui);
     }
 }
 
