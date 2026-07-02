@@ -14,7 +14,7 @@ xxhash-rust = {version = "0.8.15", default-features = false, features = ["xxh3"]
 isolang = {version = "2.4", features = ["serde"], default-features = false}
 tracing = {version = "0.1", default-features = false}
 tracing-subscriber = { version = "0.3" , default-features = false, features = ["env-filter", "fmt"]}
-regex-lite = {version = "0.1", default-features = false, features = ["std", "string"]}
+regex = {version = "1.12", default-features = false, features = ["std", "unicode", "perf"]}
 rfd = {version = "0.17.2", default-features = false, features = ["wayland", "xdg-portal"]}
 
 [build-dependencies]

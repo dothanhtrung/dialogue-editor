@@ -18,7 +18,7 @@ use crate::{
         state_to_id,
     },
 };
-use regex_lite::Regex;
+use regex::Regex;
 use slint::{
     ComponentHandle,
     SharedString,

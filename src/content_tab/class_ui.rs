@@ -12,7 +12,7 @@ use crate::{
     },
     content_tab::state_ui::reload_state,
 };
-use regex_lite::Regex;
+use regex::Regex;
 use slint::{
     ComponentHandle,
     SharedString,

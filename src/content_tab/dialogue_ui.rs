@@ -17,7 +17,7 @@ use crate::{
     },
 };
 use isolang::Language;
-use regex_lite::Regex;
+use regex::Regex;
 use slint::{
     ComponentHandle,
     SharedString,
