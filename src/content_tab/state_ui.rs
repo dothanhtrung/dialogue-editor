@@ -5,14 +5,10 @@ use crate::{
     GContent,
     UiDialogue,
     common::{
-        NotiLevel,
-        id_to_state,
-        show_noti,
-        state_to_id,
+        NotiLevel, id_to_state, new_regex, show_noti, state_to_id
     },
     content_tab::dialogue_ui::reload_dialogue,
 };
-use regex::Regex;
 use slint::{
     ComponentHandle,
     SharedString,
@@ -64,6 +60,7 @@ pub fn select_state(
         let state_id = state_to_id(state_name.as_str(), &mut data);
         config.selected_state = state_id;
         reload_dialogue(&data, &ui, &config, "");
+        ui.global::<GContent>().set_dialogue(UiDialogue::default());
     }
 }
 
@@ -136,7 +133,7 @@ pub fn search_state(
 
 /// Reload state section and clear dialogue section
 pub fn reload_state(data: &mut AppData, ui: &AppWindow, config: &Config, search_state: &str) {
-    let re = Regex::new(search_state);
+    let re = new_regex(search_state);
 
     if let Some(class) = data.dialogues.get(&config.selected_class) {
         let mut states: Vec<SharedString> = Vec::new();

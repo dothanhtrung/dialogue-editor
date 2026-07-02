@@ -4,6 +4,7 @@ use crate::{
     GNoti,
     Noti,
 };
+use regex::{Regex, RegexBuilder};
 use slint::ComponentHandle;
 use tracing::{
     error,
@@ -95,4 +96,8 @@ pub fn id_to_name(id: u64, data: &AppData, name_type: NameType) -> Option<String
     }
 
     None
+}
+
+pub fn new_regex(search: &str) -> Result<Regex, regex::Error> {
+    RegexBuilder::new(search).case_insensitive(true).build()
 }

@@ -83,6 +83,9 @@ export component EditableTextBox inherits Rectangle {
     callback delete();
     callback select;
 
+    drop-shadow-offset-x: 4px;
+    drop-shadow-offset-y: 4px;
+
     touch_area := TouchArea {
         width: 100%;
         height: 100%;
@@ -124,12 +127,10 @@ export component EditableTextBox inherits Rectangle {
     }
 }
 
-export component SearchBox inherits Rectangle {
+export component SearchBox inherits LineEdit {
     callback search(string);
 
-    LineEdit {
-        placeholder-text: "Search...";
-        edited(text) => { search(text); }
-        accepted(text) => { search(text); }
-    }
+    placeholder-text: "Search...";
+    edited(text) => { search(text); }
+    accepted(text) => { search(text); }
 }

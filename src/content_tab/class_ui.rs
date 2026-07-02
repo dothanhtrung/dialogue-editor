@@ -5,14 +5,10 @@ use crate::{
     GContent,
     UiDialogue,
     common::{
-        NotiLevel,
-        class_to_id,
-        id_to_class,
-        show_noti,
+        NotiLevel, class_to_id, id_to_class, new_regex, show_noti
     },
     content_tab::state_ui::reload_state,
 };
-use regex::Regex;
 use slint::{
     ComponentHandle,
     SharedString,
@@ -116,6 +112,8 @@ pub fn select_class(
         let class_id = class_to_id(class_name.as_str(), &mut data);
         config.selected_class = class_id;
         reload_state(&mut data, &ui, &config, "");
+        ui.global::<GContent>().set_dialogues([].into());
+        ui.global::<GContent>().set_dialogue(UiDialogue::default());
     }
 }
 
@@ -133,7 +131,7 @@ pub fn search_class(data: Rc<RefCell<AppData>>, ui_handle: Weak<AppWindow>) -> i
 pub fn reload_class(data: &mut AppData, ui: &AppWindow, search_class: &str) {
     let mut classes: Vec<SharedString> = Vec::new(); // For content tab
 
-    let re = Regex::new(search_class);
+    let re = new_regex(search_class);
     for id in data.dialogues.keys() {
         let name = id_to_class(*id, data);
         let name = match name {

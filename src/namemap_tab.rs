@@ -10,15 +10,9 @@ use crate::{
     GNameMap,
     StringId,
     common::{
-        NameType,
-        NotiLevel,
-        class_to_id,
-        event_to_id,
-        show_noti,
-        state_to_id,
+        NameType, NotiLevel, class_to_id, event_to_id, new_regex, show_noti, state_to_id
     },
 };
-use regex::Regex;
 use slint::{
     ComponentHandle,
     SharedString,
@@ -273,7 +267,7 @@ fn reload_map(data: &AppData, name_type: NameType, search: &str) -> Vec<StringId
     };
 
     let mut ret = Vec::new();
-    let re = Regex::new(search);
+    let re = new_regex(search);
 
     for (name, id) in data.iter() {
         if search.is_empty() || (re.is_ok() && re.as_ref().unwrap().is_match(name.as_str())) {

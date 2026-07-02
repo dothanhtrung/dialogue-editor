@@ -12,7 +12,6 @@ use crate::config_tab::*;
 use crate::content_tab::class_ui::*;
 use crate::content_tab::dialogue_ui::*;
 use crate::content_tab::state_ui::*;
-use crate::content_tab::*;
 use crate::file_handle::*;
 use crate::namemap_tab::*;
 use isolang::Language;

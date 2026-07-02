@@ -8,16 +8,10 @@ use crate::{
     GContent,
     UiDialogue,
     common::{
-        class_to_id,
-        event_to_id,
-        id_to_class,
-        id_to_event,
-        id_to_state,
-        state_to_id,
+        class_to_id, event_to_id, id_to_class, id_to_event, id_to_state, new_regex, state_to_id
     },
 };
 use isolang::Language;
-use regex::Regex;
 use slint::{
     ComponentHandle,
     SharedString,
@@ -248,7 +242,7 @@ pub fn reload_dialogue(data: &AppData, ui: &AppWindow, config: &Config, search: 
         && let Some(state_dialogs) = state.get(&config.selected_state)
     {
         let mut dialogues: Vec<SharedString> = Vec::new();
-        let re = Regex::new(search);
+        let re = new_regex(search);
         for dialog in state_dialogs {
             let content = if !config.langs.is_empty()
                 && let Some(content) = dialog.contents.get(config.langs.first().unwrap())
