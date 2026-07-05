@@ -38,11 +38,14 @@ slint::include_modules!();
 #[derive(Serialize, Deserialize, Default, Clone)]
 struct Dialogue {
     #[serde(default)]
+    #[serde(skip_serializing_if = "BTreeMap::is_empty")]
     contents: BTreeMap<Language, String>,
     /// The class this dialogue will affect and the state that class will change to
     #[serde(default)]
+    #[serde(skip_serializing_if = "BTreeMap::is_empty")]
     affects: BTreeMap<u64, u64>,
     #[serde(default)]
+    #[serde(skip_serializing_if = "Vec::is_empty")]
     events: Vec<u64>,
 }
 
@@ -51,9 +54,12 @@ struct AppData {
     #[serde(default)]
     dialogues: BTreeMap<u64, BTreeMap<u64, Vec<Dialogue>>>,
     #[serde(default)]
+    #[serde(skip_serializing_if = "BTreeMap::is_empty")]
     class_name_map: BTreeMap<String, u64>,
     #[serde(default)]
+    #[serde(skip_serializing_if = "BTreeMap::is_empty")]
     state_name_map: BTreeMap<String, u64>,
+    #[serde(skip_serializing_if = "BTreeMap::is_empty")]
     #[serde(default)]
     event_name_map: BTreeMap<String, u64>,
 }
@@ -66,7 +72,6 @@ impl AppData {
     }
 }
 
-// TODO: Config UI
 #[derive(Serialize, Deserialize, Default)]
 struct Config {
     #[serde(default)]
@@ -108,12 +113,15 @@ fn main() -> Result<(), Box<dyn Error>> {
 
     let data = AppData::default();
 
-    ui.set_file_path(config.file_path.to_str().unwrap_or_default().into());
-    ui.set_encrypt_key(config.encrypt_key.as_str().into());
-    ui.set_file_format(config.file_format as i32);
+    // ======== File section ===========
+    ui.global::<GFile>()
+        .set_file_path(config.file_path.to_str().unwrap_or_default().into());
+    ui.global::<GFile>().set_encrypt_key(config.encrypt_key.as_str().into());
+    ui.global::<GFile>().set_file_format(config.file_format as i32);
+    ui.global::<GFile>().set_save_without_name(config.save_without_name);
 
     #[cfg(feature = "crypt")]
-    ui.set_enable_crypt(true);
+    ui.global::<GFile>().set_enable_crypt(true);
 
     reload_lang_list(&config, &ui);
 
@@ -121,9 +129,12 @@ fn main() -> Result<(), Box<dyn Error>> {
     let data = Rc::new(RefCell::new(data));
 
     ui.on_file_picker(file_picker(config.clone(), ui.as_weak()));
-    ui.on_request_load(request_load(data.clone(), config.clone(), ui.as_weak()));
-    ui.on_request_save(request_save(data.clone(), config.clone(), ui.as_weak()));
+    ui.global::<GFile>()
+        .on_load(request_load(data.clone(), config.clone(), ui.as_weak()));
+    ui.global::<GFile>()
+        .on_save(request_save(data.clone(), config.clone(), ui.as_weak()));
 
+    // ======== Content tab ===========
     // TODO: Move these to content_tab internally
     ui.global::<GContent>()
         .on_add_class(add_class(data.clone(), config.clone(), ui.as_weak()));

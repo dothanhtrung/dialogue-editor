@@ -14,37 +14,30 @@ import {
     SelectableBox,
 } from "app_widgets.slint";
 import { StatusBar } from "status_bar.slint";
-import { FileSection } from "file_section.slint";
+import { FileSection, GFile, UnsaveLoadDialog } from "file_section.slint";
 import { NotiBox, GNoti } from "noti.slint";
 import { StringId, GNameMap, NameMapTab } from "namemap_tab.slint";
 import { ContentTab, GContent } from "content_tab.slint";
-import {ConfigTab, GConfig} from "config_tab.slint";
+import { ConfigTab, GConfig } from "config_tab.slint";
 
-export { GNoti, GNameMap, GContent, GConfig }
-
-// TODO: Config UI
+export { GNoti, GNameMap, GContent, GConfig, GFile, UnsaveLoadDialog }
 
 export component AppWindow inherits Window {
-    in-out property <string> file_path;
-    in-out property <int> file_format;
-    in-out property <string> encrypt_key;
-    in-out property <bool> enable_crypt: false;
+    title: "Dialogue Editor";
+
     in-out property <bool> is_saved: true;
 
-    callback request-save(string, int, string, bool);
-    callback request-load(string, int, string);
-
     callback file_picker();
-
-    noti_box := NotiBox {
-        x: parent.width - self.width - 20px;
-        y: 20px;
-    }
 
     public function show_notification() {
         noti_box.show();
     }
-
+    
+    noti_box := NotiBox {
+        x: parent.width - self.width - 20px;
+        y: 20px;
+    }
+    
     VerticalLayout {
         TabWidget {
             orientation: Orientation.vertical;
@@ -60,34 +53,23 @@ export component AppWindow inherits Window {
             Tab {
                 title: "E";
 
-                NameMapTab { }
+                NameMapTab {
+                    is_saved <=> root.is_saved;
+                }
             }
 
             Tab {
                 title: "S";
 
-                ConfigTab {}
+                ConfigTab { }
             }
         }
 
-        FileSection {
-            file_format: root.file_format;
-            file_path: root.file_path;
-            enable_crypt: root.enable_crypt;
-            encrypt_key: root.encrypt_key;
-
+        file_section := FileSection {
             height: 10%;
 
             browse_click => {
                 root.file_picker();
-            }
-
-            load(path_str, type_int, encrypt_str) => {
-                root.request-load(path_str, type_int, encrypt_str);
-            }
-
-            save(path_str, type_int, encrypt_str, save_without_name) => {
-                root.request-save(path_str, type_int, encrypt_str, save_without_name);
             }
         }
 

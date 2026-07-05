@@ -5,28 +5,60 @@ import {
     LineEdit,
     Button,
     CheckBox,
+    VerticalBox,
+    Palette,
+    StandardButton,
 } from "std-widgets.slint";
 
-export component FileSection inherits Rectangle {
+export global GFile {
     in-out property <int> file_format;
-    in property <bool> enable_crypt;
-    in property <string> encrypt_key;
+    in-out property <bool> enable_crypt;
+    in-out property <string> encrypt_key;
     in-out property <string> file_path;
+    in-out property <bool> save_without_name;
 
+    callback load(string, int, string, bool);
+    callback save(string, int, string, bool, bool);
+}
+
+export component UnsaveLoadDialog inherits Dialog {
+    title: "Dialogue Editor - Unsave Warning";
+
+    VerticalBox {
+        Text {
+            text: "Your work has not been saved yet! Continue without Save?";
+        }
+
+        HorizontalBox {
+            alignment: end;
+
+            StandardButton {
+                kind: yes;
+                clicked => {
+                    GFile.load(GFile.file_path, GFile.file_format, GFile.encrypt_key, true);
+                }
+            }
+
+            StandardButton {
+                kind: cancel;
+            }
+        }
+    }
+}
+
+export component FileSection inherits Rectangle {
     callback browse_click();
-    callback load(string, int, string);
-    callback save(string, int, string, bool);
 
     VerticalLayout {
         HorizontalBox {
             ui_file_format := ComboBox {
                 width: 80px;
                 model: ["RON", "BIN"];
-                current-index <=> file_format; // FIXME: If this is manual changed from UI, it can't be changed from backend anymore
+                current-index <=> GFile.file_format; // FIXME: If this is manual changed from UI, it can't be changed from backend anymore
             }
 
             file_path_input := LineEdit {
-                text: root.file_path;
+                text <=> GFile.file_path;
             }
 
             Button {
@@ -39,10 +71,10 @@ export component FileSection inherits Rectangle {
 
         HorizontalBox {
             ui_encrypt_key := LineEdit {
-                text: encrypt_key;
-                visible: enable_crypt;
+                text <=> GFile.encrypt_key;
+                visible <=> GFile.enable_crypt;
                 height: {
-                    if (enable_crypt) {
+                    if (GFile.enable_crypt) {
                         30%
                     } else {
                         0%
@@ -53,6 +85,7 @@ export component FileSection inherits Rectangle {
 
             save_without_name := CheckBox {
                 text: "Save dialogue without name map";
+                checked <=> GFile.save_without_name;
             }
         }
 
@@ -60,15 +93,14 @@ export component FileSection inherits Rectangle {
             Button {
                 text: "Load";
                 clicked => {
-                    load(file_path_input.text, ui_file_format.current-index, ui_encrypt_key.text);
+                    GFile.load(GFile.file_path, GFile.file_format, GFile.encrypt_key, false);
                 }
             }
 
-            // TODO: Add option to export file without name map
             Button {
                 text: "Save";
                 clicked => {
-                    save(file_path_input.text, ui_file_format.current-index, ui_encrypt_key.text, save_without_name.checked);
+                    GFile.save(GFile.file_path, GFile.file_format, GFile.encrypt_key, GFile.save_without_name, false);
                 }
             }
         }

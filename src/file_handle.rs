@@ -5,6 +5,8 @@ use crate::{
     AppData,
     AppWindow,
     Config,
+    GFile,
+    UnsaveLoadDialog,
     common::{
         NotiLevel,
         id_to_class,
@@ -20,8 +22,7 @@ use serde::{
     Serialize,
 };
 use slint::{
-    SharedString,
-    Weak,
+    CloseRequestResponse, ComponentHandle, SharedString, Weak
 };
 use std::{
     cell::RefCell,
@@ -65,7 +66,8 @@ pub fn file_picker(config: Rc<RefCell<Config>>, ui_handle: Weak<AppWindow>) -> i
             )
             .pick_file()
             .unwrap_or_default();
-        ui.set_file_path(config.file_path.to_str().unwrap_or_default().into());
+        ui.global::<GFile>()
+            .set_file_path(config.file_path.to_str().unwrap_or_default().into());
 
         // Poor implementation but good enough
         let Some(ext) = config.file_path.extension() else {
@@ -80,7 +82,7 @@ pub fn file_picker(config: Rc<RefCell<Config>>, ui_handle: Weak<AppWindow>) -> i
         } else {
             config.file_format = FileFormat::Bin;
         }
-        ui.set_file_format(config.file_format as i32);
+        ui.global::<GFile>().set_file_format(config.file_format as i32);
     }
 }
 
@@ -88,11 +90,11 @@ pub fn request_load(
     data: Rc<RefCell<AppData>>,
     config: Rc<RefCell<Config>>,
     ui_handle: Weak<AppWindow>,
-) -> impl Fn(SharedString, i32, SharedString) {
+) -> impl Fn(SharedString, i32, SharedString, bool) {
     // TODO: Loading icon
     // TODO: Warn if there is unsave content
 
-    move |file_path, file_format, encrypt_key| {
+    move |file_path, file_format, encrypt_key, force| {
         let ui = ui_handle.unwrap();
         let mut config = config.borrow_mut();
         let mut data = data.borrow_mut();
@@ -102,40 +104,56 @@ pub fn request_load(
         config.file_path = PathBuf::from(file_path.as_str());
         config.save();
 
-        if config.file_path.is_file() {
-            *data = match config.file_format {
-                FileFormat::Bin => match bin_file::load_from(&config.file_path, &config.encrypt_key) {
-                    Ok(ret) => ret,
-                    Err(e) => {
-                        show_noti(&ui, NotiLevel::Error, format!("Failed to load: {}", e).as_str());
-                        AppData::default()
-                    }
-                },
-                FileFormat::Ron => match ron_file::load_from(&config.file_path) {
-                    Ok(ret) => ret,
-                    Err(e) => {
-                        show_noti(&ui, NotiLevel::Error, format!("Failed to load: {}", e).as_str());
-                        AppData::default()
-                    }
-                },
-            };
-            if (config.selected_class == 0 || id_to_class(config.selected_class, &data).is_none())
-                && let Some(first_class) = data.dialogues.keys().next()
-            {
-                config.selected_class = *first_class;
-            }
-
-            if (config.selected_state == 0 || id_to_state(config.selected_state, &data).is_none())
-                && let Some(selected_class) = data.dialogues.get(&config.selected_class)
-                && let Some((first_state, _)) = selected_class.first_key_value()
-            {
-                config.selected_class = *first_state;
-            }
-
-            reload_content(&mut data, &ui, &config);
-            reload_all_map(&data, &ui);
-            ui.set_is_saved(true);
+        if !config.file_path.is_file() {
+            show_noti(
+                &ui,
+                NotiLevel::Error,
+                format!("Not a file: {}", config.file_path.display()).as_str(),
+            );
+            return;
         }
+
+        let is_saved = ui.get_is_saved();
+        if !force && !is_saved {
+            let Ok(dialog) = UnsaveLoadDialog::new() else {
+                return;
+            };
+            let _ = dialog.run();
+            return;
+        }
+
+        *data = match config.file_format {
+            FileFormat::Bin => match bin_file::load_from(&config.file_path, &config.encrypt_key) {
+                Ok(ret) => ret,
+                Err(e) => {
+                    show_noti(&ui, NotiLevel::Error, format!("Failed to load: {}", e).as_str());
+                    AppData::default()
+                }
+            },
+            FileFormat::Ron => match ron_file::load_from(&config.file_path) {
+                Ok(ret) => ret,
+                Err(e) => {
+                    show_noti(&ui, NotiLevel::Error, format!("Failed to load: {}", e).as_str());
+                    AppData::default()
+                }
+            },
+        };
+        if (config.selected_class == 0 || id_to_class(config.selected_class, &data).is_none())
+            && let Some(first_class) = data.dialogues.keys().next()
+        {
+            config.selected_class = *first_class;
+        }
+
+        if (config.selected_state == 0 || id_to_state(config.selected_state, &data).is_none())
+            && let Some(selected_class) = data.dialogues.get(&config.selected_class)
+            && let Some((first_state, _)) = selected_class.first_key_value()
+        {
+            config.selected_class = *first_state;
+        }
+
+        reload_content(&mut data, &ui, &config);
+        reload_all_map(&data, &ui);
+        ui.set_is_saved(true);
     }
 }
 
@@ -144,8 +162,8 @@ pub fn request_save(
     data: Rc<RefCell<AppData>>,
     config: Rc<RefCell<Config>>,
     ui_handle: Weak<AppWindow>,
-) -> impl Fn(SharedString, i32, SharedString, bool) {
-    move |file_path, file_format, encrypt_key, save_without_name| {
+) -> impl Fn(SharedString, i32, SharedString, bool, bool) {
+    move |file_path, file_format, encrypt_key, save_without_name, _force| {
         let mut config = config.borrow_mut();
         let data = data.borrow();
         let ui = ui_handle.unwrap();
@@ -200,3 +218,9 @@ pub fn request_save(
         }
     }
 }
+
+// pub fn on_close() -> impl FnMut() -> CloseRequestResponse + 'static {
+//     move || {
+
+//     }
+// }

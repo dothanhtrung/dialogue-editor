@@ -114,6 +114,7 @@ export component StringIdContainer inherits Rectangle {
 
 
 export component NameMapTab inherits TabReload {
+    in-out property <bool> is_saved;
 
     HorizontalBox {
         StringIdContainer {
@@ -121,12 +122,15 @@ export component NameMapTab inherits TabReload {
             values: GNameMap.classes;
             delete(name) => {
                 GNameMap.delete_class(name);
+                is_saved = false;
             }
             update(name, id) => {
                 GNameMap.update_class_id(name, id);
+                is_saved = false;
             }
             new(name, id) => {
                 GNameMap.new_class(name, id);
+                is_saved = false;
             }
             search(text) => {
                 GNameMap.search_class(text);
@@ -138,12 +142,15 @@ export component NameMapTab inherits TabReload {
             values: GNameMap.states;
             delete(name) => {
                 GNameMap.delete_state(name);
+                is_saved = false;
             }
             update(name, id) => {
                 GNameMap.update_state_id(name, id);
+                is_saved = false;
             }
             new(name, id) => {
                 GNameMap.new_state(name, id);
+                is_saved = false;
             }
             search(text) => { GNameMap.search_state(text); }
         }
@@ -153,12 +160,15 @@ export component NameMapTab inherits TabReload {
             values: GNameMap.events;
             delete(index) => {
                 GNameMap.delete_event(index);
+                is_saved = false;
             }
             update(name, id) => {
                 GNameMap.update_event_id(name, id);
+                is_saved = false;
             }
             new(name, id) => {
                 GNameMap.new_event(name, id);
+                is_saved = false;
             }
             search(text) => { GNameMap.search_event(text); }
         }

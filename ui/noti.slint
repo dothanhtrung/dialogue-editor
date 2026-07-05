@@ -1,5 +1,5 @@
 
-import { VerticalBox } from "std-widgets.slint";
+import { VerticalBox, Palette } from "std-widgets.slint";
 
 export struct Noti {
     level: int, // error, warning, info
@@ -11,12 +11,13 @@ export global GNoti {
 }
 
 export component NotiBox inherits PopupWindow {
-
     // TODO: stack notifications
-    VerticalBox {
-        padding: 2px;
+    Rectangle {
+        background: Palette.background;
 
-        Rectangle {
+        VerticalBox {
+            padding: 2px;
+
             Text {
                 text: GNoti.noti.message;
                 color: {

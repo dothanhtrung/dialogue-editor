@@ -74,7 +74,6 @@ pub fn name_to_id(name: &str, data: &mut AppData, name_type: NameType) -> u64 {
     if let Some(id) = data.get(name) {
         *id
     } else {
-        // TODO: Check duplicated id
         let lower = name.to_lowercase();
         let id = xxh3_64(lower.as_bytes());
         data.insert(name.to_string(), id);
