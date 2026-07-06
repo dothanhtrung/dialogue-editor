@@ -22,7 +22,10 @@ use serde::{
     Serialize,
 };
 use slint::{
-    CloseRequestResponse, ComponentHandle, SharedString, Weak
+    CloseRequestResponse,
+    ComponentHandle,
+    SharedString,
+    Weak,
 };
 use std::{
     cell::RefCell,
@@ -113,11 +116,35 @@ pub fn request_load(
             return;
         }
 
+        // If there is unsave work. Show warning dialog
         let is_saved = ui.get_is_saved();
         if !force && !is_saved {
             let Ok(dialog) = UnsaveLoadDialog::new() else {
                 return;
             };
+            dialog.on_cancel_clicked({
+                let dialog_handle = dialog.as_weak();
+                move || {
+                    let dialog = dialog_handle.unwrap();
+                    let _ = dialog.hide();
+                }
+            });
+            dialog.on_yes_clicked({
+                let dialog_handle = dialog.as_weak();
+                let ui_handle = ui.as_weak();
+                move || {
+                    let ui = ui_handle.unwrap();
+                    let ui = ui.global::<GFile>();
+                    let dialog = dialog_handle.unwrap();
+
+                    let file_path = ui.get_file_path();
+                    let file_format = ui.get_file_format();
+                    let encrypt_key = ui.get_encrypt_key();
+                    ui.invoke_load(file_path, file_format, encrypt_key, true);
+
+                    let _ = dialog.hide();
+                }
+            });
             let _ = dialog.run();
             return;
         }

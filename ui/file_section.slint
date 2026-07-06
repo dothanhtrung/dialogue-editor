@@ -22,27 +22,20 @@ export global GFile {
 }
 
 export component UnsaveLoadDialog inherits Dialog {
+    callback request-close();
+
     title: "Dialogue Editor - Unsave Warning";
 
-    VerticalBox {
-        Text {
-            text: "Your work has not been saved yet! Continue without Save?";
-        }
+    Text {
+        text: "Your work has not been saved yet! Continue without Save?";
+    }
 
-        HorizontalBox {
-            alignment: end;
+    StandardButton {
+        kind: yes;
+    }
 
-            StandardButton {
-                kind: yes;
-                clicked => {
-                    GFile.load(GFile.file_path, GFile.file_format, GFile.encrypt_key, true);
-                }
-            }
-
-            StandardButton {
-                kind: cancel;
-            }
-        }
+    StandardButton {
+        kind: cancel;
     }
 }
 
