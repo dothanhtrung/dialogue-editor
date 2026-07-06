@@ -128,6 +128,7 @@ fn main() -> Result<(), Box<dyn Error>> {
     let config = Rc::new(RefCell::new(config));
     let data = Rc::new(RefCell::new(data));
 
+    ui.window().on_close_requested(on_close(ui.as_weak()));
     ui.on_file_picker(file_picker(config.clone(), ui.as_weak()));
     ui.global::<GFile>()
         .on_load(request_load(data.clone(), config.clone(), ui.as_weak()));

@@ -36,6 +36,8 @@ use std::{
     rc::Rc,
 };
 
+// TODO: Autosave
+
 #[repr(i32)]
 #[derive(Default, Serialize, Deserialize, Clone, Copy)]
 pub enum FileFormat {
@@ -227,11 +229,13 @@ pub fn request_save(
                 if let Err(e) = ron_file::save_to::<AppData>(&data, &config.file_path) {
                     show_noti(&ui, NotiLevel::Error, format!("Failed to save: {:?}", e).as_str());
                 } else {
-                    let mut data_without_name = data.clone();
-                    data_without_name.clear_name_map();
-                    let file_path = config.file_path.with_extension("no_name.ron");
-                    if let Err(e) = ron_file::save_to(&data_without_name, &file_path) {
-                        show_noti(&ui, NotiLevel::Error, format!("Failed to save: {:?}", e).as_str());
+                    if save_without_name {
+                        let mut data_without_name = data.clone();
+                        data_without_name.clear_name_map();
+                        let file_path = config.file_path.with_extension("no_name.ron");
+                        if let Err(e) = ron_file::save_to(&data_without_name, &file_path) {
+                            show_noti(&ui, NotiLevel::Error, format!("Failed to save: {:?}", e).as_str());
+                        }
                     }
 
                     ui.set_is_saved(true);
@@ -246,8 +250,40 @@ pub fn request_save(
     }
 }
 
-// pub fn on_close() -> impl FnMut() -> CloseRequestResponse + 'static {
-//     move || {
+pub fn on_close(ui_handle: Weak<AppWindow>) -> impl FnMut() -> CloseRequestResponse + 'static {
+    move || {
+        let ui = ui_handle.unwrap();
+        let is_saved = ui.get_is_saved();
 
-//     }
-// }
+        if is_saved {
+            return CloseRequestResponse::HideWindow;
+        }
+
+        // Show warning dialog if there is unsaved work
+        let Ok(dialog) = UnsaveLoadDialog::new() else {
+            return CloseRequestResponse::HideWindow;
+        };
+        dialog.on_cancel_clicked({
+            let dialog_handle = dialog.as_weak();
+            move || {
+                let dialog = dialog_handle.unwrap();
+                let _ = dialog.hide();
+            }
+        });
+        dialog.on_yes_clicked({
+            let dialog_handle = dialog.as_weak();
+            let ui_handle = ui.as_weak();
+            move || {
+                let ui = ui_handle.unwrap();
+                let dialog = dialog_handle.unwrap();
+
+                ui.set_is_saved(true);
+                let _ = ui.hide();
+                let _ = dialog.hide();
+            }
+        });
+        let _ = dialog.run();
+
+        CloseRequestResponse::KeepWindowShown
+    }
+}
