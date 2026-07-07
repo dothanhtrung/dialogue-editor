@@ -10,5 +10,37 @@ Dialogue Editor
 
 Dialogue editor for [bevy-dialogue](https://gitlab.com/245project/bevy-plugin/bevy-dialogue).
 
+TODO:
+
+* High priority
+    * [ ] Undo/Redo
+    * [ ] Better UI
+        * [ ] Better color
+        * [ ] Shadow
+        * [ ] Tooltip
+
+* Low priority
+    * [ ] Disable dialogue without deletion
+    * [ ] Metadata (like schema version)
+    * [ ] Jump between dialogue in field `affects`
+    * [ ] Resizable UI
+    * [ ] Autosave
+
+* Very low priority
+    * [ ] Workspace
+        * [ ] Open multiple files
+    * [ ] Graph visualization
+
 ![](./screenshot.png)
+</div>
+
+License
+-------
+
+Please see [LICENSE](./LICENSE).
+
+<div align="center">
+
+![git_dialogue-editor](https://count.getloli.com/@git_dialogue-editor?name=git_dialogue-editor&theme=random&padding=10&offset=0&align=top&scale=1&pixelated=1&darkmode=auto)
+
 </div>

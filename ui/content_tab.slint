@@ -63,13 +63,11 @@ export global GContent {
     callback delete_affect(string);
     callback delete_event(int);
 
-    // TODO: Search case-insensitive
     callback search_class(string);
     callback search_state(string);
     callback search_dialogue(string);
 }
 
-// TODO: Add is_saved
 export component DialogueBox inherits Rectangle {
     in property <[string]> class_list; // TODO: Class list from name map too
     property <int> content_selecting;
@@ -231,7 +229,6 @@ export component DialogueBox inherits Rectangle {
     }
 }
 
-// TODO: Reload on change tab
 export component ContentTab inherits TabReload {
     in-out property <bool> is_saved;
     property <int> selecting_class: -1;
@@ -239,6 +236,7 @@ export component ContentTab inherits TabReload {
     property <int> selecting_dialog: -1;
 
     HorizontalBox {
+        // TODO: Allow resizeable
         Rectangle {
             width: 20%;
 
@@ -312,6 +310,7 @@ export component ContentTab inherits TabReload {
                 }
 
                 ListView {
+                    // TODO: Allow state to be reordered
                     for state_name[i] in GContent.states: EditableTextBox {
                         value: state_name;
                         selected: {
