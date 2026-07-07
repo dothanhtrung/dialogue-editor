@@ -21,24 +21,21 @@ import { ContentTab, GContent } from "content_tab.slint";
 import { ConfigTab, GConfig } from "config_tab.slint";
 
 export { GNoti, GNameMap, GContent, GConfig, GFile, UnsaveLoadDialog }
-
 export component AppWindow inherits Window {
     title: "Dialogue Editor";
 
     in-out property <bool> is_saved: true;
 
-    callback file_picker();
-
     public function show_notification() {
         noti_box.show();
     }
-    
+
     noti_box := NotiBox {
         x: parent.width - self.width - 20px;
         y: 20px;
     }
-    
-    VerticalLayout {
+
+    VerticalBox {
         TabWidget {
             orientation: Orientation.vertical;
 
@@ -65,16 +62,9 @@ export component AppWindow inherits Window {
             }
         }
 
-        file_section := FileSection {
-            height: 10%;
-
-            browse_click => {
-                root.file_picker();
-            }
-        }
+        FileSection { }
 
         StatusBar {
-            height: 5%;
             is_saved <=> root.is_saved;
         }
     }

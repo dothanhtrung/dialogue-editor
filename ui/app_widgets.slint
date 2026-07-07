@@ -78,6 +78,7 @@ export component SelectableBox inherits Rectangle {
 export component EditableTextBox inherits Rectangle {
     in property <string> value;
     in-out property <bool> selected;
+    private property <bool> is_edited: false;
 
     callback submit(string);
     callback delete();
@@ -100,24 +101,30 @@ export component EditableTextBox inherits Rectangle {
                 text: value;
                 enabled: selected;
                 read-only: !selected;
+
                 accepted(text) => {
                     submit(self.text);
-                    selected = false;
+                    root.is_edited = false;
+                }
+
+                edited(text) => {
+                    root.is_edited = true;
                 }
             }
 
-            save_btn := Button {
+            if (root.is_edited) : Button {
                 text: "✅";
-                visible: selected; // TODO: If data is not submited, do not hide this button
+
                 clicked => {
                     submit(edit.text);
-                    selected = false;
+                    root.is_edited = false;
                 }
             }
 
             del_btn := Button {
                 text: "🗑️";
                 visible: selected;
+
                 clicked => {
                     delete();
                     selected = false;

@@ -17,6 +17,7 @@ export global GFile {
     in-out property <string> file_path;
     in-out property <bool> save_without_name;
 
+    callback file_picker();
     callback load(string, int, string, bool);
     callback save(string, int, string, bool, bool);
 }
@@ -40,24 +41,31 @@ export component UnsaveLoadDialog inherits Dialog {
 }
 
 export component FileSection inherits Rectangle {
-    callback browse_click();
-
     VerticalLayout {
         HorizontalBox {
             ui_file_format := ComboBox {
                 width: 80px;
                 model: ["RON", "BIN"];
-                current-index <=> GFile.file_format; // FIXME: If this is manual changed from UI, it can't be changed from backend anymore
+                // FIXME: If this is manual changed from UI, it can't be changed from backend anymore
+                current-index <=> GFile.file_format;
+
+                Tooltip {
+                    text: @markdown("File format");
+                }
             }
 
             file_path_input := LineEdit {
                 text <=> GFile.file_path;
+
+                Tooltip {
+                    text: @markdown("File path");
+                }
             }
 
             Button {
                 text: "Browse";
                 clicked => {
-                    browse_click();
+                    GFile.file_picker();
                 }
             }
         }
