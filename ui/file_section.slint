@@ -48,18 +48,10 @@ export component FileSection inherits Rectangle {
                 model: ["RON", "BIN"];
                 // FIXME: If this is manual changed from UI, it can't be changed from backend anymore
                 current-index <=> GFile.file_format;
-
-                Tooltip {
-                    text: @markdown("File format");
-                }
             }
 
             file_path_input := LineEdit {
                 text <=> GFile.file_path;
-
-                Tooltip {
-                    text: @markdown("File path");
-                }
             }
 
             Button {

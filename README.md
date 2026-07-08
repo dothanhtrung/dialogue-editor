@@ -22,7 +22,7 @@ TODO:
 
 * Low priority
     * [ ] Disable dialogue without deletion
-    * [ ] Metadata (like schema version)
+    * [ ] Metadata (e.g. schema version)
     * [ ] Jump between dialogue in field `affects`
     * [ ] Resizable UI
     * [ ] Autosave
