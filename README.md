@@ -40,7 +40,7 @@ TODO:
 License
 -------
 
-Please see [LICENSE](./LICENSE).
+Please see [LICENSE.md](./LICENSE.md).
 
 <div align="center">
 
