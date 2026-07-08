@@ -5,8 +5,6 @@ import {
     SearchBox,
 } from "app_widgets.slint";
 import {
-    HorizontalBox,
-    VerticalBox,
     Palette,
     LineEdit,
     ListView,
@@ -14,6 +12,18 @@ import {
     ComboBox,
     TextEdit,
 } from "std-widgets.slint";
+import {
+    Vertical,
+    Horizontal,
+    OutlinedCard,
+    ElevatedCard,
+    IconButton,
+    TextButton,
+    FilledCard,
+    ElevatedButton,
+    HorizontalDivider,
+} from "material-1.0/material.slint";
+import { Icons } from "material-1.0/ui/icons/icons.slint";
 
 
 export struct ContentLang {
@@ -72,52 +82,50 @@ export component DialogueBox inherits Rectangle {
     in property <[string]> class_list; // TODO: Class list from name map too
     property <int> content_selecting;
 
-    VerticalBox {
-        VerticalBox {
-            height: 70%;
-
+    Vertical {
+        Vertical {
             Rectangle {
-                background: Palette.control-background;
-
                 ListView {
-                    for dialog[i] in GContent.dialogue.contents: HorizontalBox {
-                        height: 25%;
-                        lang_view := ComboBox {
-                            width: 20%;
-                            model: GContent.lang_list;
-                            current-value: dialog.language;
-                            enabled: {
-                                root.content_selecting == i
-                            };
-                            selected(current-value) => {
-                                GContent.dialogue.contents[i].language = current-value;
-                                submit_btn.visible = true;
+                    for dialog[i] in GContent.dialogue.contents: ElevatedCard {
+                        Horizontal {
+                                // TODO: Use SearchBar for this
+                                lang_view := ComboBox {
+                                model: GContent.lang_list;
+                                current-value: dialog.language;
+                                enabled: {
+                                    root.content_selecting == i
+                                };
+                                selected(current-value) => {
+                                    GContent.dialogue.contents[i].language = current-value;
+                                    submit_btn.visible = true;
+                                }
                             }
-                        }
 
-                        content_view := TextEdit {
-                            text: dialog.content;
-                            enabled: {
-                                root.content_selecting == i
-                            };
-                            edited(value) => {
-                                GContent.dialogue.contents[i].content = value;
-                                submit_btn.visible = true;
+                            content_view := TextEdit {
+                                text: dialog.content;
+                                enabled: {
+                                    root.content_selecting == i
+                                };
+                                edited(value) => {
+                                    GContent.dialogue.contents[i].content = value;
+                                    submit_btn.visible = true;
+                                }
                             }
-                        }
 
-                        Button {
-                            text: "🗑️";
-                            clicked => {
-                                GContent.delete_content(dialog.language);
+                            IconButton {
+                                icon: Icons.remove;
+                                inline: true;
+                                clicked => {
+                                    GContent.delete_content(dialog.language);
+                                }
                             }
                         }
                     }
                 }
             }
 
-            submit_btn := Button {
-                text: "✅";
+            submit_btn := TextButton {
+                text: "Submit";
                 visible: false;
                 clicked => {
                     GContent.update_content(GContent.dialogue);
@@ -125,8 +133,7 @@ export component DialogueBox inherits Rectangle {
                 };
             }
 
-            HorizontalBox {
-                height: 20%;
+            Horizontal {
                 new_lang := ComboBox {
                     width: 20%;
                     model: GContent.lang_list;
@@ -137,8 +144,8 @@ export component DialogueBox inherits Rectangle {
                     text: "new dialog";
                 }
 
-                Button {
-                    text: "Add";
+                TextButton {
+                    text: "+";
                     clicked => {
                         GContent.update_content(GContent.dialogue);
                         GContent.add_lang_content(new_lang.current-value, new_content.text);
@@ -148,12 +155,13 @@ export component DialogueBox inherits Rectangle {
             }
         }
 
-        VerticalBox {
+        HorizontalDivider { }
+
+        Vertical {
             Rectangle {
-                background: Palette.control-background;
                 ListView {
                     // TODO: Add "Go to" the affected state
-                    for affect[i] in GContent.dialogue.affects: HorizontalBox {
+                    for affect[i] in GContent.dialogue.affects: Horizontal {
                         Text {
                             text: affect.class;
                         }
@@ -172,7 +180,7 @@ export component DialogueBox inherits Rectangle {
                 }
             }
 
-            HorizontalBox {
+            Horizontal {
                 new_affect_class := ComboBox {
                     model: class_list;
                     current-index: 0;
@@ -193,11 +201,12 @@ export component DialogueBox inherits Rectangle {
             }
         }
 
-        VerticalBox {
+        HorizontalDivider { }
+
+        Vertical {
             Rectangle {
-                background: Palette.control-background;
                 ListView {
-                    for event[i] in GContent.dialogue.events: HorizontalBox {
+                    for event[i] in GContent.dialogue.events: Horizontal {
                         Text {
                             text: event;
                         }
@@ -212,7 +221,7 @@ export component DialogueBox inherits Rectangle {
                 }
             }
 
-            HorizontalBox {
+            Horizontal {
                 new_event := ComboBox {
                     model: GContent.event_list;
                 }
@@ -235,12 +244,12 @@ export component ContentTab inherits TabReload {
     property <int> selecting_state: -1;
     property <int> selecting_dialog: -1;
 
-    HorizontalBox {
+    Horizontal {
         // TODO: Allow resizeable
-        Rectangle {
-            width: 20%;
+        OutlinedCard {
+            width: 15%;
 
-            VerticalBox {
+            Vertical {
                 SearchBox {
                     search(text) => {
                         GContent.search_class(text);
@@ -256,13 +265,13 @@ export component ContentTab inherits TabReload {
                         selected: {
                             root.selecting_class == i
                         };
-                        background: {
-                            if (root.selecting_class == i) {
-                                Palette.selection-background
-                            } else {
-                                Palette.background
-                            }
-                        };
+                        // background: {
+                        //     if (root.selecting_class == i) {
+                        //         Palette.selection-background
+                        //     } else {
+                        //         Palette.background
+                        //     }
+                        // };
                         select => {
                             GContent.select-class(class_name);
                             root.selecting_class = i;
@@ -280,12 +289,12 @@ export component ContentTab inherits TabReload {
                     }
                 }
 
-                HorizontalBox {
+                Horizontal {
                     new_class := LineEdit {
                         placeholder-text: "New class";
                     }
 
-                    Button {
+                    ElevatedButton {
                         text: "Add";
                         clicked => {
                             GContent.add-class(new_class.text);
@@ -297,10 +306,10 @@ export component ContentTab inherits TabReload {
             }
         }
 
-        Rectangle {
-            width: 20%;
+        OutlinedCard {
+            width: 15%;
 
-            VerticalBox {
+            Vertical {
                 SearchBox {
                     search(text) => {
                         GContent.search_state(text);
@@ -316,13 +325,13 @@ export component ContentTab inherits TabReload {
                         selected: {
                             root.selecting_state == i
                         };
-                        background: {
-                            if (root.selecting_state == i) {
-                                Palette.selection-background
-                            } else {
-                                Palette.background
-                            }
-                        };
+                        // background: {
+                        //     if (root.selecting_state == i) {
+                        //         Palette.selection-background
+                        //     } else {
+                        //         Palette.background
+                        //     }
+                        // };
                         select => {
                             GContent.select-state(state_name);
                             root.selecting_state = i;
@@ -339,30 +348,32 @@ export component ContentTab inherits TabReload {
                     }
                 }
 
-                HorizontalBox {
+                Rectangle {
                     visible: {
                         root.selecting_class >= 0
                     };
-                    new_state := LineEdit {
-                        placeholder-text: "New state";
-                    }
+                    Horizontal {
+                        new_state := LineEdit {
+                            placeholder-text: "New state";
+                        }
 
-                    Button {
-                        text: "Add";
-                        clicked => {
-                            GContent.add-state(new_state.text);
-                            root.is_saved = false;
-                            new_state.text = "";
+                        Button {
+                            text: "Add";
+                            clicked => {
+                                GContent.add-state(new_state.text);
+                                root.is_saved = false;
+                                new_state.text = "";
+                            }
                         }
                     }
                 }
             }
         }
 
-        Rectangle {
+        OutlinedCard {
             width: 20%;
 
-            VerticalBox {
+            Vertical {
                 SearchBox {
                     search(text) => {
                         GContent.search_dialogue(text);
@@ -376,25 +387,19 @@ export component ContentTab inherits TabReload {
                         selected: {
                             root.selecting_dialog == i
                         };
-                        background: {
-                            if (root.selecting_dialog == i) {
-                                Palette.selection-background
-                            } else {
-                                Palette.background
-                            }
-                        };
+
                         select => {
                             GContent.select-dialog(i);
                             root.selecting_dialog = i;
                         };
-                        delete_dialog => {
+                        delete => {
                             GContent.remove-dialog(i);
                             root.is_saved = false;
                         };
                     }
                 }
 
-                Button {
+                ElevatedButton {
                     visible: {
                         root.selecting_state >= 0
                     };
@@ -407,14 +412,12 @@ export component ContentTab inherits TabReload {
             }
         }
 
-        Rectangle {
-            VerticalBox {
-                DialogueBox {
-                    visible: {
-                        root.selecting_dialog >= 0
-                    };
-                    class_list: GContent.classes;
-                }
+        OutlinedCard {
+            DialogueBox {
+                visible: {
+                    root.selecting_dialog >= 0
+                };
+                class_list: GContent.classes;
             }
         }
     }

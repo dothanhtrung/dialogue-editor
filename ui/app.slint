@@ -1,8 +1,6 @@
 import {
     TextEdit,
     Button,
-    VerticalBox,
-    HorizontalBox,
     ListView,
     ComboBox,
     LineEdit,
@@ -19,6 +17,7 @@ import { NotiBox, GNoti } from "noti.slint";
 import { StringId, GNameMap, NameMapTab } from "namemap_tab.slint";
 import { ContentTab, GContent } from "content_tab.slint";
 import { ConfigTab, GConfig } from "config_tab.slint";
+import { Vertical } from "material-1.0/material.slint";
 
 export { GNoti, GNameMap, GContent, GConfig, GFile, UnsaveLoadDialog }
 export component AppWindow inherits Window {
@@ -35,7 +34,7 @@ export component AppWindow inherits Window {
         y: 20px;
     }
 
-    VerticalBox {
+    Vertical {
         TabWidget {
             orientation: Orientation.vertical;
 

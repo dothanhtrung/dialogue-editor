@@ -1,14 +1,13 @@
 
 import {
-    HorizontalBox,
     ComboBox,
     LineEdit,
     Button,
     CheckBox,
-    VerticalBox,
     Palette,
     StandardButton,
 } from "std-widgets.slint";
+import { Horizontal, Vertical } from "material-1.0/material.slint";
 
 export global GFile {
     in-out property <int> file_format;
@@ -41,8 +40,8 @@ export component UnsaveLoadDialog inherits Dialog {
 }
 
 export component FileSection inherits Rectangle {
-    VerticalLayout {
-        HorizontalBox {
+    Vertical {
+        Horizontal {
             ui_file_format := ComboBox {
                 width: 80px;
                 model: ["RON", "BIN"];
@@ -62,7 +61,7 @@ export component FileSection inherits Rectangle {
             }
         }
 
-        HorizontalBox {
+        Horizontal {
             ui_encrypt_key := LineEdit {
                 text <=> GFile.encrypt_key;
                 visible <=> GFile.enable_crypt;
@@ -82,7 +81,7 @@ export component FileSection inherits Rectangle {
             }
         }
 
-        HorizontalBox {
+        Horizontal {
             Button {
                 text: "Load";
                 clicked => {

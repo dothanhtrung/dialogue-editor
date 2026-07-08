@@ -1,47 +1,27 @@
 import {
-    HorizontalBox,
     Button,
-    VerticalBox,
     ComboBox,
     TextEdit,
     LineEdit,
     ListView,
     Palette,
 } from "std-widgets.slint";
+import {
+    IconButton,
+    Horizontal,
+    Vertical,
+    ElevatedCard,
+} from "material-1.0/material.slint";
+import { SearchBar } from "material-1.0/ui/components/search_bar.slint";
+import { Icons } from "material-1.0/ui/icons/icons.slint";
 
 export component TabReload inherits Rectangle { }
 
-export component SearchableComboBox inherits Rectangle {
-    in-out property <[string]> model;
-
-    callback filter(string);
-    callback submit(string);
-
-    VerticalLayout {
-        edit := LineEdit {
-            edited(text) => {
-                filter(text);
-            }
-
-            accepted(text) => {
-                submit(text);
-            }
-        }
-
-        list := ComboBox {
-            model: model;
-            selected(current-value) => {
-                edit.text = current-value;
-            }
-        }
-    }
-}
-
-export component SelectableBox inherits Rectangle {
+export component SelectableBox inherits ElevatedCard {
     in property <string> value;
     in property <bool> selected;
 
-    callback delete_dialog();
+    callback delete();
     callback select();
 
     TouchArea {
@@ -52,7 +32,7 @@ export component SelectableBox inherits Rectangle {
             select();
         }
 
-        HorizontalBox {
+        Horizontal {
             Text {
                 text: {
                     if (value == "") {
@@ -63,11 +43,11 @@ export component SelectableBox inherits Rectangle {
                 };
             }
 
-            del_btn := Button {
-                text: "🗑️";
+            del_btn := IconButton {
+                icon: Icons.remove;
                 visible: selected;
                 clicked => {
-                    delete_dialog();
+                    delete();
                 };
             }
         }
@@ -75,7 +55,7 @@ export component SelectableBox inherits Rectangle {
 }
 
 
-export component EditableTextBox inherits Rectangle {
+export component EditableTextBox inherits ElevatedCard {
     in property <string> value;
     in-out property <bool> selected;
     private property <bool> is_edited: false;
@@ -83,9 +63,6 @@ export component EditableTextBox inherits Rectangle {
     callback submit(string);
     callback delete();
     callback select;
-
-    drop-shadow-offset-x: 4px;
-    drop-shadow-offset-y: 4px;
 
     touch_area := TouchArea {
         width: 100%;
@@ -96,7 +73,7 @@ export component EditableTextBox inherits Rectangle {
         }
 
         // TODO: Fix cropped view
-        HorizontalBox {
+        Horizontal {
             edit := LineEdit {
                 text: value;
                 enabled: selected;
@@ -104,26 +81,30 @@ export component EditableTextBox inherits Rectangle {
 
                 accepted(text) => {
                     submit(self.text);
-                    root.is_edited = false;
+                    is_edited = false;
                 }
 
                 edited(text) => {
-                    root.is_edited = true;
+                    is_edited = true;
                 }
             }
 
-            if (root.is_edited) : Button {
-                text: "✅";
+            if (root.is_edited): IconButton {
+                icon: Icons.edit;
+                tooltip: "Submit";
+                inline: true;
 
                 clicked => {
                     submit(edit.text);
-                    root.is_edited = false;
+                    is_edited = false;
                 }
             }
 
-            del_btn := Button {
-                text: "🗑️";
+            del_btn := IconButton {
+                icon: Icons.remove;
                 visible: selected;
+                tooltip: "Remove";
+                inline: true;
 
                 clicked => {
                     delete();
@@ -134,10 +115,13 @@ export component EditableTextBox inherits Rectangle {
     }
 }
 
-export component SearchBox inherits LineEdit {
+export component SearchBox inherits ElevatedCard {
     callback search(string);
-
-    placeholder-text: "Search...";
-    edited(text) => { search(text); }
-    accepted(text) => { search(text); }
+    LineEdit {
+        width: 100%;
+        height: 100%;
+        placeholder-text: "Search...";
+        edited(text) => { search(text); }
+        accepted(text) => { search(text); }
+    }
 }

@@ -1,6 +1,4 @@
 import {
-    HorizontalBox,
-    VerticalBox,
     LineEdit,
     Button,
     GridBox,
@@ -9,6 +7,7 @@ import {
     ListView,
 } from "std-widgets.slint";
 import { TabReload, EditableTextBox, SearchBox } from "app_widgets.slint";
+import { Vertical, Horizontal, OutlinedCard } from "material-1.0/material.slint";
 
 
 export struct StringId {
@@ -36,7 +35,7 @@ export global GNameMap {
 }
 
 
-export component StringIdContainer inherits Rectangle {
+export component StringIdContainer inherits OutlinedCard {
     in-out property <[StringId]> values;
 
     callback delete(string);
@@ -44,13 +43,13 @@ export component StringIdContainer inherits Rectangle {
     callback new(string, string);
     callback search(string);
 
-    VerticalBox {
+    Vertical {
         SearchBox {
             search(text) => { root.search(text); }
         }
 
         ListView {
-            for value[i] in values: HorizontalBox {
+            for value[i] in values: Horizontal {
                 // TODO: Allow rename
                 Text {
                     text: value.name;
@@ -80,7 +79,7 @@ export component StringIdContainer inherits Rectangle {
             }
         }
 
-        HorizontalBox {
+        Horizontal {
             new_name := LineEdit {
                 placeholder-text: "New name";
 
@@ -116,9 +115,8 @@ export component StringIdContainer inherits Rectangle {
 export component NameMapTab inherits TabReload {
     in-out property <bool> is_saved;
 
-    HorizontalBox {
+    Horizontal {
         StringIdContainer {
-            width: 30%;
             values: GNameMap.classes;
             delete(name) => {
                 GNameMap.delete_class(name);
@@ -138,7 +136,6 @@ export component NameMapTab inherits TabReload {
         }
 
         StringIdContainer {
-            width: 30%;
             values: GNameMap.states;
             delete(name) => {
                 GNameMap.delete_state(name);
@@ -156,7 +153,6 @@ export component NameMapTab inherits TabReload {
         }
 
         StringIdContainer {
-            width: 30%;
             values: GNameMap.events;
             delete(index) => {
                 GNameMap.delete_event(index);

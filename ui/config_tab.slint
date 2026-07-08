@@ -2,11 +2,19 @@
 import { TabReload } from "app_widgets.slint";
 import {
     Palette,
-    VerticalBox,
     Button,
     LineEdit,
     ListView,
 } from "std-widgets.slint";
+import {
+    Horizontal,
+    Vertical,
+    ElevatedButton,
+    InputChip,
+    OutlinedCard,
+    Grid,
+} from "material-1.0/material.slint";
+import { Icons } from "material-1.0/ui/icons/icons.slint";
 
 export global GConfig {
     in-out property <[string]> lang_list;
@@ -20,7 +28,7 @@ export component Tag inherits Rectangle {
     in property <string> value;
     callback delete();
 
-    HorizontalLayout {
+    Horizontal {
         Text {
             text <=> value;
         }
@@ -35,28 +43,29 @@ export component Tag inherits Rectangle {
 }
 
 export component ConfigTab inherits TabReload {
-
-    VerticalBox {
-        Text {
-            text: "Supported languages";
-        }
-
-        ListView {
-            for lang[i] in GConfig.lang_list: Tag {
-                value: lang;
-
-                delete => { GConfig.delete_lang(lang); }
+    OutlinedCard {
+        Vertical {
+            Text {
+                text: "Supported languages";
             }
-        }
 
-        new_lang := LineEdit {
-            placeholder-text: "Language code in ISO-639-3";
-        }
+            Horizontal {
+                for lang[i] in GConfig.lang_list: InputChip {
+                    text: lang;
+                    trailing_icon: Icons.close;
+                    trailing_icon_clicked => { GConfig.delete_lang(lang); }
+                }
+            }
 
-        Button {
-            text: "Add";
-            clicked => {
-                GConfig.add_lang(new_lang.text);
+            new_lang := LineEdit {
+                placeholder-text: "Language code in ISO-639-3";
+            }
+
+            ElevatedButton {
+                text: "Add";
+                clicked => {
+                    GConfig.add_lang(new_lang.text);
+                }
             }
         }
     }

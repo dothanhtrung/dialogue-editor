@@ -1,11 +1,10 @@
-import { HorizontalBox } from "std-widgets.slint";
+
+import { Horizontal } from "material-1.0/material.slint";
 
 export component StatusBar inherits Rectangle {
     in property <bool> is_saved: true;
 
-    HorizontalBox {
-        alignment: end;
-
+    Horizontal {
         Text {
             text: {
                 if is_saved {
