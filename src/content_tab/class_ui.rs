@@ -23,6 +23,7 @@ use std::{
     collections::BTreeMap,
     rc::Rc,
 };
+use crate::namemap_tab::reload_class_map;
 
 pub fn add_class(
     data: Rc<RefCell<AppData>>,
@@ -47,6 +48,7 @@ pub fn add_class(
         config.selected_class = class_id;
         config.selected_state = 0;
         reload_class(&mut data, &ui, "");
+        reload_class_map(&data, &ui, "");
 
         ui.global::<GContent>().set_states([].into());
         ui.global::<GContent>().set_dialogues([].into());
@@ -76,6 +78,7 @@ pub fn rename_class(
                 data.dialogues.insert(new_class_id, value);
                 config.selected_class = new_class_id;
                 reload_class(&mut data, &ui, "");
+                reload_class_map(&data, &ui, "");
             }
         } else {
             show_noti(&ui, NotiLevel::Error, format!("Duplicated class {}", new_name).as_str());

@@ -22,6 +22,7 @@ import {
     FilledCard,
     ElevatedButton,
     HorizontalDivider,
+    FloatingActionButton,
 } from "material-1.0/material.slint";
 import { Icons } from "material-1.0/ui/icons/icons.slint";
 
@@ -50,6 +51,8 @@ export global GContent {
     in-out property <[string]> lang_list;
     in-out property <[string]> state_list;
     in-out property <[string]> event_list;
+
+    callback refresh();
 
     callback select-class(string);
     callback remove-class(string);

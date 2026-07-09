@@ -12,6 +12,8 @@ import {
     ElevatedButton,
 } from "material-1.0/ui/components/elevated_button.slint";
 import { Icons } from "material-1.0/ui/icons/icons.slint";
+import { GContent } from "content_tab.slint";
+import { GNameMap } from "namemap_tab.slint";
 
 export global GFile {
     in-out property <int> file_format;
@@ -20,6 +22,7 @@ export global GFile {
     in-out property <string> file_path;
     in-out property <bool> save_without_name;
 
+    // file_format, load_true_save_false
     callback file_picker(int, bool);
     callback load(string, int, string, bool);
     callback save(string, int, string, bool, bool);
@@ -68,15 +71,11 @@ export component FileSection inherits Rectangle {
             text: "Save";
             clicked => {
                 if (GFile.file_path == "") {
-                    GFile.file_picker(GFile.file_format, true);
+                    GFile.file_picker(GFile.file_format, false);
                 } else {
                     GFile.save(GFile.file_path, GFile.file_format, GFile.encrypt_key, GFile.save_without_name, false);
                 }
             }
         }
-
-        // Horizontal {
-        //     ui_encrypt_key := 
-        // }
     }
 }

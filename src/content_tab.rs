@@ -3,10 +3,6 @@ pub mod dialogue_ui;
 pub mod state_ui;
 
 use crate::{
-    AppData,
-    AppWindow,
-    Config,
-    GContent,
     content_tab::{
         class_ui::reload_class,
         dialogue_ui::{
@@ -15,11 +11,28 @@ use crate::{
         },
         state_ui::reload_state,
     },
+    AppData,
+    AppWindow,
+    Config,
+    GContent,
 };
 use slint::{
     ComponentHandle,
     SharedString,
+    Weak,
 };
+use std::cell::RefCell;
+use std::rc::Rc;
+
+pub fn refresh(data: Rc<RefCell<AppData>>, config: Rc<RefCell<Config>>, ui: Weak<AppWindow>) -> impl Fn() {
+    move || {
+        let mut data = data.borrow_mut();
+        let config = config.borrow();
+        let ui = ui.unwrap();
+
+        reload_content(&mut data, &ui, &config);
+    }
+}
 
 pub fn reload_content(data: &mut AppData, ui: &AppWindow, config: &Config) {
     reload_class(data, ui, "");

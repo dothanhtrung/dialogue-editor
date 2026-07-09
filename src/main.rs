@@ -137,6 +137,8 @@ fn main() -> Result<(), Box<dyn Error>> {
     // ======== Content tab ===========
     // TODO: Move these to content_tab internally
     ui.global::<GContent>()
+        .on_refresh(content_tab::refresh(data.clone(), config.clone(), ui.as_weak()));
+    ui.global::<GContent>()
         .on_add_class(add_class(data.clone(), config.clone(), ui.as_weak()));
     ui.global::<GContent>()
         .on_rename_class(rename_class(data.clone(), config.clone(), ui.as_weak()));
@@ -182,7 +184,8 @@ fn main() -> Result<(), Box<dyn Error>> {
         .on_search_dialogue(search_dialogue(data.clone(), config.clone(), ui.as_weak()));
 
     // --------------------- Namemap Tab -------------------------
-
+    ui.global::<GNameMap>()
+        .on_refresh(namemap_tab::refresh(data.clone(), ui.as_weak()));
     ui.global::<GNameMap>()
         .on_delete_class(delete_class_map(data.clone(), ui.as_weak()));
     ui.global::<GNameMap>()

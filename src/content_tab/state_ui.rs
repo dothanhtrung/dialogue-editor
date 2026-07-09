@@ -22,6 +22,7 @@ use std::{
     cell::RefCell,
     rc::Rc,
 };
+use crate::namemap_tab::reload_state_map;
 
 pub fn add_state(
     data: Rc<RefCell<AppData>>,
@@ -48,6 +49,7 @@ pub fn add_state(
             }
 
             reload_state(&mut data, &ui, &config, "");
+            reload_state_map(&data, &ui, "");
 
             ui.global::<GContent>().set_dialogues([].into());
             ui.global::<GContent>().set_dialogue(UiDialogue::default());
@@ -115,6 +117,7 @@ pub fn rename_state(
                 data.dialogues.insert(new_id, dialog);
                 config.selected_state = new_id;
                 reload_state(&mut data, &ui, &config, "");
+                reload_state_map(&data, &ui, "");
             }
         } else {
             show_noti(&ui, NotiLevel::Error, format!("Duplicated state {}", new_name).as_str());

@@ -2,19 +2,19 @@ pub mod bin_file;
 pub mod ron_file;
 
 use crate::{
+    common::{
+        id_to_class,
+        id_to_state,
+        show_noti,
+        NotiLevel,
+    },
+    content_tab::reload_content,
+    namemap_tab::reload_all_map,
     AppData,
     AppWindow,
     Config,
     GFile,
     UnsaveLoadDialog,
-    common::{
-        NotiLevel,
-        id_to_class,
-        id_to_state,
-        show_noti,
-    },
-    content_tab::reload_content,
-    namemap_tab::reload_all_map,
 };
 use rfd::FileDialog;
 use serde::{
@@ -66,18 +66,23 @@ pub fn file_picker(
         let ui = ui_handle.unwrap();
         let mut config = config.borrow_mut();
         config.file_format = file_format.into();
-        config.file_path = FileDialog::new()
+
+        let file_dialog = FileDialog::new()
+            .add_filter("Ron", &["ron"])
+            .add_filter("Bin", &["bin"])
             .set_directory(
-                config
-                    .file_path
-                    .parent()
-                    .unwrap_or(Path::new("/"))
-                    .to_str()
-                    .unwrap_or("/"),
-            )
-            .set_can_create_directories(true)
-            .pick_file()
-            .unwrap_or_default();
+            config
+                .file_path
+                .parent()
+                .unwrap_or(Path::new("/"))
+                .to_str()
+                .unwrap_or("/"),
+        );
+        config.file_path = if load_true_save_false {
+            file_dialog.pick_file().unwrap_or_default()
+        } else {
+            file_dialog.save_file().unwrap_or_default()
+        };
 
         ui.global::<GFile>()
             .set_file_path(config.file_path.to_str().unwrap_or_default().into());
@@ -100,6 +105,7 @@ pub fn file_picker(
         if load_true_save_false {
             load(&mut data, &mut config, &ui);
         } else {
+            // Show warning when data is empty and the save file is not empty
             save(&data, &config, &ui);
         }
     }

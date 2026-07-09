@@ -1,28 +1,27 @@
-use std::{
-    cell::RefCell,
-    rc::Rc,
-};
-
 use crate::{
-    AppData,
-    AppWindow,
-    GContent,
-    GNameMap,
-    StringId,
     common::{
-        NameType,
-        NotiLevel,
         class_to_id,
         event_to_id,
         new_regex,
         show_noti,
         state_to_id,
+        NameType,
+        NotiLevel,
     },
+    AppData,
+    AppWindow,
+    GContent,
+    GNameMap,
+    StringId,
 };
 use slint::{
     ComponentHandle,
     SharedString,
     Weak,
+};
+use std::{
+    cell::RefCell,
+    rc::Rc,
 };
 use xxhash_rust::xxh3::xxh3_64;
 
@@ -33,7 +32,7 @@ pub fn delete_class_map(data: Rc<RefCell<AppData>>, ui: Weak<AppWindow>) -> impl
         let mut data = data.borrow_mut();
         let ui = ui.unwrap();
         data.class_name_map.remove(name.as_str()); // TODO: Check if content is using this
-        reload_class_map(&data, &ui, ""); // TODO: Reload tab separate
+        reload_class_map(&data, &ui, "");
     }
 }
 
@@ -230,18 +229,26 @@ fn update_id(
     }
 }
 
+pub fn refresh(data: Rc<RefCell<AppData>>, ui: Weak<AppWindow>) -> impl Fn() {
+    move || {
+        let data = data.borrow();
+        let ui = ui.unwrap();
+        reload_all_map(&data, &ui);
+    }
+}
+
 pub fn reload_all_map(data: &AppData, ui: &AppWindow) {
     reload_class_map(data, ui, "");
     reload_state_map(data, ui, "");
     reload_event_map(data, ui, "");
 }
 
-fn reload_class_map(data: &AppData, ui: &AppWindow, search: &str) {
+pub fn reload_class_map(data: &AppData, ui: &AppWindow, search: &str) {
     let class_map = reload_map(data, NameType::Class, search);
     ui.global::<GNameMap>().set_classes(class_map.as_slice().into());
 }
 
-fn reload_state_map(data: &AppData, ui: &AppWindow, search: &str) {
+pub fn reload_state_map(data: &AppData, ui: &AppWindow, search: &str) {
     let class_map = reload_map(data, NameType::State, search);
     ui.global::<GNameMap>().set_states(class_map.as_slice().into());
 
@@ -252,8 +259,7 @@ fn reload_state_map(data: &AppData, ui: &AppWindow, search: &str) {
     ui.global::<GContent>().set_state_list(state_list.as_slice().into());
 }
 
-// TODO: Why is this delay compare to reload_class_map and reload_state_map?
-fn reload_event_map(data: &AppData, ui: &AppWindow, search: &str) {
+pub fn reload_event_map(data: &AppData, ui: &AppWindow, search: &str) {
     let event_map = reload_map(data, NameType::Event, search);
 
     ui.global::<GNameMap>().set_events(event_map.as_slice().into());
