@@ -10,7 +10,13 @@ use crate::{
     GNameMap,
     StringId,
     common::{
-        NameType, NotiLevel, class_to_id, event_to_id, new_regex, show_noti, state_to_id
+        NameType,
+        NotiLevel,
+        class_to_id,
+        event_to_id,
+        new_regex,
+        show_noti,
+        state_to_id,
     },
 };
 use slint::{

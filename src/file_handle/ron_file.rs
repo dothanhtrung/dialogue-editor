@@ -1,5 +1,11 @@
-use ron::ser::{PrettyConfig, to_string_pretty};
-use serde::{Deserialize, Serialize};
+use ron::ser::{
+    PrettyConfig,
+    to_string_pretty,
+};
+use serde::{
+    Deserialize,
+    Serialize,
+};
 use std::fs::File;
 use std::io::Write;
 use std::path::Path;

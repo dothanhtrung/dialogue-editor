@@ -8,7 +8,13 @@ use crate::{
     GContent,
     UiDialogue,
     common::{
-        class_to_id, event_to_id, id_to_class, id_to_event, id_to_state, new_regex, state_to_id
+        class_to_id,
+        event_to_id,
+        id_to_class,
+        id_to_event,
+        id_to_state,
+        new_regex,
+        state_to_id,
     },
 };
 use isolang::Language;

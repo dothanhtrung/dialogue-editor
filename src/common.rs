@@ -4,7 +4,10 @@ use crate::{
     GNoti,
     Noti,
 };
-use regex::{Regex, RegexBuilder};
+use regex::{
+    Regex,
+    RegexBuilder,
+};
 use slint::ComponentHandle;
 use tracing::{
     error,

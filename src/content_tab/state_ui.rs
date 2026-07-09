@@ -5,7 +5,11 @@ use crate::{
     GContent,
     UiDialogue,
     common::{
-        NotiLevel, id_to_state, new_regex, show_noti, state_to_id
+        NotiLevel,
+        id_to_state,
+        new_regex,
+        show_noti,
+        state_to_id,
     },
     content_tab::dialogue_ui::reload_dialogue,
 };
@@ -32,14 +36,17 @@ pub fn add_state(
 
         config.selected_state = state_id;
         if let Some(class) = data.dialogues.get_mut(&config.selected_class) {
-            class.entry(state_id).or_insert_with(|| {
+            if class.contains_key(&state_id) {
                 show_noti(
                     &ui,
                     NotiLevel::Warn,
                     format!("State {} already exists", &state_name).as_str(),
                 );
-                Vec::new()
-            });
+                return;
+            } else {
+                class.insert(state_id, Vec::new());
+            }
+
             reload_state(&mut data, &ui, &config, "");
 
             ui.global::<GContent>().set_dialogues([].into());

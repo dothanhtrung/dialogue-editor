@@ -5,6 +5,7 @@ import {
     Button,
     LineEdit,
     ListView,
+    CheckBox,
 } from "std-widgets.slint";
 import {
     Horizontal,
@@ -14,6 +15,7 @@ import {
     OutlinedCard,
     Grid,
 } from "material-1.0/material.slint";
+import { GFile } from "file_section.slint";
 import { Icons } from "material-1.0/ui/icons/icons.slint";
 
 export global GConfig {
@@ -44,6 +46,21 @@ export component Tag inherits Rectangle {
 
 export component ConfigTab inherits TabReload {
     Vertical {
+        OutlinedCard {
+            CheckBox {
+                text: "Save dialogue without name map";
+                checked <=> GFile.save_without_name;
+            }
+        }
+
+        if (GFile.enable_crypt):
+        OutlinedCard {
+            LineEdit {
+                text <=> GFile.encrypt_key;
+                placeholder-text: "Encryption key";
+            }
+        }
+
         OutlinedCard {
             Vertical {
                 Text {

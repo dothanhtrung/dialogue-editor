@@ -1,8 +1,13 @@
 use crate::{
-    AppData, AppWindow, Config, GConfig, GContent, common::{
+    AppData,
+    AppWindow,
+    Config,
+    GConfig,
+    GContent,
+    common::{
         NotiLevel,
         show_noti,
-    }
+    },
 };
 use isolang::Language;
 use slint::{

@@ -1,4 +1,3 @@
-
 import {
     ComboBox,
     LineEdit,
@@ -9,7 +8,9 @@ import {
 } from "std-widgets.slint";
 import { Horizontal, Vertical } from "material-1.0/material.slint";
 import { OutlinedCard } from "material-1.0/ui/components/card.slint";
-import { ElevatedButton } from "material-1.0/ui/components/elevated_button.slint";
+import {
+    ElevatedButton,
+} from "material-1.0/ui/components/elevated_button.slint";
 import { Icons } from "material-1.0/ui/icons/icons.slint";
 
 export global GFile {
@@ -19,7 +20,7 @@ export global GFile {
     in-out property <string> file_path;
     in-out property <bool> save_without_name;
 
-    callback file_picker();
+    callback file_picker(int, bool);
     callback load(string, int, string, bool);
     callback save(string, int, string, bool, bool);
 }
@@ -42,62 +43,40 @@ export component UnsaveLoadDialog inherits Dialog {
     }
 }
 
-export component FileSection inherits OutlinedCard {
-    Vertical {
-        Horizontal {
-            ui_file_format := ComboBox {
-                width: 80px;
-                model: ["RON", "BIN"];
+export component FileSection inherits Rectangle {
+
+    Horizontal {
+        ui_file_format := ComboBox {
+            width: 80px;
+            model: ["RON", "BIN"];
                 // FIXME: If this is manual changed from UI, it can't be changed from backend anymore
                 current-index <=> GFile.file_format;
-            }
+        }
 
-            file_path_input := LineEdit {
-                text <=> GFile.file_path;
-            }
+        file_path_input := LineEdit {
+            text <=> GFile.file_path;
+        }
 
-            ElevatedButton {
-                text: "Browse";
-                clicked => {
-                    GFile.file_picker();
-                }
+        ElevatedButton {
+            text: "Load";
+            clicked => {
+                GFile.file_picker(GFile.file_format, true);
             }
         }
 
-        Horizontal {
-            ui_encrypt_key := LineEdit {
-                text <=> GFile.encrypt_key;
-                visible <=> GFile.enable_crypt;
-                height: {
-                    if (GFile.enable_crypt) {
-                        30%
-                    } else {
-                        0%
-                    }
-                };
-                placeholder-text: "Encryption key";
-            }
-
-            save_without_name := CheckBox {
-                text: "Save dialogue without name map";
-                checked <=> GFile.save_without_name;
-            }
-        }
-
-        Horizontal {
-            ElevatedButton {
-                text: "Load";
-                clicked => {
-                    GFile.load(GFile.file_path, GFile.file_format, GFile.encrypt_key, false);
-                }
-            }
-
-            ElevatedButton {
-                text: "Save";
-                clicked => {
+        ElevatedButton {
+            text: "Save";
+            clicked => {
+                if (GFile.file_path == "") {
+                    GFile.file_picker(GFile.file_format, true);
+                } else {
                     GFile.save(GFile.file_path, GFile.file_format, GFile.encrypt_key, GFile.save_without_name, false);
                 }
             }
         }
+
+        // Horizontal {
+        //     ui_encrypt_key := 
+        // }
     }
 }

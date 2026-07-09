@@ -35,6 +35,8 @@ export component AppWindow inherits Window {
     }
 
     Vertical {
+        FileSection { }
+
         TabWidget {
             orientation: Orientation.vertical;
 
@@ -60,8 +62,6 @@ export component AppWindow inherits Window {
                 ConfigTab { }
             }
         }
-
-        FileSection { }
 
         StatusBar {
             is_saved <=> root.is_saved;

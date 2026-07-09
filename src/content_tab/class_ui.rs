@@ -5,7 +5,11 @@ use crate::{
     GContent,
     UiDialogue,
     common::{
-        NotiLevel, class_to_id, id_to_class, new_regex, show_noti
+        NotiLevel,
+        class_to_id,
+        id_to_class,
+        new_regex,
+        show_noti,
     },
     content_tab::state_ui::reload_state,
 };

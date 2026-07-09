@@ -56,10 +56,16 @@ impl From<i32> for FileFormat {
     }
 }
 
-pub fn file_picker(config: Rc<RefCell<Config>>, ui_handle: Weak<AppWindow>) -> impl Fn() {
-    move || {
+pub fn file_picker(
+    data: Rc<RefCell<AppData>>,
+    config: Rc<RefCell<Config>>,
+    ui_handle: Weak<AppWindow>,
+) -> impl Fn(i32, bool) {
+    move |file_format, load_true_save_false| {
+        let mut data = data.borrow_mut();
         let ui = ui_handle.unwrap();
         let mut config = config.borrow_mut();
+        config.file_format = file_format.into();
         config.file_path = FileDialog::new()
             .set_directory(
                 config
@@ -69,8 +75,10 @@ pub fn file_picker(config: Rc<RefCell<Config>>, ui_handle: Weak<AppWindow>) -> i
                     .to_str()
                     .unwrap_or("/"),
             )
+            .set_can_create_directories(true)
             .pick_file()
             .unwrap_or_default();
+
         ui.global::<GFile>()
             .set_file_path(config.file_path.to_str().unwrap_or_default().into());
 
@@ -88,6 +96,12 @@ pub fn file_picker(config: Rc<RefCell<Config>>, ui_handle: Weak<AppWindow>) -> i
             config.file_format = FileFormat::Bin;
         }
         ui.global::<GFile>().set_file_format(config.file_format as i32);
+
+        if load_true_save_false {
+            load(&mut data, &mut config, &ui);
+        } else {
+            save(&data, &config, &ui);
+        }
     }
 }
 
@@ -151,39 +165,43 @@ pub fn request_load(
             return;
         }
 
-        *data = match config.file_format {
-            FileFormat::Bin => match bin_file::load_from(&config.file_path, &config.encrypt_key) {
-                Ok(ret) => ret,
-                Err(e) => {
-                    show_noti(&ui, NotiLevel::Error, format!("Failed to load: {}", e).as_str());
-                    AppData::default()
-                }
-            },
-            FileFormat::Ron => match ron_file::load_from(&config.file_path) {
-                Ok(ret) => ret,
-                Err(e) => {
-                    show_noti(&ui, NotiLevel::Error, format!("Failed to load: {}", e).as_str());
-                    AppData::default()
-                }
-            },
-        };
-        if (config.selected_class == 0 || id_to_class(config.selected_class, &data).is_none())
-            && let Some(first_class) = data.dialogues.keys().next()
-        {
-            config.selected_class = *first_class;
-        }
-
-        if (config.selected_state == 0 || id_to_state(config.selected_state, &data).is_none())
-            && let Some(selected_class) = data.dialogues.get(&config.selected_class)
-            && let Some((first_state, _)) = selected_class.first_key_value()
-        {
-            config.selected_class = *first_state;
-        }
-
-        reload_content(&mut data, &ui, &config);
-        reload_all_map(&data, &ui);
-        ui.set_is_saved(true);
+        load(&mut data, &mut config, &ui);
     }
+}
+
+fn load(data: &mut AppData, config: &mut Config, ui: &AppWindow) {
+    *data = match config.file_format {
+        FileFormat::Bin => match bin_file::load_from(&config.file_path, &config.encrypt_key) {
+            Ok(ret) => ret,
+            Err(e) => {
+                show_noti(ui, NotiLevel::Error, format!("Failed to load: {}", e).as_str());
+                AppData::default()
+            }
+        },
+        FileFormat::Ron => match ron_file::load_from(&config.file_path) {
+            Ok(ret) => ret,
+            Err(e) => {
+                show_noti(ui, NotiLevel::Error, format!("Failed to load: {}", e).as_str());
+                AppData::default()
+            }
+        },
+    };
+    if (config.selected_class == 0 || id_to_class(config.selected_class, data).is_none())
+        && let Some(first_class) = data.dialogues.keys().next()
+    {
+        config.selected_class = *first_class;
+    }
+
+    if (config.selected_state == 0 || id_to_state(config.selected_state, data).is_none())
+        && let Some(selected_class) = data.dialogues.get(&config.selected_class)
+        && let Some((first_state, _)) = selected_class.first_key_value()
+    {
+        config.selected_state = *first_state;
+    }
+
+    reload_content(data, ui, config);
+    reload_all_map(data, ui);
+    ui.set_is_saved(true);
 }
 
 // TODO: Shortcut Ctrl-S
@@ -203,48 +221,52 @@ pub fn request_save(
         config.save_without_name = save_without_name;
         config.save();
 
-        match config.file_format {
-            FileFormat::Bin => {
-                if let Err(e) = bin_file::save_to::<AppData>(&data, &config.file_path, &config.encrypt_key) {
-                    show_noti(&ui, NotiLevel::Error, format!("Failed to save: {:?}", e).as_str());
-                } else {
-                    if save_without_name {
-                        let mut data_without_name = data.clone();
-                        data_without_name.clear_name_map();
-                        let file_path = config.file_path.with_extension("no_name.bin");
-                        if let Err(e) = bin_file::save_to(&data_without_name, &file_path, &config.encrypt_key) {
-                            show_noti(&ui, NotiLevel::Error, format!("Failed to save: {:?}", e).as_str());
-                        }
-                    }
+        save(&data, &config, &ui);
+    }
+}
 
-                    ui.set_is_saved(true);
-                    show_noti(
-                        &ui,
-                        NotiLevel::Info,
-                        format!("Success save {}", &config.file_path.display()).as_str(),
-                    );
+fn save(data: &AppData, config: &Config, ui: &AppWindow) {
+    match config.file_format {
+        FileFormat::Bin => {
+            if let Err(e) = bin_file::save_to::<AppData>(data, &config.file_path, &config.encrypt_key) {
+                show_noti(ui, NotiLevel::Error, format!("Failed to save: {:?}", e).as_str());
+            } else {
+                if config.save_without_name {
+                    let mut data_without_name = data.clone();
+                    data_without_name.clear_name_map();
+                    let file_path = config.file_path.with_extension("no_name.bin");
+                    if let Err(e) = bin_file::save_to(&data_without_name, &file_path, &config.encrypt_key) {
+                        show_noti(ui, NotiLevel::Error, format!("Failed to save: {:?}", e).as_str());
+                    }
                 }
+
+                ui.set_is_saved(true);
+                show_noti(
+                    ui,
+                    NotiLevel::Info,
+                    format!("Success save {}", &config.file_path.display()).as_str(),
+                );
             }
-            FileFormat::Ron => {
-                if let Err(e) = ron_file::save_to::<AppData>(&data, &config.file_path) {
-                    show_noti(&ui, NotiLevel::Error, format!("Failed to save: {:?}", e).as_str());
-                } else {
-                    if save_without_name {
-                        let mut data_without_name = data.clone();
-                        data_without_name.clear_name_map();
-                        let file_path = config.file_path.with_extension("no_name.ron");
-                        if let Err(e) = ron_file::save_to(&data_without_name, &file_path) {
-                            show_noti(&ui, NotiLevel::Error, format!("Failed to save: {:?}", e).as_str());
-                        }
+        }
+        FileFormat::Ron => {
+            if let Err(e) = ron_file::save_to::<AppData>(data, &config.file_path) {
+                show_noti(ui, NotiLevel::Error, format!("Failed to save: {:?}", e).as_str());
+            } else {
+                if config.save_without_name {
+                    let mut data_without_name = data.clone();
+                    data_without_name.clear_name_map();
+                    let file_path = config.file_path.with_extension("no_name.ron");
+                    if let Err(e) = ron_file::save_to(&data_without_name, &file_path) {
+                        show_noti(ui, NotiLevel::Error, format!("Failed to save: {:?}", e).as_str());
                     }
-
-                    ui.set_is_saved(true);
-                    show_noti(
-                        &ui,
-                        NotiLevel::Info,
-                        format!("Success save {}", &config.file_path.display()).as_str(),
-                    );
                 }
+
+                ui.set_is_saved(true);
+                show_noti(
+                    ui,
+                    NotiLevel::Info,
+                    format!("Success save {}", &config.file_path.display()).as_str(),
+                );
             }
         }
     }
