@@ -8,6 +8,9 @@ import {
     StandardButton,
 } from "std-widgets.slint";
 import { Horizontal, Vertical } from "material-1.0/material.slint";
+import { OutlinedCard } from "material-1.0/ui/components/card.slint";
+import { ElevatedButton } from "material-1.0/ui/components/elevated_button.slint";
+import { Icons } from "material-1.0/ui/icons/icons.slint";
 
 export global GFile {
     in-out property <int> file_format;
@@ -39,7 +42,7 @@ export component UnsaveLoadDialog inherits Dialog {
     }
 }
 
-export component FileSection inherits Rectangle {
+export component FileSection inherits OutlinedCard {
     Vertical {
         Horizontal {
             ui_file_format := ComboBox {
@@ -53,7 +56,7 @@ export component FileSection inherits Rectangle {
                 text <=> GFile.file_path;
             }
 
-            Button {
+            ElevatedButton {
                 text: "Browse";
                 clicked => {
                     GFile.file_picker();
@@ -82,14 +85,14 @@ export component FileSection inherits Rectangle {
         }
 
         Horizontal {
-            Button {
+            ElevatedButton {
                 text: "Load";
                 clicked => {
                     GFile.load(GFile.file_path, GFile.file_format, GFile.encrypt_key, false);
                 }
             }
 
-            Button {
+            ElevatedButton {
                 text: "Save";
                 clicked => {
                     GFile.save(GFile.file_path, GFile.file_format, GFile.encrypt_key, GFile.save_without_name, false);

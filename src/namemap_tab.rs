@@ -61,7 +61,7 @@ pub fn update_class_id(data: Rc<RefCell<AppData>>, ui: Weak<AppWindow>) -> impl 
         {
             data.dialogues.insert(new_id, value);
         }
-        reload_class_map(&data, &ui, "");
+        // reload_class_map(&data, &ui, "");
     }
 }
 
@@ -77,7 +77,7 @@ pub fn update_state_id(data: Rc<RefCell<AppData>>, ui: Weak<AppWindow>) -> impl 
                 }
             }
         }
-        reload_state_map(&data, &ui, "");
+        // reload_state_map(&data, &ui, "");
     }
 }
 
@@ -100,7 +100,7 @@ pub fn update_event_id(data: Rc<RefCell<AppData>>, ui: Weak<AppWindow>) -> impl 
             }
         }
 
-        reload_event_map(&data, &ui, "");
+        // reload_event_map(&data, &ui, "");
     }
 }
 

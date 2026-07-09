@@ -7,7 +7,18 @@ import {
     ListView,
 } from "std-widgets.slint";
 import { TabReload, EditableTextBox, SearchBox } from "app_widgets.slint";
-import { Vertical, Horizontal, OutlinedCard } from "material-1.0/material.slint";
+import {
+    Vertical,
+    Horizontal,
+    OutlinedCard,
+} from "material-1.0/material.slint";
+import { ElevatedCard } from "material-1.0/ui/components/card.slint";
+import {
+    ElevatedButton,
+} from "material-1.0/ui/components/elevated_button.slint";
+import { Icons } from "material-1.0/ui/icons/icons.slint";
+import { Icon } from "material-1.0/ui/components/icon.slint";
+import { IconButton } from "material-1.0/ui/components/icon_button.slint";
 
 
 export struct StringId {
@@ -35,6 +46,52 @@ export global GNameMap {
 }
 
 
+// TODO: Allow rename
+component NameMapItem inherits ElevatedCard {
+    in property <StringId> value;
+    property <bool> is_edited: false;
+
+    callback update(string, string);
+    callback delete(string);
+
+    Horizontal {
+        alignment: start;
+
+        Text {
+            text: value.name;
+        }
+
+        edit := LineEdit {
+            text: value.id;
+            input-type: number;
+            edited(text) => {
+                is_edited = true;
+            }
+            accepted(text) => {
+                update(value.name, self.text);
+                is_edited = false;
+            }
+        }
+
+        if (is_edited): IconButton {
+            icon: Icons.check;
+            inline: true;
+            clicked => {
+                update(value.name, edit.text);
+                root.is_edited = false;
+            }
+        }
+
+        IconButton {
+            icon: Icons.remove;
+            inline: true;
+            clicked => {
+                delete(value.name);
+            }
+        }
+    }
+}
+
 export component StringIdContainer inherits OutlinedCard {
     in-out property <[StringId]> values;
 
@@ -45,35 +102,20 @@ export component StringIdContainer inherits OutlinedCard {
 
     Vertical {
         SearchBox {
-            search(text) => { root.search(text); }
+            search(text) => {
+                root.search(text);
+            }
         }
 
         ListView {
-            for value[i] in values: Horizontal {
-                // TODO: Allow rename
-                Text {
-                    text: value.name;
-                }
-
-                edit := LineEdit {
-                    text: value.id;
-                    input-type: number;
-                    accepted(text) => {
-                        update(value.name, self.text);
+            for value[i] in values: ElevatedCard {
+                NameMapItem {
+                    value: value;
+                    update(name, id) => {
+                        update(name,id);
                     }
-                }
-
-                Button {
-                    text: "";
-                    clicked => {
-                        update(value.name, edit.text);
-                    }
-                }
-
-                Button {
-                    text: "Del";
-                    clicked => {
-                        delete(value.name);
+                    delete(name) => {
+                        delete(name);
                     }
                 }
             }
@@ -95,7 +137,7 @@ export component StringIdContainer inherits OutlinedCard {
                 }
             }
 
-            Button {
+            ElevatedButton {
                 text: "Add";
                 clicked => {
                     submit();
@@ -149,7 +191,9 @@ export component NameMapTab inherits TabReload {
                 GNameMap.new_state(name, id);
                 is_saved = false;
             }
-            search(text) => { GNameMap.search_state(text); }
+            search(text) => {
+                GNameMap.search_state(text);
+            }
         }
 
         StringIdContainer {
@@ -166,7 +210,9 @@ export component NameMapTab inherits TabReload {
                 GNameMap.new_event(name, id);
                 is_saved = false;
             }
-            search(text) => { GNameMap.search_event(text); }
+            search(text) => {
+                GNameMap.search_event(text);
+            }
         }
     }
 }
