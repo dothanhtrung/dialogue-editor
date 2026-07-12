@@ -83,69 +83,62 @@ export global GContent {
 }
 
 export component DialogueBox inherits Rectangle {
-    in property <[string]> class_list; // TODO: Class list from name map too
+    in property <[string]> class_list; // TODO: Class list from name map toos
     property <int> content_selecting;
+    property <bool> is_edited: false;
 
     Vertical {
         Vertical {
-            Rectangle {
-                ListView {
-                    for dialog[i] in GContent.dialogue.contents: ElevatedCard {
-                        Horizontal {
-                                // TODO: Use SearchBar for this
-                                lang_view := ComboBox {
-                                model: GContent.lang_list;
-                                current-value: dialog.language;
-                                enabled: {
-                                    root.content_selecting == i
-                                };
-                                selected(current-value) => {
-                                    GContent.dialogue.contents[i].language = current-value;
-                                    submit_btn.visible = true;
-                                }
-                            }
+            height: 50%;
+            ListView {
+                for dialog[i] in GContent.dialogue.contents: Horizontal {
+                    alignment: start;
+                    Text {
+                        text: dialog.language;
+                    }
 
-                            content_view := TextEdit {
-                                text: dialog.content;
-                                enabled: {
-                                    root.content_selecting == i
-                                };
-                                edited(value) => {
-                                    GContent.dialogue.contents[i].content = value;
-                                    submit_btn.visible = true;
-                                }
-                            }
+                    content_view := TextEdit {
+                        height: 96px;
+                        width: 80%;
+                        placeholder-text: "Your dialogue";
+                        text: dialog.content;
+                        edited(value) => {
+                            GContent.dialogue.contents[i].content = value;
+                            is_edited = true;
+                        }
+                    }
 
-                            IconButton {
-                                icon: Icons.remove;
-                                inline: true;
-                                clicked => {
-                                    GContent.delete_content(dialog.language);
-                                }
+                    Rectangle {
+                        IconButton {
+                            icon: Icons.remove;
+                            clicked => {
+                                GContent.delete_content(dialog.language);
+                                is_edited = false;
                             }
                         }
                     }
                 }
             }
 
-            submit_btn := TextButton {
+            if is_edited: TextButton {
                 text: "Submit";
-                visible: false;
                 clicked => {
                     GContent.update_content(GContent.dialogue);
-                    self.visible = false;
+                    is_edited = false;
                 };
             }
 
             Horizontal {
-                new_lang := ComboBox {
-                    width: 20%;
-                    model: GContent.lang_list;
-                    current-index: 0;
+                alignment: start;
+                Rectangle {
+                    new_lang := ComboBox {
+                        model: GContent.lang_list;
+                        current-index: 0;
+                    }
                 }
 
-                new_content := TextEdit {
-                    text: "new dialog";
+                new_content := LineEdit {
+                    placeholder-text: "new dialog";
                 }
 
                 TextButton {
@@ -154,6 +147,7 @@ export component DialogueBox inherits Rectangle {
                         GContent.update_content(GContent.dialogue);
                         GContent.add_lang_content(new_lang.current-value, new_content.text);
                         new_content.text = "";
+                        is_edited = false;
                     };
                 }
             }
@@ -356,7 +350,7 @@ export component ContentTab inherits TabReload {
 
                 Rectangle {
                     visible: {
-                        root.selecting_class >= 0
+                        root.selecting_class >= 0 || root.selecting_state >= 0
                     };
                     Horizontal {
                         new_state := LineEdit {

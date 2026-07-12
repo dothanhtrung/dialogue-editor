@@ -11,6 +11,8 @@ Dialogue Editor
 
 Dialogue editor for [bevy-dialogue](https://gitlab.com/245project/bevy-plugin/bevy-dialogue).
 
+> Although the file schema is stable, the editor is still in progress.
+
 TODO:
 
 * High priority

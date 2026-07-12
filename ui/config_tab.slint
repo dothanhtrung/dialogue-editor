@@ -66,30 +66,39 @@ export component ConfigTab inherits TabReload {
 
         Rectangle {
             Vertical {
+                alignment: start;
+
                 Text {
                     text: "Dialogue languages";
                 }
 
-                Horizontal {
-                    for lang[i] in GConfig.lang_list: InputChip {
-                        text: lang;
-                        trailing_icon: Icons.close;
-                        trailing_icon_clicked => {
-                            GConfig.delete_lang(lang);
+                Rectangle {
+                    Horizontal {
+                        alignment: start;
+                        for lang[i] in GConfig.lang_list: Rectangle {
+                            InputChip {
+                                text: lang;
+                                trailing_icon: Icons.close;
+                                trailing_icon_clicked => {
+                                    GConfig.delete_lang(lang);
+                                }
+                            }
                         }
                     }
                 }
 
-                Horizontal {
-                    new_lang := LineEdit {
-                        placeholder-text: "Language code in ISO-639-3";
-                    }
+                Rectangle {
+                    Horizontal {
+                        new_lang := LineEdit {
+                            placeholder-text: "Language code in ISO-639-3";
+                        }
 
-                    ElevatedButton {
-                        text: "Add";
-                        clicked => {
-                            GConfig.add_lang(new_lang.text);
-                            self.text = "";
+                        ElevatedButton {
+                            text: "Add";
+                            clicked => {
+                                GConfig.add_lang(new_lang.text);
+                                self.text = "";
+                            }
                         }
                     }
                 }
