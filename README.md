@@ -18,12 +18,10 @@ TODO:
 * High priority
     * [ ] Undo/Redo
     * [ ] Better UI
-        * [ ] Better color
-        * [ ] Shadow
-        * [ ] Tooltip
 
 * Low priority
     * [ ] Disable dialogue without deletion
+    * [ ] Dialogue condition
     * [ ] Metadata (e.g. schema version)
     * [ ] Jump between dialogue in field `affects`
     * [ ] Resizable UI
