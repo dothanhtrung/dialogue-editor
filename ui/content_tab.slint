@@ -23,6 +23,7 @@ import {
     ElevatedButton,
     HorizontalDivider,
     FloatingActionButton,
+    InputChip,
 } from "material-1.0/material.slint";
 import { Icons } from "material-1.0/ui/icons/icons.slint";
 import { VerticalDivider } from "material-1.0/ui/components/divider.slint";
@@ -89,7 +90,7 @@ export component DialogueBox inherits Rectangle {
 
     Vertical {
         Vertical {
-            height: 50%;
+            height: 60%;
             ListView {
                 for dialog[i] in GContent.dialogue.contents: Horizontal {
                     alignment: start;
@@ -142,7 +143,7 @@ export component DialogueBox inherits Rectangle {
                 }
 
                 TextButton {
-                    text: "+";
+                    text: "Add";
                     clicked => {
                         GContent.update_content(GContent.dialogue);
                         GContent.add_lang_content(new_lang.current-value, new_content.text);
@@ -156,24 +157,17 @@ export component DialogueBox inherits Rectangle {
         HorizontalDivider { }
 
         Vertical {
-            Rectangle {
-                ListView {
-                    // TODO: Add "Go to" the affected state
-                    for affect[i] in GContent.dialogue.affects: Horizontal {
-                        Text {
-                            text: affect.class;
-                        }
+            Text {
+                text: "Affect list";
+            }
 
-                        Text {
-                            text: affect.state;
-                        }
-
-                        Button {
-                            text: "🗑️";
-                            clicked => {
-                                GContent.delete_affect(affect.class);
-                            }
-                        }
+            ListView {
+                // TODO: Add "Go to" the affected state
+                for affect[i] in GContent.dialogue.affects: InputChip {
+                    text: { affect.class + ":" + affect.state };
+                    trailing_icon: Icons.remove;
+                    trailing_icon_clicked => {
+                        GContent.delete_affect(affect.class);
                     }
                 }
             }
@@ -189,7 +183,7 @@ export component DialogueBox inherits Rectangle {
                     current-index: 0;
                 }
 
-                Button {
+                TextButton {
                     text: "Add";
                     clicked => {
                         GContent.update_content(GContent.dialogue);
@@ -202,19 +196,16 @@ export component DialogueBox inherits Rectangle {
         HorizontalDivider { }
 
         Vertical {
-            Rectangle {
-                ListView {
-                    for event[i] in GContent.dialogue.events: Horizontal {
-                        Text {
-                            text: event;
-                        }
+            Text {
+                text: "Event List";
+            }
 
-                        Button {
-                            text: "🗑️";
-                            clicked => {
-                                GContent.delete_event(i);
-                            }
-                        }
+            ListView {
+                for event[i] in GContent.dialogue.events: InputChip {
+                    text: event;
+                    trailing_icon: Icons.remove;
+                    trailing_icon_clicked => {
+                        GContent.delete_event(i);
                     }
                 }
             }
@@ -224,7 +215,7 @@ export component DialogueBox inherits Rectangle {
                     model: GContent.event_list;
                 }
 
-                Button {
+                TextButton {
                     text: "Add";
                     clicked => {
                         GContent.update_content(GContent.dialogue);
