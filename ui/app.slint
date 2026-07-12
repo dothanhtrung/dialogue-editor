@@ -37,11 +37,13 @@ export component AppWindow inherits Window {
     Vertical {
         FileSection { }
 
-        ElevatedButton {
-            text: "Refresh";
-            clicked => {
-                GContent.refresh();
-                GNameMap.refresh();
+        Rectangle {
+            ElevatedButton {
+                text: "Refresh";
+                clicked => {
+                    GContent.refresh();
+                    GNameMap.refresh();
+                }
             }
         }
 

@@ -30,6 +30,7 @@ use std::{
         PathBuf,
     },
     rc::Rc,
+    str::FromStr,
 };
 use tracing_subscriber::EnvFilter;
 
@@ -232,7 +233,7 @@ impl Dialogue {
         }
         for content in ui_dialog.contents.iter() {
             ret.contents.insert(
-                Language::from_639_3(content.language.as_str()).unwrap_or_default(),
+                Language::from_str(content.language.as_str()).unwrap_or_default(),
                 content.content.to_string(),
             );
         }

@@ -11,7 +11,7 @@ import {
     Vertical,
     Horizontal,
     OutlinedCard,
-    FloatingActionButton,
+    FloatingActionButton, VerticalDivider,
 } from "material-1.0/material.slint";
 import { ElevatedCard } from "material-1.0/ui/components/card.slint";
 import {
@@ -95,7 +95,7 @@ component NameMapItem inherits ElevatedCard {
     }
 }
 
-export component StringIdContainer inherits OutlinedCard {
+export component StringIdContainer inherits Rectangle {
     in-out property <[StringId]> values;
 
     callback delete(string);
@@ -180,6 +180,8 @@ export component NameMapTab inherits TabReload {
             }
         }
 
+        VerticalDivider { }
+
         StringIdContainer {
             values: GNameMap.states;
             delete(name) => {
@@ -198,6 +200,8 @@ export component NameMapTab inherits TabReload {
                 GNameMap.search_state(text);
             }
         }
+
+        VerticalDivider { }
 
         StringIdContainer {
             values: GNameMap.events;

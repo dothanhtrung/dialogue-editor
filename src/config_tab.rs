@@ -17,7 +17,7 @@ use slint::{
 };
 use std::{
     cell::RefCell,
-    rc::Rc,
+    rc::Rc, str::FromStr,
 };
 
 pub fn add_lang(config: Rc<RefCell<Config>>, ui: Weak<AppWindow>) -> impl Fn(SharedString) {
@@ -25,18 +25,27 @@ pub fn add_lang(config: Rc<RefCell<Config>>, ui: Weak<AppWindow>) -> impl Fn(Sha
         let mut config = config.borrow_mut();
         let ui = ui.unwrap();
 
-        if let Some(lang) = Language::from_639_3(lang.as_str()) {
-            if !config.langs.contains(&lang) {
-                config.langs.insert(lang);
-                reload_lang_list(&config, &ui);
+        let langs: Vec<&str> = lang.split(" ").collect();
+
+        for lang_str in langs.iter() {
+            if lang_str.is_empty() {
+                continue;
             }
-        } else {
-            show_noti(
-                &ui,
-                NotiLevel::Error,
-                format!("Invalid language code: {}", lang).as_str(),
-            );
+            if let Ok(lang) = Language::from_str(lang_str) {
+                if !config.langs.contains(&lang) {
+                    config.langs.insert(lang);
+                }
+            } else {
+                show_noti(
+                    &ui,
+                    NotiLevel::Error,
+                    format!("Invalid language code: {}", lang_str).as_str(),
+                );
+                continue;
+            }
         }
+
+        reload_lang_list(&config, &ui);
     }
 }
 
@@ -50,7 +59,7 @@ pub fn delete_lang(
         let mut config = config.borrow_mut();
         let ui = ui.unwrap();
 
-        if let Some(lang) = Language::from_639_3(lang.as_str()) {
+        if let Ok(lang) = Language::from_str(lang.as_str()) {
             'outer: for (_, class) in data.dialogues.iter() {
                 for (_, state) in class.iter() {
                     for dialogue in state.iter() {

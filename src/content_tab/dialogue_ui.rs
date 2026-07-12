@@ -25,7 +25,7 @@ use slint::{
 };
 use std::{
     cell::RefCell,
-    rc::Rc,
+    rc::Rc, str::FromStr,
 };
 
 pub fn add_dialogue(data: Rc<RefCell<AppData>>, config: Rc<RefCell<Config>>, ui_handle: Weak<AppWindow>) -> impl Fn() {
@@ -93,7 +93,7 @@ pub fn add_lang_content(
             && let Some(state) = class.get_mut(&config.selected_state)
             && let Some(dialogue) = state.get_mut(config.selected_dialog)
         {
-            let lang = Language::from_639_3(lang.as_str()).unwrap_or_default();
+            let lang = Language::from_str(lang.as_str()).unwrap_or_default();
             dialogue.contents.insert(lang, content.to_string());
             reload_dialogue_detail(&data, &ui, &config);
         }
@@ -181,7 +181,7 @@ pub fn delete_content(
         {
             dialogue
                 .contents
-                .remove(&Language::from_639_3(lang.to_string().as_str()).unwrap_or_default());
+                .remove(&Language::from_str(lang.to_string().as_str()).unwrap_or_default());
         }
         reload_dialogue_detail(&data, &ui, &config);
     }

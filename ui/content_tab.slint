@@ -25,6 +25,7 @@ import {
     FloatingActionButton,
 } from "material-1.0/material.slint";
 import { Icons } from "material-1.0/ui/icons/icons.slint";
+import { VerticalDivider } from "material-1.0/ui/components/divider.slint";
 
 
 export struct ContentLang {
@@ -249,7 +250,7 @@ export component ContentTab inherits TabReload {
 
     Horizontal {
         // TODO: Allow resizeable
-        OutlinedCard {
+        Rectangle {
             width: 15%;
 
             Vertical {
@@ -309,7 +310,9 @@ export component ContentTab inherits TabReload {
             }
         }
 
-        OutlinedCard {
+        VerticalDivider { }
+
+        Rectangle {
             width: 15%;
 
             Vertical {
@@ -373,7 +376,9 @@ export component ContentTab inherits TabReload {
             }
         }
 
-        OutlinedCard {
+        VerticalDivider { }
+
+        Rectangle {
             width: 20%;
 
             Vertical {
@@ -415,7 +420,9 @@ export component ContentTab inherits TabReload {
             }
         }
 
-        OutlinedCard {
+        VerticalDivider { }
+
+        Rectangle {
             DialogueBox {
                 visible: {
                     root.selecting_dialog >= 0
