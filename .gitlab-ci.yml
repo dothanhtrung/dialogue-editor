@@ -10,7 +10,6 @@ cache: &global_cache
     - target/
     - .cargo/registry/index
     - .cargo/registry/cache
-    - .cargo/bin
   policy: pull-push
 
 variables:
@@ -38,9 +37,14 @@ test:
       - examples/**/*
       - tests/**/*
 
-#publish:
-#  stage: deploy
-#  script:
-#    - cargo publish --token $CARGO_REGISTRY_TOKEN
-#  only:
-#    - tags
+release_build:
+  stage: deploy
+  rules:
+    - if: $CI_COMMIT_TAG
+  script:
+    - cargo build --release
+    - tar cJvf dialogue-editor_${CI_COMMIT_TAG}.linux.x86-64.tar.xz -C target/release dialogue-editor
+    - find . -mtime +30 -delete || true
+  artifacts:
+    paths:
+      - dialogue-editor_*.tar.xz
