@@ -1,3 +1,4 @@
+use crate::namemap_tab::reload_class_map;
 use crate::{
     AppData,
     AppWindow,
@@ -23,7 +24,6 @@ use std::{
     collections::BTreeMap,
     rc::Rc,
 };
-use crate::namemap_tab::reload_class_map;
 
 pub fn add_class(
     data: Rc<RefCell<AppData>>,
@@ -45,10 +45,14 @@ pub fn add_class(
         } else {
             data.dialogues.insert(class_id, BTreeMap::new());
         }
+
         config.selected_class = class_id;
         config.selected_state = 0;
         reload_class(&mut data, &ui, "");
         reload_class_map(&data, &ui, "");
+
+        ui.global::<GContent>().set_selecting_class(class_name);
+        ui.global::<GContent>().set_selecting_state(SharedString::new());
 
         ui.global::<GContent>().set_states([].into());
         ui.global::<GContent>().set_dialogues([].into());
@@ -79,6 +83,8 @@ pub fn rename_class(
                 config.selected_class = new_class_id;
                 reload_class(&mut data, &ui, "");
                 reload_class_map(&data, &ui, "");
+
+                ui.global::<GContent>().set_selecting_class(new_name);
             }
         } else {
             show_noti(&ui, NotiLevel::Error, format!("Duplicated class {}", new_name).as_str());
@@ -101,6 +107,8 @@ pub fn remove_class(
         config.selected_class = 0;
         reload_class(&mut data, &ui, "");
 
+        ui.global::<GContent>().set_selecting_class(SharedString::new());
+
         ui.global::<GContent>().set_states([].into());
         ui.global::<GContent>().set_dialogues([].into());
         ui.global::<GContent>().set_dialogue(UiDialogue::default());
@@ -119,6 +127,9 @@ pub fn select_class(
         let class_id = class_to_id(class_name.as_str(), &mut data);
         config.selected_class = class_id;
         reload_state(&mut data, &ui, &config, "");
+
+        ui.global::<GContent>().set_selecting_class(class_name);
+
         ui.global::<GContent>().set_dialogues([].into());
         ui.global::<GContent>().set_dialogue(UiDialogue::default());
     }

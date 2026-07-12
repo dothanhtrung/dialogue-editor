@@ -46,8 +46,8 @@ struct Dialogue {
     #[serde(skip_serializing_if = "BTreeMap::is_empty")]
     affects: BTreeMap<u64, u64>,
     #[serde(default)]
-    #[serde(skip_serializing_if = "Vec::is_empty")]
-    events: Vec<u64>,
+    #[serde(skip_serializing_if = "BTreeSet::is_empty")]
+    events: BTreeSet<u64>,
 }
 
 #[derive(Serialize, Deserialize, Default, Clone)]

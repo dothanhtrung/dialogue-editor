@@ -1,18 +1,18 @@
 use crate::{
-    common::{
-        class_to_id,
-        event_to_id,
-        new_regex,
-        show_noti,
-        state_to_id,
-        NameType,
-        NotiLevel,
-    },
     AppData,
     AppWindow,
     GContent,
     GNameMap,
     StringId,
+    common::{
+        NameType,
+        NotiLevel,
+        class_to_id,
+        event_to_id,
+        new_regex,
+        show_noti,
+        state_to_id,
+    },
 };
 use slint::{
     ComponentHandle,
@@ -95,11 +95,8 @@ pub fn update_event_id(data: Rc<RefCell<AppData>>, ui: Weak<AppWindow>) -> impl 
             for (_, class) in data.dialogues.iter_mut() {
                 for (_, state) in class.iter_mut() {
                     for dialogue in state.iter_mut() {
-                        let Some(old_event) = dialogue.events.iter().position(|id| *id == old_id) else {
-                            continue;
-                        };
-                        dialogue.events.remove(old_event);
-                        dialogue.events.push(new_id);
+                        dialogue.events.remove(&old_id);
+                        dialogue.events.insert(new_id);
                     }
                 }
             }

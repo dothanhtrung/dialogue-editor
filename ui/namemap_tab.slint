@@ -11,7 +11,8 @@ import {
     Vertical,
     Horizontal,
     OutlinedCard,
-    FloatingActionButton, VerticalDivider,
+    FloatingActionButton,
+    VerticalDivider,
 } from "material-1.0/material.slint";
 import { ElevatedCard } from "material-1.0/ui/components/card.slint";
 import {
@@ -58,8 +59,6 @@ component NameMapItem inherits ElevatedCard {
     callback delete(string);
 
     Horizontal {
-        alignment: start;
-
         Text {
             text: value.name;
         }
@@ -111,14 +110,16 @@ export component StringIdContainer inherits Rectangle {
         }
 
         ListView {
-            for value[i] in values: ElevatedCard {
-                NameMapItem {
-                    value: value;
-                    update(name, id) => {
-                        update(name,id);
-                    }
-                    delete(name) => {
-                        delete(name);
+            for value[i] in values: Rectangle {
+                ElevatedCard {
+                    NameMapItem {
+                        value: value;
+                        update(name, id) => {
+                            update(name,id);
+                        }
+                        delete(name) => {
+                            delete(name);
+                        }
                     }
                 }
             }

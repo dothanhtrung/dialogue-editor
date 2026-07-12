@@ -25,7 +25,8 @@ use slint::{
 };
 use std::{
     cell::RefCell,
-    rc::Rc, str::FromStr,
+    rc::Rc,
+    str::FromStr,
 };
 
 pub fn add_dialogue(data: Rc<RefCell<AppData>>, config: Rc<RefCell<Config>>, ui_handle: Weak<AppWindow>) -> impl Fn() {
@@ -40,6 +41,9 @@ pub fn add_dialogue(data: Rc<RefCell<AppData>>, config: Rc<RefCell<Config>>, ui_
             dialogues.push(Dialogue::default());
             config.selected_dialog = dialogues.len() - 1;
             reload_dialogue(&data, &ui, &config, "");
+
+            ui.global::<GContent>()
+                .set_selecting_dialog(config.selected_dialog as i32);
         }
     }
 }
@@ -56,6 +60,9 @@ pub fn select_dialogue(
 
         config.selected_dialog = dialog_id as usize;
         reload_dialogue_detail(&data, &ui, &config);
+
+        ui.global::<GContent>()
+            .set_selecting_dialog(config.selected_dialog as i32);
     }
 }
 
@@ -68,13 +75,17 @@ pub fn remove_dialogue(
         let dialog_id = dialog_id as usize;
         let ui = ui_handle.unwrap();
         let mut data = data.borrow_mut();
-        let config = config.borrow();
+        let mut config = config.borrow_mut();
         if let Some(class) = data.dialogues.get_mut(&config.selected_class)
             && let Some(state) = class.get_mut(&config.selected_state)
             && dialog_id < state.len()
         {
             state.remove(dialog_id);
+            config.selected_dialog = 0;
             reload_dialogue(&data, &ui, &config, "");
+
+            ui.global::<GContent>()
+                .set_selecting_dialog(config.selected_dialog as i32);
         }
     }
 }
@@ -138,7 +149,7 @@ pub fn add_event(
             && let Some(state) = class.get_mut(&config.selected_state)
             && let Some(dialogue) = state.get_mut(config.selected_dialog)
         {
-            dialogue.events.push(event_id);
+            dialogue.events.insert(event_id);
             reload_dialogue_detail(&data, &ui, &config);
         }
     }
@@ -159,7 +170,7 @@ pub fn update_content(
             && let Some(state) = class.get_mut(&config.selected_state)
             && let Some(dialogue) = state.get_mut(config.selected_dialog)
         {
-            *dialogue = ui_dialogue;
+            dialogue.contents = ui_dialogue.contents;
             reload_dialogue_detail(&data, &ui, &config);
         }
     }
@@ -213,17 +224,18 @@ pub fn delete_event(
     data: Rc<RefCell<AppData>>,
     config: Rc<RefCell<Config>>,
     ui_handle: Weak<AppWindow>,
-) -> impl Fn(i32) {
-    move |index| {
+) -> impl Fn(SharedString) {
+    move |event| {
         let ui = ui_handle.unwrap();
         let mut data = data.borrow_mut();
         let config = config.borrow();
+        let event_id = event_to_id(event.as_str(), &mut data);
 
         if let Some(class) = data.dialogues.get_mut(&config.selected_class)
             && let Some(state) = class.get_mut(&config.selected_state)
             && let Some(dialogue) = state.get_mut(config.selected_dialog)
         {
-            dialogue.events.remove(index as usize);
+            dialogue.events.remove(&event_id);
         }
         reload_dialogue_detail(&data, &ui, &config);
     }
@@ -236,10 +248,14 @@ pub fn search_dialogue(
 ) -> impl Fn(SharedString) {
     move |search| {
         let data = data.borrow();
-        let config = config.borrow();
+        let mut config = config.borrow_mut();
         let ui = ui_handle.unwrap();
 
+        config.selected_dialog = 0;
         reload_dialogue(&data, &ui, &config, search.as_str());
+
+        ui.global::<GContent>()
+            .set_selecting_dialog(config.selected_dialog as i32);
     }
 }
 

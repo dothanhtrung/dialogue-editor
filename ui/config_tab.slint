@@ -15,6 +15,7 @@ import {
     OutlinedCard,
     Grid,
     HorizontalDivider,
+    Switch,
 } from "material-1.0/material.slint";
 import { GFile } from "file_section.slint";
 import { Icons } from "material-1.0/ui/icons/icons.slint";
@@ -48,9 +49,16 @@ export component Tag inherits Rectangle {
 export component ConfigTab inherits TabReload {
     Vertical {
         Rectangle {
-            CheckBox {
-                text: "Save dialogue without name map";
-                checked <=> GFile.save_without_name;
+            Horizontal {
+                Text {
+                    text: "Save dialogue without name map";
+                }
+
+                Rectangle {
+                    Switch {
+                        checked <=> GFile.save_without_name;
+                    }
+                }
             }
         }
 

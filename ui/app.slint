@@ -17,10 +17,10 @@ import { NotiBox, GNoti } from "noti.slint";
 import { StringId, GNameMap, NameMapTab } from "namemap_tab.slint";
 import { ContentTab, GContent } from "content_tab.slint";
 import { ConfigTab, GConfig } from "config_tab.slint";
-import { Vertical, ElevatedButton } from "material-1.0/material.slint";
+import { Vertical, ElevatedButton, MaterialWindow } from "material-1.0/material.slint";
 
 export { GNoti, GNameMap, GContent, GConfig, GFile, UnsaveLoadDialog }
-export component AppWindow inherits Window {
+export component AppWindow inherits MaterialWindow {
     title: "Dialogue Editor";
 
     in-out property <bool> is_saved: true;

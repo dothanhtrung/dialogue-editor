@@ -54,6 +54,10 @@ export global GContent {
     in-out property <[string]> state_list;
     in-out property <[string]> event_list;
 
+    in-out property <string> selecting_class: "";
+    in-out property <string> selecting_state: "";
+    in-out property <int> selecting_dialog: -1;
+
     callback refresh();
 
     callback select-class(string);
@@ -76,7 +80,7 @@ export global GContent {
     callback update_content(UiDialogue); // TODO: This is alrready in GContent, do not need to pass it again
     callback delete_content(string);
     callback delete_affect(string);
-    callback delete_event(int);
+    callback delete_event(string);
 
     callback search_class(string);
     callback search_state(string);
@@ -163,11 +167,13 @@ export component DialogueBox inherits Rectangle {
 
             ListView {
                 // TODO: Add "Go to" the affected state
-                for affect[i] in GContent.dialogue.affects: InputChip {
-                    text: { affect.class + ":" + affect.state };
-                    trailing_icon: Icons.remove;
-                    trailing_icon_clicked => {
-                        GContent.delete_affect(affect.class);
+                for affect[i] in GContent.dialogue.affects: Rectangle {
+                    InputChip {
+                        text: { affect.class + ":" + affect.state };
+                        trailing_icon: Icons.remove;
+                        trailing_icon_clicked => {
+                            GContent.delete_affect(affect.class);
+                        }
                     }
                 }
             }
@@ -201,11 +207,13 @@ export component DialogueBox inherits Rectangle {
             }
 
             ListView {
-                for event[i] in GContent.dialogue.events: InputChip {
-                    text: event;
-                    trailing_icon: Icons.remove;
-                    trailing_icon_clicked => {
-                        GContent.delete_event(i);
+                for event[i] in GContent.dialogue.events: Rectangle {
+                    InputChip {
+                        text: event;
+                        trailing_icon: Icons.remove;
+                        trailing_icon_clicked => {
+                            GContent.delete_event(event);
+                        }
                     }
                 }
             }
@@ -229,9 +237,6 @@ export component DialogueBox inherits Rectangle {
 
 export component ContentTab inherits TabReload {
     in-out property <bool> is_saved;
-    property <int> selecting_class: -1;
-    property <int> selecting_state: -1;
-    property <int> selecting_dialog: -1;
 
     Horizontal {
         // TODO: Allow resizeable
@@ -242,9 +247,9 @@ export component ContentTab inherits TabReload {
                 SearchBox {
                     search(text) => {
                         GContent.search_class(text);
-                        root.selecting_class = -1;
-                        root.selecting_state = -1;
-                        root.selecting_dialog = -1;
+                        GContent.selecting_class = "";
+                        GContent.selecting_state = "";
+                        GContent.selecting_dialog = -1;
                     }
                 }
 
@@ -252,10 +257,10 @@ export component ContentTab inherits TabReload {
                     for class_name[i] in GContent.classes: EditableTextBox {
                         value: class_name;
                         selected: {
-                            root.selecting_class == i
+                            GContent.selecting_class == class_name
                         };
                         // background: {
-                        //     if (root.selecting_class == i) {
+                        //     if (GContent.selecting_class == class_name) {
                         //         Palette.selection-background
                         //     } else {
                         //         Palette.background
@@ -263,9 +268,9 @@ export component ContentTab inherits TabReload {
                         // };
                         select => {
                             GContent.select-class(class_name);
-                            root.selecting_class = i;
-                            root.selecting_state = -1;
-                            root.selecting_dialog = -1;
+                            GContent.selecting_class = class_name;
+                            GContent.selecting_state = "";
+                            GContent.selecting_dialog = -1;
                         };
                         submit(new_name) => {
                             GContent.rename-class(class_name, new_name);
@@ -304,8 +309,8 @@ export component ContentTab inherits TabReload {
                 SearchBox {
                     search(text) => {
                         GContent.search_state(text);
-                        root.selecting_state = -1;
-                        root.selecting_dialog = -1;
+                        GContent.selecting_state = "";
+                        GContent.selecting_dialog = -1;
                     }
                 }
 
@@ -314,10 +319,10 @@ export component ContentTab inherits TabReload {
                     for state_name[i] in GContent.states: EditableTextBox {
                         value: state_name;
                         selected: {
-                            root.selecting_state == i
+                            GContent.selecting_state == state_name
                         };
                         // background: {
-                        //     if (root.selecting_state == i) {
+                        //     if (GContent.selecting_state == state_name) {
                         //         Palette.selection-background
                         //     } else {
                         //         Palette.background
@@ -325,8 +330,8 @@ export component ContentTab inherits TabReload {
                         // };
                         select => {
                             GContent.select-state(state_name);
-                            root.selecting_state = i;
-                            root.selecting_dialog = -1;
+                            GContent.selecting_state = state_name;
+                            GContent.selecting_dialog = -1;
                         };
                         submit(new_name) => {
                             GContent.rename-state(state_name, new_name);
@@ -341,7 +346,7 @@ export component ContentTab inherits TabReload {
 
                 Rectangle {
                     visible: {
-                        root.selecting_class >= 0 || root.selecting_state >= 0
+                        GContent.selecting_class != "" || GContent.selecting_state != ""
                     };
                     Horizontal {
                         new_state := LineEdit {
@@ -370,7 +375,7 @@ export component ContentTab inherits TabReload {
                 SearchBox {
                     search(text) => {
                         GContent.search_dialogue(text);
-                        root.selecting_dialog = -1;
+                        GContent.selecting_dialog = -1;
                     }
                 }
 
@@ -378,12 +383,12 @@ export component ContentTab inherits TabReload {
                     for dialog[i] in GContent.dialogues: SelectableBox {
                         value: dialog;
                         selected: {
-                            root.selecting_dialog == i
+                            GContent.selecting_dialog == i
                         };
 
                         select => {
                             GContent.select-dialog(i);
-                            root.selecting_dialog = i;
+                            GContent.selecting_dialog = i;
                         };
                         delete => {
                             GContent.remove-dialog(i);
@@ -394,7 +399,7 @@ export component ContentTab inherits TabReload {
 
                 ElevatedButton {
                     visible: {
-                        root.selecting_state >= 0
+                        GContent.selecting_state != ""
                     };
                     text: "Add";
                     clicked => {
@@ -410,7 +415,7 @@ export component ContentTab inherits TabReload {
         Rectangle {
             DialogueBox {
                 visible: {
-                    root.selecting_dialog >= 0
+                    GContent.selecting_dialog >= 0
                 };
                 class_list: GContent.classes;
             }
