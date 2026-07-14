@@ -14,8 +14,9 @@ xxhash-rust = {version = "0.8", default-features = false, features = ["xxh3"] }
 isolang = {version = "2.4", features = ["serde"], default-features = false}
 tracing = {version = "0.1", default-features = false}
 tracing-subscriber = { version = "0.3" , default-features = false, features = ["env-filter", "fmt"]}
-regex = {version = "1.12", default-features = false, features = ["std", "unicode", "perf"]}
+regex = {version = "1.13", default-features = false, features = ["std", "unicode", "perf"]}
 rfd = {version = "0.17", default-features = false, features = ["wayland", "xdg-portal"]}
+clap = { version = "4.6", default-features = false, features = ["derive", "std", "color", "help", "usage", "error-context"] }
 
 [build-dependencies]
 slint-build = "1.17"

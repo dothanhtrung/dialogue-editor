@@ -37,6 +37,24 @@ TODO:
 ![](./screenshot.png)
 </div>
 
+How to
+------
+
+### Build
+
+```shell
+cargo build --release
+```
+
+Output: `target/release/dialogue-editor`.
+
+### Run
+
+```shell
+./dialogue-editor -c dialogue-editor.ron
+```
+* `dialogue-editor.ron`: Application config file.
+
 License
 -------
 

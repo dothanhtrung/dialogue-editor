@@ -14,6 +14,7 @@ use crate::content_tab::dialogue_ui::*;
 use crate::content_tab::state_ui::*;
 use crate::file_handle::*;
 use crate::namemap_tab::*;
+use clap::Parser;
 use isolang::Language;
 use serde::{
     Deserialize,
@@ -32,9 +33,17 @@ use std::{
     rc::Rc,
     str::FromStr,
 };
+use tracing::warn;
 use tracing_subscriber::EnvFilter;
 
 slint::include_modules!();
+
+#[derive(Parser)]
+#[command(version, about)]
+struct Cli {
+    #[clap(short, long, default_value = "./dialog-editor.ron")]
+    config: PathBuf,
+}
 
 #[derive(Serialize, Deserialize, Default, Clone)]
 struct Dialogue {
@@ -76,6 +85,9 @@ impl AppData {
 #[derive(Serialize, Deserialize, Default)]
 struct Config {
     #[serde(default)]
+    #[serde(skip)]
+    config_path: PathBuf,
+    #[serde(default)]
     file_path: PathBuf,
     #[serde(default)]
     selected_class: u64, // TODO: Support history of select
@@ -95,8 +107,23 @@ struct Config {
 }
 
 impl Config {
+    fn load(path: &Path) -> Self {
+        if !path.is_file() {
+            warn!("Config file {:?} does not exist", path);
+        }
+        let mut ret = match ron_file::load_from(path) {
+            Ok(ret) => ret,
+            Err(e) => {
+                warn!("Failed to load config file {:?}: {}", path, e);
+                Config::default()
+            }
+        };
+        ret.config_path = PathBuf::from(path);
+        ret
+    }
+
     fn save(&self) {
-        let _ = ron_file::save_to::<Config>(self, Path::new("./dialog-editor.ron"));
+        let _ = ron_file::save_to::<Config>(self, &self.config_path);
     }
 }
 
@@ -107,8 +134,10 @@ fn main() -> Result<(), Box<dyn Error>> {
         .finish();
     tracing::subscriber::set_global_default(subscriber)?;
 
+    let args = Cli::parse();
+
     let ui = AppWindow::new()?;
-    let config: Config = ron_file::load_from(Path::new("./dialog-editor.ron")).unwrap_or_default();
+    let config = Config::load(&args.config);
 
     let data = AppData::default();
 
