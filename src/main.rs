@@ -41,7 +41,7 @@ slint::include_modules!();
 #[derive(Parser)]
 #[command(version, about)]
 struct Cli {
-    #[clap(short, long, default_value = "./dialog-editor.ron")]
+    #[clap(short, long, default_value = "./dialogue-editor.ron")]
     config: PathBuf,
 }
 

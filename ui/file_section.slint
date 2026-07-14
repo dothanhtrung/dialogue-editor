@@ -23,9 +23,9 @@ export global GFile {
     in-out property <bool> save_without_name;
 
     // file_format, load_true_save_false
-    callback file_picker(int, bool);
-    callback load(string, int, string, bool);
-    callback save(string, int, string, bool, bool);
+    callback file_picker(bool);
+    callback load(string, string, bool);
+    callback save(string, string, bool, bool);
 }
 
 export component UnsaveLoadDialog inherits Dialog {
@@ -49,31 +49,35 @@ export component UnsaveLoadDialog inherits Dialog {
 export component FileSection inherits Rectangle {
 
     Horizontal {
-        ui_file_format := ComboBox {
-            width: 80px;
-            model: ["RON", "BIN"];
-                // FIXME: If this is manual changed from UI, it can't be changed from backend anymore
-                current-index <=> GFile.file_format;
-        }
+        alignment: start;
 
-        file_path_input := LineEdit {
-            text <=> GFile.file_path;
-        }
-
-        ElevatedButton {
-            text: "Load";
-            clicked => {
-                GFile.file_picker(GFile.file_format, true);
+        Rectangle {
+            ElevatedButton {
+                text: "Open";
+                clicked => {
+                    GFile.file_picker(true);
+                }
             }
         }
 
-        ElevatedButton {
-            text: "Save";
-            clicked => {
-                if (GFile.file_path == "") {
-                    GFile.file_picker(GFile.file_format, false);
-                } else {
-                    GFile.save(GFile.file_path, GFile.file_format, GFile.encrypt_key, GFile.save_without_name, false);
+        Rectangle {
+            ElevatedButton {
+                text: "Save";
+                clicked => {
+                    if (GFile.file_path == "") {
+                        GFile.file_picker(false);
+                    } else {
+                        GFile.save(GFile.file_path, GFile.encrypt_key, GFile.save_without_name, false);
+                    }
+                }
+            }
+        }
+
+        Rectangle {
+            ElevatedButton {
+                text: "Save As";
+                clicked => {
+                    GFile.file_picker(false);
                 }
             }
         }

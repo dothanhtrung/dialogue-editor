@@ -2,19 +2,19 @@ pub mod bin_file;
 pub mod ron_file;
 
 use crate::{
-    common::{
-        id_to_class,
-        id_to_state,
-        show_noti,
-        NotiLevel,
-    },
-    content_tab::reload_content,
-    namemap_tab::reload_all_map,
     AppData,
     AppWindow,
     Config,
     GFile,
     UnsaveLoadDialog,
+    common::{
+        NotiLevel,
+        id_to_class,
+        id_to_state,
+        show_noti,
+    },
+    content_tab::reload_content,
+    namemap_tab::reload_all_map,
 };
 use rfd::FileDialog;
 use serde::{
@@ -60,24 +60,23 @@ pub fn file_picker(
     data: Rc<RefCell<AppData>>,
     config: Rc<RefCell<Config>>,
     ui_handle: Weak<AppWindow>,
-) -> impl Fn(i32, bool) {
-    move |file_format, load_true_save_false| {
+) -> impl Fn(bool) {
+    move |load_true_save_false| {
         let mut data = data.borrow_mut();
         let ui = ui_handle.unwrap();
         let mut config = config.borrow_mut();
-        config.file_format = file_format.into();
 
         let file_dialog = FileDialog::new()
             .add_filter("Ron", &["ron"])
             .add_filter("Bin", &["bin"])
             .set_directory(
-            config
-                .file_path
-                .parent()
-                .unwrap_or(Path::new("/"))
-                .to_str()
-                .unwrap_or("/"),
-        );
+                config
+                    .file_path
+                    .parent()
+                    .unwrap_or(Path::new("/"))
+                    .to_str()
+                    .unwrap_or("/"),
+            );
         config.file_path = if load_true_save_false {
             file_dialog.pick_file().unwrap_or_default()
         } else {
@@ -87,19 +86,7 @@ pub fn file_picker(
         ui.global::<GFile>()
             .set_file_path(config.file_path.to_str().unwrap_or_default().into());
 
-        // Poor implementation but good enough
-        let Some(ext) = config.file_path.extension() else {
-            return;
-        };
-        let Some(ext) = ext.to_str() else {
-            return;
-        };
-        let ext = ext.to_string();
-        if ext.eq_ignore_ascii_case("ron") {
-            config.file_format = FileFormat::Ron;
-        } else {
-            config.file_format = FileFormat::Bin;
-        }
+        config.file_format = get_file_format(&config.file_path);
         ui.global::<GFile>().set_file_format(config.file_format as i32);
 
         if load_true_save_false {
@@ -115,18 +102,18 @@ pub fn request_load(
     data: Rc<RefCell<AppData>>,
     config: Rc<RefCell<Config>>,
     ui_handle: Weak<AppWindow>,
-) -> impl Fn(SharedString, i32, SharedString, bool) {
+) -> impl Fn(SharedString, SharedString, bool) {
     // TODO: Loading icon
     // TODO: Warn if there is unsave content
 
-    move |file_path, file_format, encrypt_key, force| {
+    move |file_path, encrypt_key, force| {
         let ui = ui_handle.unwrap();
         let mut config = config.borrow_mut();
         let mut data = data.borrow_mut();
 
-        config.file_format = file_format.into();
         config.encrypt_key = encrypt_key.to_string();
         config.file_path = PathBuf::from(file_path.as_str());
+        config.file_format = get_file_format(&config.file_path);
         config.save();
 
         if !config.file_path.is_file() {
@@ -160,9 +147,8 @@ pub fn request_load(
                     let dialog = dialog_handle.unwrap();
 
                     let file_path = ui.get_file_path();
-                    let file_format = ui.get_file_format();
                     let encrypt_key = ui.get_encrypt_key();
-                    ui.invoke_load(file_path, file_format, encrypt_key, true);
+                    ui.invoke_load(file_path, encrypt_key, true);
 
                     let _ = dialog.hide();
                 }
@@ -215,16 +201,16 @@ pub fn request_save(
     data: Rc<RefCell<AppData>>,
     config: Rc<RefCell<Config>>,
     ui_handle: Weak<AppWindow>,
-) -> impl Fn(SharedString, i32, SharedString, bool, bool) {
-    move |file_path, file_format, encrypt_key, save_without_name, _force| {
+) -> impl Fn(SharedString, SharedString, bool, bool) {
+    move |file_path, encrypt_key, save_without_name, _force| {
         let mut config = config.borrow_mut();
         let data = data.borrow();
         let ui = ui_handle.unwrap();
 
-        config.file_format = file_format.into();
         config.encrypt_key = encrypt_key.to_string();
         config.file_path = PathBuf::from(file_path.as_str());
         config.save_without_name = save_without_name;
+        config.file_format = get_file_format(&config.file_path);
         config.save();
 
         save(&data, &config, &ui);
@@ -314,4 +300,16 @@ pub fn on_close(ui_handle: Weak<AppWindow>) -> impl FnMut() -> CloseRequestRespo
 
         CloseRequestResponse::KeepWindowShown
     }
+}
+
+// TODO: Check mime type instead of file extension
+fn get_file_format(path: &Path) -> FileFormat {
+    let Some(ext) = path.extension() else {
+        return FileFormat::Ron;
+    };
+    let Some(ext) = ext.to_str() else {
+        return FileFormat::Ron;
+    };
+    let ext = ext.to_string();
+    if ext.eq_ignore_ascii_case("ron") { FileFormat::Ron } else { FileFormat::Bin }
 }
