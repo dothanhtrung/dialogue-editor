@@ -34,7 +34,7 @@ TODO:
 
 <div align="center">
 
-![](./screenshot.png)
+![](./assets/screenshot.png)
 </div>
 
 How to

@@ -1,0 +1,7 @@
+[Desktop Entry]
+Categories=Development;
+Exec=dialogue-editor -c ~/.config/dialogue-editor.ron
+Icon=
+Name=Dialogue Editor
+Type=Application
+Version=1.0
