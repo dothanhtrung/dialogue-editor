@@ -6,6 +6,7 @@ mod config_tab;
 mod content_tab;
 mod file_handle;
 mod namemap_tab;
+mod history;
 
 use crate::common::*;
 use crate::config_tab::*;
@@ -13,6 +14,7 @@ use crate::content_tab::class_ui::*;
 use crate::content_tab::dialogue_ui::*;
 use crate::content_tab::state_ui::*;
 use crate::file_handle::*;
+use crate::history::History;
 use crate::namemap_tab::*;
 use clap::Parser;
 use isolang::Language;
@@ -84,7 +86,6 @@ impl AppData {
 
 #[derive(Serialize, Deserialize, Default)]
 struct Config {
-    #[serde(default)]
     #[serde(skip)]
     config_path: PathBuf,
     #[serde(default)]
@@ -104,6 +105,9 @@ struct Config {
     save_without_name: bool,
     #[serde(default)]
     langs: BTreeSet<Language>,
+
+    #[serde(skip)]
+    history: History,
 }
 
 impl Config {
