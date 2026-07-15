@@ -1,16 +1,21 @@
 use crate::{
     AppData,
+    AppWindow,
+    Config,
     Dialogue,
     common::{
         class_to_id,
         state_to_id,
     },
+    content_tab::reload_content,
+    namemap_tab::reload_all_map,
 };
-use serde::{
-    Deserialize,
-    Serialize,
+use slint::Weak;
+use std::{
+    cell::RefCell,
+    collections::BTreeMap,
+    rc::Rc,
 };
-use std::collections::BTreeMap;
 
 #[derive(Default, Clone)]
 pub enum ActionType {
@@ -75,6 +80,13 @@ impl History {
         apply_action(&redo_action, data);
         self.undo_actions.push(redo_action.get_reverse_action());
     }
+
+    pub fn add_undo(&mut self, action: Action, ui: &AppWindow) {
+        self.undo_actions.push(action);
+        self.redo_actions.clear();
+        ui.set_undo_available(true);
+        ui.set_redo_available(false);
+    }
 }
 
 fn apply_action(action: &Action, data: &mut AppData) {
@@ -83,8 +95,8 @@ fn apply_action(action: &Action, data: &mut AppData) {
         ActionType::Add(name) => match &action.target {
             ActionTarget::None => {}
             ActionTarget::ContentClass(states) => {
-                let id = class_to_id(name.as_str(), data);
-                data.dialogues.insert(id, states.clone().unwrap_or_default());
+                let class_id = class_to_id(name.as_str(), data);
+                data.dialogues.insert(class_id, states.clone().unwrap_or_default());
             }
             ActionTarget::ContentState(class_id, dialogues) => {
                 let state_id = state_to_id(name.as_str(), data);
@@ -93,7 +105,71 @@ fn apply_action(action: &Action, data: &mut AppData) {
                 }
             }
         },
-        ActionType::Delete(_) => todo!(),
-        ActionType::Update(_, _) => todo!(),
+        ActionType::Delete(name) => match &action.target {
+            ActionTarget::None => {}
+            ActionTarget::ContentClass(_) => {
+                let class_id = class_to_id(name.as_str(), data);
+                data.dialogues.remove(&class_id);
+            }
+            ActionTarget::ContentState(class_id, _) => {
+                let state_id = state_to_id(name.as_str(), data);
+                if let Some(class) = data.dialogues.get_mut(class_id) {
+                    class.remove(&state_id);
+                }
+            }
+        },
+        ActionType::Update(old_name, new_name) => match &action.target {
+            ActionTarget::None => {}
+            ActionTarget::ContentClass(_) => {
+                let old_id = class_to_id(old_name, data);
+                let new_id = class_to_id(new_name, data);
+                if let Some(states) = data.dialogues.remove(&old_id) {
+                    data.dialogues.insert(new_id, states);
+                }
+            }
+            ActionTarget::ContentState(class_id, _) => {
+                let old_id = state_to_id(old_name, data);
+                let new_id = state_to_id(new_name, data);
+                if let Some(class) = data.dialogues.get_mut(class_id)
+                    && let Some(dialogues) = class.remove(&old_id)
+                {
+                    class.insert(new_id, dialogues);
+                }
+            }
+        },
+    }
+}
+
+pub fn undo(data: Rc<RefCell<AppData>>, config: Rc<RefCell<Config>>, ui: Weak<AppWindow>) -> impl Fn() {
+    move || {
+        let mut data = data.borrow_mut();
+        let mut config = config.borrow_mut();
+        let ui = ui.unwrap();
+
+        config.history.undo(&mut data);
+        reload_content(&mut data, &ui, &config);
+        reload_all_map(&data, &ui);
+
+        if config.history.undo_actions.is_empty() {
+            ui.set_undo_available(false);
+        }
+        ui.set_redo_available(true);
+    }
+}
+
+pub fn redo(data: Rc<RefCell<AppData>>, config: Rc<RefCell<Config>>, ui: Weak<AppWindow>) -> impl Fn() {
+    move || {
+        let mut data = data.borrow_mut();
+        let mut config = config.borrow_mut();
+        let ui = ui.unwrap();
+
+        config.history.redo(&mut data);
+        reload_content(&mut data, &ui, &config);
+        reload_all_map(&data, &ui);
+
+        if config.history.redo_actions.is_empty() {
+            ui.set_redo_available(false);
+        }
+        ui.set_undo_available(true);
     }
 }

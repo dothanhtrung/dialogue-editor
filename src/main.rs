@@ -5,8 +5,8 @@ mod common;
 mod config_tab;
 mod content_tab;
 mod file_handle;
-mod namemap_tab;
 mod history;
+mod namemap_tab;
 
 use crate::common::*;
 use crate::config_tab::*;
@@ -14,7 +14,11 @@ use crate::content_tab::class_ui::*;
 use crate::content_tab::dialogue_ui::*;
 use crate::content_tab::state_ui::*;
 use crate::file_handle::*;
-use crate::history::History;
+use crate::history::{
+    History,
+    redo,
+    undo,
+};
 use crate::namemap_tab::*;
 use clap::Parser;
 use isolang::Language;
@@ -167,6 +171,9 @@ fn main() -> Result<(), Box<dyn Error>> {
         .on_load(request_load(data.clone(), config.clone(), ui.as_weak()));
     ui.global::<GFile>()
         .on_save(request_save(data.clone(), config.clone(), ui.as_weak()));
+
+    ui.on_undo(undo(data.clone(), config.clone(), ui.as_weak()));
+    ui.on_redo(redo(data.clone(), config.clone(), ui.as_weak()));
 
     // ======== Content tab ===========
     // TODO: Move these to content_tab internally

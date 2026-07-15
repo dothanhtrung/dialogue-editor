@@ -49,10 +49,13 @@ pub fn add_class(
             );
         } else {
             data.dialogues.insert(class_id, BTreeMap::new());
-            config.history.undo_actions.push(Action {
-                action: ActionType::Delete(class_name.to_string()),
-                target: ActionTarget::ContentClass(None),
-            })
+            config.history.add_undo(
+                Action {
+                    action: ActionType::Delete(class_name.to_string()),
+                    target: ActionTarget::ContentClass(None),
+                },
+                &ui,
+            );
         }
 
         config.selected_class = class_id;
@@ -93,10 +96,13 @@ pub fn rename_class(
                 reload_class(&mut data, &ui, "");
                 reload_class_map(&data, &ui, "");
 
-                config.history.undo_actions.push(Action {
-                    action: ActionType::Update(new_name.to_string(), old_name.to_string()),
-                    target: ActionTarget::ContentClass(None),
-                });
+                config.history.add_undo(
+                    Action {
+                        action: ActionType::Update(new_name.to_string(), old_name.to_string()),
+                        target: ActionTarget::ContentClass(None),
+                    },
+                    &ui,
+                );
 
                 ui.global::<GContent>().set_selecting_class(new_name);
             }
@@ -121,10 +127,13 @@ pub fn remove_class(
         config.selected_class = 0;
         reload_class(&mut data, &ui, "");
 
-        config.history.undo_actions.push(Action {
-            action: ActionType::Add(class_name.to_string()),
-            target: ActionTarget::ContentClass(states),
-        });
+        config.history.add_undo(
+            Action {
+                action: ActionType::Add(class_name.to_string()),
+                target: ActionTarget::ContentClass(states),
+            },
+            &ui,
+        );
 
         ui.global::<GContent>().set_selecting_class(SharedString::new());
 

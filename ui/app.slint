@@ -17,13 +17,22 @@ import { NotiBox, GNoti } from "noti.slint";
 import { StringId, GNameMap, NameMapTab } from "namemap_tab.slint";
 import { ContentTab, GContent } from "content_tab.slint";
 import { ConfigTab, GConfig } from "config_tab.slint";
-import { Vertical, ElevatedButton, MaterialWindow } from "material-1.0/material.slint";
+import {
+    Vertical,
+    ElevatedButton,
+    MaterialWindow,
+    Horizontal,
+} from "material-1.0/material.slint";
 
 export { GNoti, GNameMap, GContent, GConfig, GFile, UnsaveLoadDialog }
 export component AppWindow inherits MaterialWindow {
     title: "Dialogue Editor";
 
     in-out property <bool> is_saved: true;
+    in-out property <bool> undo_available: false;
+    in-out property <bool> redo_available: false;
+    callback undo();
+    callback redo();
 
     public function show_notification() {
         noti_box.show();
@@ -37,12 +46,38 @@ export component AppWindow inherits MaterialWindow {
     Vertical {
         FileSection { }
 
-        Rectangle {
-            ElevatedButton {
-                text: "Refresh";
-                clicked => {
-                    GContent.refresh();
-                    GNameMap.refresh();
+        Horizontal {
+            Horizontal {
+                alignment: start;
+
+                Rectangle {
+                    ElevatedButton {
+                        visible: undo_available;
+                        text: "Undo";
+                        clicked => {
+                            root.undo();
+                        }
+                    }
+                }
+
+                Rectangle {
+                    ElevatedButton {
+                        visible: redo_available;
+                        text: "Redo";
+                        clicked => {
+                            root.redo();
+                        }
+                    }
+                }
+            }
+
+            Rectangle {
+                ElevatedButton {
+                    text: "Refresh";
+                    clicked => {
+                        GContent.refresh();
+                        GNameMap.refresh();
+                    }
                 }
             }
         }
