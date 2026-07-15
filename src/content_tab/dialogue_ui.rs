@@ -52,7 +52,7 @@ pub fn add_dialogue(data: Rc<RefCell<AppData>>, config: Rc<RefCell<Config>>, ui_
             let dialogue_pos = config.selected_dialogue;
             config.history.add_undo(
                 Action {
-                    action: ActionType::Delete(String::new()),
+                    action: ActionType::DeleteStr(String::new()),
                     target: ActionTarget::ContentDialogue(class_id, state_id, dialogue_pos, Dialogue::default()),
                 },
                 &ui,
@@ -104,7 +104,7 @@ pub fn remove_dialogue(
             let state_id = config.selected_state;
             config.history.add_undo(
                 Action {
-                    action: ActionType::Add(String::new()),
+                    action: ActionType::AddStr(String::new()),
                     target: ActionTarget::ContentDialogue(class_id, state_id, dialog_id, removed_dialogue),
                 },
                 &ui,
@@ -139,7 +139,7 @@ pub fn add_lang_content(
             let dialogue_pos = config.selected_dialogue;
             config.history.add_undo(
                 Action {
-                    action: ActionType::Delete(content.to_string()),
+                    action: ActionType::DeleteStr(content.to_string()),
                     target: ActionTarget::ContentLang(class_id, state_id, dialogue_pos, lang),
                 },
                 &ui,
@@ -173,7 +173,7 @@ pub fn add_affect(
             let dialogue_pos = config.selected_dialogue;
             config.history.add_undo(
                 Action {
-                    action: ActionType::Delete(affect_state.to_string()),
+                    action: ActionType::DeleteStr(affect_state.to_string()),
                     target: ActionTarget::ContentAffect(class_id, state_id, dialogue_pos, affect_class),
                 },
                 &ui,
@@ -205,7 +205,7 @@ pub fn add_event(
             let dialogue_pos = config.selected_dialogue;
             config.history.add_undo(
                 Action {
-                    action: ActionType::Delete(event_id.to_string()),
+                    action: ActionType::DeleteStr(event_id.to_string()),
                     target: ActionTarget::ContentEvent(class_id, state_id, dialogue_pos),
                 },
                 &ui,
@@ -260,7 +260,7 @@ pub fn delete_content(
                 let dialogue_pos = config.selected_dialogue;
                 config.history.add_undo(
                     Action {
-                        action: ActionType::Add(content),
+                        action: ActionType::AddStr(content),
                         target: ActionTarget::ContentLang(class_id, state_id, dialogue_pos, lang),
                     },
                     &ui,
@@ -293,7 +293,7 @@ pub fn delete_affect(
                 let dialogue_pos = config.selected_dialogue;
                 config.history.add_undo(
                     Action {
-                        action: ActionType::Add(affect_state.to_string()),
+                        action: ActionType::AddStr(affect_state.to_string()),
                         target: ActionTarget::ContentAffect(class_id, state_id, dialogue_pos, affect_class),
                     },
                     &ui,
@@ -326,7 +326,7 @@ pub fn delete_event(
             let dialogue_pos = config.selected_dialogue;
             config.history.add_undo(
                 Action {
-                    action: ActionType::Add(event_id.to_string()),
+                    action: ActionType::AddStr(event_id.to_string()),
                     target: ActionTarget::ContentEvent(class_id, state_id, dialogue_pos),
                 },
                 &ui,

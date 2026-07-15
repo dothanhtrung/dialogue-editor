@@ -50,7 +50,7 @@ pub fn delete_class_map(
 
         config.history.add_undo(
             Action {
-                action: ActionType::Add(id.to_string()),
+                action: ActionType::AddStr(id.to_string()),
                 target: ActionTarget::NamemapClass(name.to_string()),
             },
             &ui,
@@ -75,7 +75,7 @@ pub fn delete_state_map(
 
         config.history.add_undo(
             Action {
-                action: ActionType::Add(id.to_string()),
+                action: ActionType::AddStr(id.to_string()),
                 target: ActionTarget::NamemapState(name.to_string()),
             },
             &ui,
@@ -100,7 +100,7 @@ pub fn delete_event_map(
 
         config.history.add_undo(
             Action {
-                action: ActionType::Add(id.to_string()),
+                action: ActionType::AddStr(id.to_string()),
                 target: ActionTarget::NamemapEvent(name.to_string()),
             },
             &ui,
@@ -125,7 +125,7 @@ pub fn update_class_id(
             data.dialogues.insert(new_id, value);
             config.history.add_undo(
                 Action {
-                    action: ActionType::Update(id.to_string(), old_id.to_string()),
+                    action: ActionType::UpdateStr(id.to_string(), old_id.to_string()),
                     target: ActionTarget::NamemapClass(name.to_string()),
                 },
                 &ui,
@@ -153,7 +153,7 @@ pub fn update_state_id(
             }
             config.history.add_undo(
                 Action {
-                    action: ActionType::Update(id.to_string(), old_id.to_string()),
+                    action: ActionType::UpdateStr(id.to_string(), old_id.to_string()),
                     target: ActionTarget::NamemapState(name.to_string()),
                 },
                 &ui,
@@ -184,7 +184,7 @@ pub fn update_event_id(
             }
             config.history.add_undo(
                 Action {
-                    action: ActionType::Update(id.to_string(), old_id.to_string()),
+                    action: ActionType::UpdateStr(id.to_string(), old_id.to_string()),
                     target: ActionTarget::NamemapEvent(name.to_string()),
                 },
                 &ui,
@@ -203,11 +203,11 @@ pub fn add_new_class(
         let mut config = config.borrow_mut();
         let ui = ui.unwrap();
 
-        if add_new(&mut data, &ui, name.to_string(), id.as_str(), NameType::Class).is_ok() {
-            reload_class_map(&mut data, &ui, "");
+        if let Ok(new_id) = add_new(&mut data, &ui, name.to_string(), id.as_str(), NameType::Class) {
+            reload_class_map(&data, &ui, "");
             config.history.add_undo(
                 Action {
-                    action: ActionType::Delete(id.to_string()),
+                    action: ActionType::DeleteStr(new_id.to_string()),
                     target: ActionTarget::NamemapClass(name.to_string()),
                 },
                 &ui,
@@ -226,12 +226,12 @@ pub fn add_new_state(
         let mut config = config.borrow_mut();
         let ui = ui.unwrap();
 
-        if add_new(&mut data, &ui, name.to_string(), id.as_str(), NameType::State).is_ok() {
-            reload_state_map(&mut data, &ui, "");
+        if let Ok(new_id) = add_new(&mut data, &ui, name.to_string(), id.as_str(), NameType::State) {
+            reload_state_map(&data, &ui, "");
 
             config.history.add_undo(
                 Action {
-                    action: ActionType::Delete(id.to_string()),
+                    action: ActionType::DeleteStr(new_id.to_string()),
                     target: ActionTarget::NamemapState(name.to_string()),
                 },
                 &ui,
@@ -250,12 +250,12 @@ pub fn add_new_event(
         let mut config = config.borrow_mut();
         let ui = ui.unwrap();
 
-        if add_new(&mut data, &ui, name.to_string(), id.as_str(), NameType::Event).is_ok() {
+        if let Ok(new_id) = add_new(&mut data, &ui, name.to_string(), id.as_str(), NameType::Event) {
             reload_event_map(&data, &ui, "");
 
             config.history.add_undo(
                 Action {
-                    action: ActionType::Delete(id.to_string()),
+                    action: ActionType::DeleteStr(new_id.to_string()),
                     target: ActionTarget::NamemapEvent(name.to_string()),
                 },
                 &ui,

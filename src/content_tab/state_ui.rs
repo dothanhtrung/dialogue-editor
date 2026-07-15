@@ -53,7 +53,7 @@ pub fn add_state(
                 class.insert(state_id, Vec::new());
                 config.history.add_undo(
                     Action {
-                        action: ActionType::Delete(state_name.to_string()),
+                        action: ActionType::DeleteStr(state_name.to_string()),
                         target: ActionTarget::ContentState(class_id, None),
                     },
                     &ui,
@@ -108,7 +108,7 @@ pub fn remove_state(
 
             config.history.add_undo(
                 Action {
-                    action: ActionType::Add(state_name.to_string()),
+                    action: ActionType::AddStr(state_name.to_string()),
                     target: ActionTarget::ContentState(class_id, removed_data),
                 },
                 &ui,
@@ -149,7 +149,7 @@ pub fn rename_state(
 
                     config.history.add_undo(
                         Action {
-                            action: ActionType::Update(new_name.to_string(), old_name.to_string()),
+                            action: ActionType::UpdateStr(new_name.to_string(), old_name.to_string()),
                             target: ActionTarget::ContentState(class_id, None),
                         },
                         &ui,

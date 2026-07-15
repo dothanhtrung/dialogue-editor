@@ -5,7 +5,6 @@ use crate::{
     Dialogue,
     common::{
         class_to_id,
-        event_to_id,
         state_to_id,
     },
     content_tab::reload_content,
@@ -28,9 +27,12 @@ use tracing::warn;
 pub enum ActionType {
     #[default]
     None,
-    Add(String),
-    Delete(String),
-    Update(String, String),
+    AddStr(String),
+    DeleteStr(String),
+    UpdateStr(String, String),
+    AddId(u64),
+    DeleteId(u64),
+    UpdateId(u64, u64),
 }
 
 #[derive(Default, Clone)]
@@ -55,12 +57,15 @@ pub struct Action {
 }
 
 impl Action {
-    pub fn to_reverse_action(mut self) -> Self {
+    pub fn reverse(mut self) -> Self {
         self.action = match self.action {
             ActionType::None => ActionType::None,
-            ActionType::Add(value) => ActionType::Delete(value),
-            ActionType::Delete(value) => ActionType::Add(value),
-            ActionType::Update(old_value, new_value) => ActionType::Update(new_value, old_value),
+            ActionType::AddStr(value) => ActionType::DeleteStr(value),
+            ActionType::DeleteStr(value) => ActionType::AddStr(value),
+            ActionType::UpdateStr(old_value, new_value) => ActionType::UpdateStr(new_value, old_value),
+            ActionType::AddId(id) => ActionType::DeleteId(id),
+            ActionType::DeleteId(id) => ActionType::AddId(id),
+            ActionType::UpdateId(old_id, new_id) => ActionType::UpdateId(new_id, old_id),
         };
         self
     }
@@ -92,7 +97,7 @@ impl History {
             return;
         };
         apply_action(&undo_action, data);
-        self.redo_actions.push(undo_action.to_reverse_action());
+        self.redo_actions.push(undo_action.reverse());
     }
 
     pub fn redo(&mut self, data: &mut AppData) {
@@ -100,7 +105,7 @@ impl History {
             return;
         };
         apply_action(&redo_action, data);
-        self.undo_actions.push(redo_action.to_reverse_action());
+        self.undo_actions.push(redo_action.reverse());
     }
 
     pub fn add_undo(&mut self, action: Action, ui: &AppWindow) {
@@ -118,10 +123,9 @@ impl History {
 fn apply_action(action: &Action, data: &mut AppData) {
     match &action.action {
         ActionType::None => {}
-        ActionType::Add(value) => match &action.target {
+        ActionType::AddStr(value) => match &action.target {
             ActionTarget::None => {}
             ActionTarget::ContentClass(states) => {
-                // TODO: Reduce call *_to_id() functions
                 let class_id = class_to_id(value.as_str(), data);
                 data.dialogues.insert(class_id, states.clone().unwrap_or_default());
             }
@@ -184,7 +188,7 @@ fn apply_action(action: &Action, data: &mut AppData) {
                 data.event_name_map.insert(event_name.clone(), event_id);
             }
         },
-        ActionType::Delete(value) => match &action.target {
+        ActionType::DeleteStr(value) => match &action.target {
             ActionTarget::None => {}
             ActionTarget::ContentClass(_) => {
                 let class_id = class_to_id(value.as_str(), data);
@@ -237,7 +241,7 @@ fn apply_action(action: &Action, data: &mut AppData) {
                 data.event_name_map.remove(event_name);
             }
         },
-        ActionType::Update(old_value, new_value) => match &action.target {
+        ActionType::UpdateStr(old_value, new_value) => match &action.target {
             ActionTarget::None => {}
             ActionTarget::ContentClass(_) => {
                 let old_id = class_to_id(old_value, data);
@@ -308,6 +312,9 @@ fn apply_action(action: &Action, data: &mut AppData) {
                 data.event_name_map.insert(event_name.clone(), new_id);
             }
         },
+        ActionType::AddId(_) => todo!(),
+        ActionType::DeleteId(_) => todo!(),
+        ActionType::UpdateId(_, _) => todo!(),
     }
 }
 
