@@ -99,7 +99,7 @@ struct Config {
     #[serde(default)]
     selected_state: u64,
     #[serde(default)]
-    selected_dialog: usize,
+    selected_dialogue: usize,
     #[serde(default)]
     /// Used when file_format is Bin
     encrypt_key: String,

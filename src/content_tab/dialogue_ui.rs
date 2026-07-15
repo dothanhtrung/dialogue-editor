@@ -16,6 +16,11 @@ use crate::{
         new_regex,
         state_to_id,
     },
+    history::{
+        Action,
+        ActionTarget,
+        ActionType,
+    },
 };
 use isolang::Language;
 use slint::{
@@ -39,11 +44,22 @@ pub fn add_dialogue(data: Rc<RefCell<AppData>>, config: Rc<RefCell<Config>>, ui_
             && let Some(dialogues) = state_list.get_mut(&config.selected_state)
         {
             dialogues.push(Dialogue::default());
-            config.selected_dialog = dialogues.len() - 1;
+            config.selected_dialogue = dialogues.len() - 1;
             reload_dialogue(&data, &ui, &config, "");
 
+            let class_id = config.selected_class;
+            let state_id = config.selected_state;
+            let dialogue_pos = config.selected_dialogue;
+            config.history.add_undo(
+                Action {
+                    action: ActionType::Delete(String::new()),
+                    target: ActionTarget::ContentDialogue(class_id, state_id, dialogue_pos, Dialogue::default()),
+                },
+                &ui,
+            );
+
             ui.global::<GContent>()
-                .set_selecting_dialog(config.selected_dialog as i32);
+                .set_selecting_dialog(config.selected_dialogue as i32);
         }
     }
 }
@@ -58,11 +74,11 @@ pub fn select_dialogue(
         let data = data.borrow_mut();
         let mut config = config.borrow_mut();
 
-        config.selected_dialog = dialog_id as usize;
+        config.selected_dialogue = dialog_id as usize;
         reload_dialogue_detail(&data, &ui, &config);
 
         ui.global::<GContent>()
-            .set_selecting_dialog(config.selected_dialog as i32);
+            .set_selecting_dialog(config.selected_dialogue as i32);
     }
 }
 
@@ -80,12 +96,22 @@ pub fn remove_dialogue(
             && let Some(state) = class.get_mut(&config.selected_state)
             && dialog_id < state.len()
         {
-            state.remove(dialog_id);
-            config.selected_dialog = 0;
+            let removed_dialogue = state.remove(dialog_id);
+            config.selected_dialogue = 0;
             reload_dialogue(&data, &ui, &config, "");
 
+            let class_id = config.selected_class;
+            let state_id = config.selected_state;
+            config.history.add_undo(
+                Action {
+                    action: ActionType::Add(String::new()),
+                    target: ActionTarget::ContentDialogue(class_id, state_id, dialog_id, removed_dialogue),
+                },
+                &ui,
+            );
+
             ui.global::<GContent>()
-                .set_selecting_dialog(config.selected_dialog as i32);
+                .set_selecting_dialog(config.selected_dialogue as i32);
         }
     }
 }
@@ -98,15 +124,26 @@ pub fn add_lang_content(
     move |lang, content| {
         let ui = ui_handle.unwrap();
         let mut data = data.borrow_mut();
-        let config = config.borrow();
+        let mut config = config.borrow_mut();
 
         if let Some(class) = data.dialogues.get_mut(&config.selected_class)
             && let Some(state) = class.get_mut(&config.selected_state)
-            && let Some(dialogue) = state.get_mut(config.selected_dialog)
+            && let Some(dialogue) = state.get_mut(config.selected_dialogue)
         {
             let lang = Language::from_str(lang.as_str()).unwrap_or_default();
             dialogue.contents.insert(lang, content.to_string());
             reload_dialogue_detail(&data, &ui, &config);
+
+            let class_id = config.selected_class;
+            let state_id = config.selected_state;
+            let dialogue_pos = config.selected_dialogue;
+            config.history.add_undo(
+                Action {
+                    action: ActionType::Delete(content.to_string()),
+                    target: ActionTarget::ContentLang(class_id, state_id, dialogue_pos, lang),
+                },
+                &ui,
+            );
         }
     }
 }
@@ -119,17 +156,28 @@ pub fn add_affect(
     move |class_name, state_name| {
         let ui = ui_handle.unwrap();
         let mut data = data.borrow_mut();
-        let config = config.borrow();
+        let mut config = config.borrow_mut();
 
-        let class_id = class_to_id(class_name.as_str(), &mut data);
-        let state_id = state_to_id(state_name.as_str(), &mut data);
+        let affect_class = class_to_id(class_name.as_str(), &mut data);
+        let affect_state = state_to_id(state_name.as_str(), &mut data);
 
         if let Some(class) = data.dialogues.get_mut(&config.selected_class)
             && let Some(state) = class.get_mut(&config.selected_state)
-            && let Some(dialogue) = state.get_mut(config.selected_dialog)
+            && let Some(dialogue) = state.get_mut(config.selected_dialogue)
         {
-            dialogue.affects.insert(class_id, state_id);
+            dialogue.affects.insert(affect_class, affect_state);
             reload_dialogue_detail(&data, &ui, &config);
+
+            let class_id = config.selected_class;
+            let state_id = config.selected_state;
+            let dialogue_pos = config.selected_dialogue;
+            config.history.add_undo(
+                Action {
+                    action: ActionType::Delete(affect_state.to_string()),
+                    target: ActionTarget::ContentAffect(class_id, state_id, dialogue_pos, affect_class),
+                },
+                &ui,
+            );
         }
     }
 }
@@ -142,15 +190,26 @@ pub fn add_event(
     move |event_name| {
         let ui = ui_handle.unwrap();
         let mut data = data.borrow_mut();
-        let config = config.borrow();
+        let mut config = config.borrow_mut();
         let event_id = event_to_id(event_name.as_str(), &mut data);
 
         if let Some(class) = data.dialogues.get_mut(&config.selected_class)
             && let Some(state) = class.get_mut(&config.selected_state)
-            && let Some(dialogue) = state.get_mut(config.selected_dialog)
+            && let Some(dialogue) = state.get_mut(config.selected_dialogue)
         {
             dialogue.events.insert(event_id);
             reload_dialogue_detail(&data, &ui, &config);
+
+            let class_id = config.selected_class;
+            let state_id = config.selected_state;
+            let dialogue_pos = config.selected_dialogue;
+            config.history.add_undo(
+                Action {
+                    action: ActionType::Delete(event_id.to_string()),
+                    target: ActionTarget::ContentEvent(class_id, state_id, dialogue_pos),
+                },
+                &ui,
+            );
         }
     }
 }
@@ -168,10 +227,12 @@ pub fn update_content(
 
         if let Some(class) = data.dialogues.get_mut(&config.selected_class)
             && let Some(state) = class.get_mut(&config.selected_state)
-            && let Some(dialogue) = state.get_mut(config.selected_dialog)
+            && let Some(dialogue) = state.get_mut(config.selected_dialogue)
         {
             dialogue.contents = ui_dialogue.contents;
             reload_dialogue_detail(&data, &ui, &config);
+
+            // TODO: Implement history for this action
         }
     }
 }
@@ -184,17 +245,30 @@ pub fn delete_content(
     move |lang| {
         let ui = ui_handle.unwrap();
         let mut data = data.borrow_mut();
-        let config = config.borrow();
+        let mut config = config.borrow_mut();
 
         if let Some(class) = data.dialogues.get_mut(&config.selected_class)
             && let Some(state) = class.get_mut(&config.selected_state)
-            && let Some(dialogue) = state.get_mut(config.selected_dialog)
+            && let Some(dialogue) = state.get_mut(config.selected_dialogue)
         {
-            dialogue
-                .contents
-                .remove(&Language::from_str(lang.to_string().as_str()).unwrap_or_default());
+            let Ok(lang) = Language::from_str(lang.to_string().as_str()) else {
+                return;
+            };
+            if let Some(content) = dialogue.contents.remove(&lang) {
+                let class_id = config.selected_class;
+                let state_id = config.selected_state;
+                let dialogue_pos = config.selected_dialogue;
+                config.history.add_undo(
+                    Action {
+                        action: ActionType::Add(content),
+                        target: ActionTarget::ContentLang(class_id, state_id, dialogue_pos, lang),
+                    },
+                    &ui,
+                );
+            }
+
+            reload_dialogue_detail(&data, &ui, &config);
         }
-        reload_dialogue_detail(&data, &ui, &config);
     }
 }
 
@@ -206,17 +280,27 @@ pub fn delete_affect(
     move |class_name| {
         let ui = ui_handle.unwrap();
         let mut data = data.borrow_mut();
-        let config = config.borrow();
-
-        let class_id = class_to_id(class_name.as_str(), &mut data);
+        let mut config = config.borrow_mut();
+        let affect_class = class_to_id(class_name.as_str(), &mut data);
 
         if let Some(class) = data.dialogues.get_mut(&config.selected_class)
             && let Some(state) = class.get_mut(&config.selected_state)
-            && let Some(dialogue) = state.get_mut(config.selected_dialog)
+            && let Some(dialogue) = state.get_mut(config.selected_dialogue)
         {
-            dialogue.affects.remove(&class_id);
+            if let Some(affect_state) = dialogue.affects.remove(&affect_class) {
+                let class_id = config.selected_class;
+                let state_id = config.selected_state;
+                let dialogue_pos = config.selected_dialogue;
+                config.history.add_undo(
+                    Action {
+                        action: ActionType::Add(affect_state.to_string()),
+                        target: ActionTarget::ContentAffect(class_id, state_id, dialogue_pos, affect_class),
+                    },
+                    &ui,
+                );
+            }
+            reload_dialogue_detail(&data, &ui, &config);
         }
-        reload_dialogue_detail(&data, &ui, &config);
     }
 }
 
@@ -228,14 +312,25 @@ pub fn delete_event(
     move |event| {
         let ui = ui_handle.unwrap();
         let mut data = data.borrow_mut();
-        let config = config.borrow();
+        let mut config = config.borrow_mut();
         let event_id = event_to_id(event.as_str(), &mut data);
 
         if let Some(class) = data.dialogues.get_mut(&config.selected_class)
             && let Some(state) = class.get_mut(&config.selected_state)
-            && let Some(dialogue) = state.get_mut(config.selected_dialog)
+            && let Some(dialogue) = state.get_mut(config.selected_dialogue)
         {
             dialogue.events.remove(&event_id);
+
+            let class_id = config.selected_class;
+            let state_id = config.selected_state;
+            let dialogue_pos = config.selected_dialogue;
+            config.history.add_undo(
+                Action {
+                    action: ActionType::Add(event_id.to_string()),
+                    target: ActionTarget::ContentEvent(class_id, state_id, dialogue_pos),
+                },
+                &ui,
+            );
         }
         reload_dialogue_detail(&data, &ui, &config);
     }
@@ -251,11 +346,11 @@ pub fn search_dialogue(
         let mut config = config.borrow_mut();
         let ui = ui_handle.unwrap();
 
-        config.selected_dialog = 0;
+        config.selected_dialogue = 0;
         reload_dialogue(&data, &ui, &config, search.as_str());
 
         ui.global::<GContent>()
-            .set_selecting_dialog(config.selected_dialog as i32);
+            .set_selecting_dialog(config.selected_dialogue as i32);
     }
 }
 
@@ -289,7 +384,7 @@ pub fn reload_dialogue(data: &AppData, ui: &AppWindow, config: &Config, search: 
 pub fn reload_dialogue_detail(data: &AppData, ui: &AppWindow, config: &Config) {
     if let Some(state) = data.dialogues.get(&config.selected_class)
         && let Some(dialog_list) = state.get(&config.selected_state)
-        && let Some(dialog) = dialog_list.get(config.selected_dialog)
+        && let Some(dialog) = dialog_list.get(config.selected_dialogue)
     {
         let mut contents: Vec<ContentLang> = Vec::new();
         let mut affects: Vec<Affect> = Vec::new();
