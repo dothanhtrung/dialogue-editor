@@ -109,8 +109,7 @@ struct Config {
     save_without_name: bool,
     #[serde(default)]
     langs: BTreeSet<Language>,
-
-    #[serde(skip)]
+    #[serde(default)]
     history: History,
 }
 
@@ -228,23 +227,23 @@ fn main() -> Result<(), Box<dyn Error>> {
     ui.global::<GNameMap>()
         .on_refresh(namemap_tab::refresh(data.clone(), ui.as_weak()));
     ui.global::<GNameMap>()
-        .on_delete_class(delete_class_map(data.clone(), ui.as_weak()));
+        .on_delete_class(delete_class_map(data.clone(), config.clone(), ui.as_weak()));
     ui.global::<GNameMap>()
-        .on_delete_state(delete_state_map(data.clone(), ui.as_weak()));
+        .on_delete_state(delete_state_map(data.clone(), config.clone(), ui.as_weak()));
     ui.global::<GNameMap>()
-        .on_delete_event(delete_event_map(data.clone(), ui.as_weak()));
+        .on_delete_event(delete_event_map(data.clone(), config.clone(), ui.as_weak()));
     ui.global::<GNameMap>()
-        .on_update_class_id(update_class_id(data.clone(), ui.as_weak()));
+        .on_update_class_id(update_class_id(data.clone(), config.clone(), ui.as_weak()));
     ui.global::<GNameMap>()
-        .on_update_state_id(update_state_id(data.clone(), ui.as_weak()));
+        .on_update_state_id(update_state_id(data.clone(), config.clone(), ui.as_weak()));
     ui.global::<GNameMap>()
-        .on_update_event_id(update_event_id(data.clone(), ui.as_weak()));
+        .on_update_event_id(update_event_id(data.clone(), config.clone(), ui.as_weak()));
     ui.global::<GNameMap>()
-        .on_new_class(add_new_class(data.clone(), ui.as_weak()));
+        .on_new_class(add_new_class(data.clone(), config.clone(), ui.as_weak()));
     ui.global::<GNameMap>()
-        .on_new_state(add_new_state(data.clone(), ui.as_weak()));
+        .on_new_state(add_new_state(data.clone(), config.clone(), ui.as_weak()));
     ui.global::<GNameMap>()
-        .on_new_event(add_new_event(data.clone(), ui.as_weak()));
+        .on_new_event(add_new_event(data.clone(), config.clone(), ui.as_weak()));
     ui.global::<GNameMap>()
         .on_search_class(search_class_map(data.clone(), ui.as_weak()));
     ui.global::<GNameMap>()

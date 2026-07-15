@@ -1,6 +1,7 @@
 use crate::{
     AppData,
     AppWindow,
+    Config,
     GContent,
     GNameMap,
     StringId,
@@ -12,6 +13,11 @@ use crate::{
         new_regex,
         show_noti,
         state_to_id,
+    },
+    history::{
+        Action,
+        ActionTarget,
+        ActionType,
     },
 };
 use slint::{
@@ -27,37 +33,89 @@ use xxhash_rust::xxh3::xxh3_64;
 
 // TODO: Update selected class, selected state
 
-pub fn delete_class_map(data: Rc<RefCell<AppData>>, ui: Weak<AppWindow>) -> impl Fn(SharedString) {
+pub fn delete_class_map(
+    data: Rc<RefCell<AppData>>,
+    config: Rc<RefCell<Config>>,
+    ui: Weak<AppWindow>,
+) -> impl Fn(SharedString) {
     move |name| {
         let mut data = data.borrow_mut();
+        let mut config = config.borrow_mut();
         let ui = ui.unwrap();
-        data.class_name_map.remove(name.as_str()); // TODO: Check if content is using this
+
+        let Some(id) = data.class_name_map.remove(name.as_str()) else {
+            return;
+        }; // TODO: Check if content is using this
         reload_class_map(&data, &ui, "");
+
+        config.history.add_undo(
+            Action {
+                action: ActionType::Add(id.to_string()),
+                target: ActionTarget::NamemapClass(name.to_string()),
+            },
+            &ui,
+        );
     }
 }
 
-pub fn delete_state_map(data: Rc<RefCell<AppData>>, ui: Weak<AppWindow>) -> impl Fn(SharedString) {
+pub fn delete_state_map(
+    data: Rc<RefCell<AppData>>,
+    config: Rc<RefCell<Config>>,
+    ui: Weak<AppWindow>,
+) -> impl Fn(SharedString) {
     move |name| {
         let mut data = data.borrow_mut();
+        let mut config = config.borrow_mut();
         let ui = ui.unwrap();
-        data.state_name_map.remove(name.as_str()); // TODO: Check if content is using this
+
+        let Some(id) = data.state_name_map.remove(name.as_str()) else {
+            return;
+        }; // TODO: Check if content is using this
         reload_state_map(&data, &ui, "");
+
+        config.history.add_undo(
+            Action {
+                action: ActionType::Add(id.to_string()),
+                target: ActionTarget::NamemapState(name.to_string()),
+            },
+            &ui,
+        );
     }
 }
 
-pub fn delete_event_map(data: Rc<RefCell<AppData>>, ui: Weak<AppWindow>) -> impl Fn(SharedString) {
+pub fn delete_event_map(
+    data: Rc<RefCell<AppData>>,
+    config: Rc<RefCell<Config>>,
+    ui: Weak<AppWindow>,
+) -> impl Fn(SharedString) {
     move |name| {
         let mut data = data.borrow_mut();
+        let mut config = config.borrow_mut();
         let ui = ui.unwrap();
-        data.event_name_map.remove(name.as_str()); // TODO: Check if content is using this
 
+        let Some(id) = data.event_name_map.remove(name.as_str()) else {
+            return;
+        }; // TODO: Check if content is using this
         reload_event_map(&data, &ui, "");
+
+        config.history.add_undo(
+            Action {
+                action: ActionType::Add(id.to_string()),
+                target: ActionTarget::NamemapEvent(name.to_string()),
+            },
+            &ui,
+        );
     }
 }
 
-pub fn update_class_id(data: Rc<RefCell<AppData>>, ui: Weak<AppWindow>) -> impl Fn(SharedString, SharedString) {
+pub fn update_class_id(
+    data: Rc<RefCell<AppData>>,
+    config: Rc<RefCell<Config>>,
+    ui: Weak<AppWindow>,
+) -> impl Fn(SharedString, SharedString) {
     move |name, id| {
         let mut data = data.borrow_mut();
+        let mut config = config.borrow_mut();
         let ui = ui.unwrap();
         let old_id = class_to_id(name.as_str(), &mut data);
 
@@ -65,32 +123,56 @@ pub fn update_class_id(data: Rc<RefCell<AppData>>, ui: Weak<AppWindow>) -> impl 
             && let Some(value) = data.dialogues.remove(&old_id)
         {
             data.dialogues.insert(new_id, value);
+            config.history.add_undo(
+                Action {
+                    action: ActionType::Update(id.to_string(), old_id.to_string()),
+                    target: ActionTarget::NamemapClass(name.to_string()),
+                },
+                &ui,
+            );
         }
-        // reload_class_map(&data, &ui, "");
     }
 }
 
-pub fn update_state_id(data: Rc<RefCell<AppData>>, ui: Weak<AppWindow>) -> impl Fn(SharedString, SharedString) {
+pub fn update_state_id(
+    data: Rc<RefCell<AppData>>,
+    config: Rc<RefCell<Config>>,
+    ui: Weak<AppWindow>,
+) -> impl Fn(SharedString, SharedString) {
     move |name, id| {
         let mut data = data.borrow_mut();
+        let mut config = config.borrow_mut();
         let ui = ui.unwrap();
         let old_id = state_to_id(name.as_str(), &mut data);
+
         if let Ok(new_id) = update_id(&mut data, &ui, name.to_string(), old_id, id.as_str(), NameType::State) {
             for (_, class) in data.dialogues.iter_mut() {
                 if let Some(value) = class.remove(&old_id) {
                     class.insert(new_id, value);
                 }
             }
+            config.history.add_undo(
+                Action {
+                    action: ActionType::Update(id.to_string(), old_id.to_string()),
+                    target: ActionTarget::NamemapState(name.to_string()),
+                },
+                &ui,
+            );
         }
-        // reload_state_map(&data, &ui, "");
     }
 }
 
-pub fn update_event_id(data: Rc<RefCell<AppData>>, ui: Weak<AppWindow>) -> impl Fn(SharedString, SharedString) {
+pub fn update_event_id(
+    data: Rc<RefCell<AppData>>,
+    config: Rc<RefCell<Config>>,
+    ui: Weak<AppWindow>,
+) -> impl Fn(SharedString, SharedString) {
     move |name, id| {
         let mut data = data.borrow_mut();
+        let mut config = config.borrow_mut();
         let ui = ui.unwrap();
         let old_id = event_to_id(name.as_str(), &mut data);
+
         if let Ok(new_id) = update_id(&mut data, &ui, name.to_string(), old_id, id.as_str(), NameType::Event) {
             for (_, class) in data.dialogues.iter_mut() {
                 for (_, state) in class.iter_mut() {
@@ -100,41 +182,84 @@ pub fn update_event_id(data: Rc<RefCell<AppData>>, ui: Weak<AppWindow>) -> impl 
                     }
                 }
             }
+            config.history.add_undo(
+                Action {
+                    action: ActionType::Update(id.to_string(), old_id.to_string()),
+                    target: ActionTarget::NamemapEvent(name.to_string()),
+                },
+                &ui,
+            );
         }
-
-        // reload_event_map(&data, &ui, "");
     }
 }
 
-pub fn add_new_class(data: Rc<RefCell<AppData>>, ui: Weak<AppWindow>) -> impl Fn(SharedString, SharedString) {
+pub fn add_new_class(
+    data: Rc<RefCell<AppData>>,
+    config: Rc<RefCell<Config>>,
+    ui: Weak<AppWindow>,
+) -> impl Fn(SharedString, SharedString) {
     move |name, id| {
         let mut data = data.borrow_mut();
+        let mut config = config.borrow_mut();
         let ui = ui.unwrap();
 
         if add_new(&mut data, &ui, name.to_string(), id.as_str(), NameType::Class).is_ok() {
             reload_class_map(&mut data, &ui, "");
+            config.history.add_undo(
+                Action {
+                    action: ActionType::Delete(id.to_string()),
+                    target: ActionTarget::NamemapClass(name.to_string()),
+                },
+                &ui,
+            );
         }
     }
 }
 
-pub fn add_new_state(data: Rc<RefCell<AppData>>, ui: Weak<AppWindow>) -> impl Fn(SharedString, SharedString) {
+pub fn add_new_state(
+    data: Rc<RefCell<AppData>>,
+    config: Rc<RefCell<Config>>,
+    ui: Weak<AppWindow>,
+) -> impl Fn(SharedString, SharedString) {
     move |name, id| {
         let mut data = data.borrow_mut();
+        let mut config = config.borrow_mut();
         let ui = ui.unwrap();
 
         if add_new(&mut data, &ui, name.to_string(), id.as_str(), NameType::State).is_ok() {
             reload_state_map(&mut data, &ui, "");
+
+            config.history.add_undo(
+                Action {
+                    action: ActionType::Delete(id.to_string()),
+                    target: ActionTarget::NamemapState(name.to_string()),
+                },
+                &ui,
+            );
         }
     }
 }
 
-pub fn add_new_event(data: Rc<RefCell<AppData>>, ui: Weak<AppWindow>) -> impl Fn(SharedString, SharedString) {
+pub fn add_new_event(
+    data: Rc<RefCell<AppData>>,
+    config: Rc<RefCell<Config>>,
+    ui: Weak<AppWindow>,
+) -> impl Fn(SharedString, SharedString) {
     move |name, id| {
         let mut data = data.borrow_mut();
+        let mut config = config.borrow_mut();
         let ui = ui.unwrap();
 
         if add_new(&mut data, &ui, name.to_string(), id.as_str(), NameType::Event).is_ok() {
             reload_event_map(&data, &ui, "");
+
+            config.history.add_undo(
+                Action {
+                    action: ActionType::Delete(id.to_string()),
+                    target: ActionTarget::NamemapEvent(name.to_string()),
+                },
+                &ui,
+            );
         }
     }
 }
