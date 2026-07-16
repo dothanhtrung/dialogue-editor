@@ -15,4 +15,4 @@ From [Slint License](https://github.com/slint-ui/slint/blob/master/LICENSE.md):
 > Do you want to build an open-source application? Use Slint for free under the GPLv3 on any platform; your own files can stay MIT or Apache-2.0. You're not tied to the GPL, though — the Royalty-free or Commercial license works too.
 
 Although Slint says that and the code in this repository is "MIT | Apache-2.0",
-when you sell the binary, which is linked to Slint, you may still need to comply with GPLv3.
+when you sell the binary, which is linked to Slint, you may still need to comply with GPLv3 or Royalty-free License.
