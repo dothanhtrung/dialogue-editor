@@ -149,44 +149,8 @@ fn apply_action(action: &Action, data: &mut AppData) {
                     state[*dialogue_pos].contents.insert(*language, value.clone());
                 }
             }
-            ActionTarget::ContentAffect(class_id, state_id, dialogue_pos, affect_class) => {
-                let Ok(affect_state) = value.parse() else {
-                    return;
-                };
-                if let Some(class) = data.dialogues.get_mut(class_id)
-                    && let Some(state) = class.get_mut(state_id)
-                {
-                    state[*dialogue_pos].affects.insert(*affect_class, affect_state);
-                }
-            }
-            ActionTarget::ContentEvent(class_id, state_id, dialogue_pos) => {
-                let Ok(event_id) = value.parse() else {
-                    return;
-                };
-                if let Some(class) = data.dialogues.get_mut(class_id)
-                    && let Some(state) = class.get_mut(state_id)
-                {
-                    state[*dialogue_pos].events.insert(event_id);
-                }
-            }
-            ActionTarget::NamemapClass(class_name) => {
-                let Ok(class_id) = value.parse() else {
-                    return;
-                };
-                data.class_name_map.insert(class_name.clone(), class_id);
-            }
-            ActionTarget::NamemapState(state_name) => {
-                let Ok(state_id) = value.parse() else {
-                    return;
-                };
-                data.state_name_map.insert(state_name.clone(), state_id);
-            }
-            ActionTarget::NamemapEvent(event_name) => {
-                let Ok(event_id) = value.parse() else {
-                    return;
-                };
-                data.event_name_map.insert(event_name.clone(), event_id);
-            }
+
+            _ => {}
         },
         ActionType::DeleteStr(value) => match &action.target {
             ActionTarget::None => {}
@@ -214,32 +178,8 @@ fn apply_action(action: &Action, data: &mut AppData) {
                     state[*dialogue_pos].contents.remove(language);
                 }
             }
-            ActionTarget::ContentAffect(class_id, state_id, dialogue_pos, affect_class) => {
-                if let Some(class) = data.dialogues.get_mut(class_id)
-                    && let Some(state) = class.get_mut(state_id)
-                {
-                    state[*dialogue_pos].affects.remove(affect_class);
-                }
-            }
-            ActionTarget::ContentEvent(class_id, state_id, dialogue_pos) => {
-                let Ok(event_id) = value.parse() else {
-                    return;
-                };
-                if let Some(class) = data.dialogues.get_mut(class_id)
-                    && let Some(state) = class.get_mut(state_id)
-                {
-                    state[*dialogue_pos].events.remove(&event_id);
-                }
-            }
-            ActionTarget::NamemapClass(class_name) => {
-                data.class_name_map.remove(class_name);
-            }
-            ActionTarget::NamemapState(state_name) => {
-                data.state_name_map.remove(state_name);
-            }
-            ActionTarget::NamemapEvent(event_name) => {
-                data.event_name_map.remove(event_name);
-            }
+
+            _ => {}
         },
         ActionType::UpdateStr(old_value, new_value) => match &action.target {
             ActionTarget::None => {}
@@ -269,52 +209,73 @@ fn apply_action(action: &Action, data: &mut AppData) {
                     state[*dialogue_pos].contents.insert(*lang, new_value.clone());
                 }
             }
+
+            _ => {}
+        },
+        ActionType::AddId(value) => match &action.target {
             ActionTarget::ContentAffect(class_id, state_id, dialogue_pos, affect_class) => {
-                let Ok(affect_state) = new_value.parse() else {
-                    return;
-                };
                 if let Some(class) = data.dialogues.get_mut(class_id)
                     && let Some(state) = class.get_mut(state_id)
                 {
-                    state[*dialogue_pos].affects.insert(*affect_class, affect_state);
+                    state[*dialogue_pos].affects.insert(*affect_class, *value);
                 }
             }
             ActionTarget::ContentEvent(class_id, state_id, dialogue_pos) => {
-                let Ok(old_event) = old_value.parse() else {
-                    return;
-                };
-                let Ok(new_event) = new_value.parse() else {
-                    return;
-                };
                 if let Some(class) = data.dialogues.get_mut(class_id)
                     && let Some(state) = class.get_mut(state_id)
                 {
-                    state[*dialogue_pos].events.remove(&old_event);
-                    state[*dialogue_pos].events.insert(new_event);
+                    state[*dialogue_pos].events.insert(*value);
                 }
             }
             ActionTarget::NamemapClass(class_name) => {
-                let Ok(new_id) = new_value.parse() else {
-                    return;
-                };
-                data.class_name_map.insert(class_name.clone(), new_id);
+                data.class_name_map.insert(class_name.clone(), *value);
             }
             ActionTarget::NamemapState(state_name) => {
-                let Ok(new_id) = new_value.parse() else {
-                    return;
-                };
-                data.state_name_map.insert(state_name.clone(), new_id);
+                data.state_name_map.insert(state_name.clone(), *value);
             }
             ActionTarget::NamemapEvent(event_name) => {
-                let Ok(new_id) = new_value.parse() else {
-                    return;
-                };
-                data.event_name_map.insert(event_name.clone(), new_id);
+                data.event_name_map.insert(event_name.clone(), *value);
             }
+            _ => {}
         },
-        ActionType::AddId(_) => todo!(),
-        ActionType::DeleteId(_) => todo!(),
-        ActionType::UpdateId(_, _) => todo!(),
+        ActionType::DeleteId(value) => match &action.target {
+            ActionTarget::ContentAffect(class_id, state_id, dialogue_pos, affect_class) => {
+                if let Some(class) = data.dialogues.get_mut(class_id)
+                    && let Some(state) = class.get_mut(state_id)
+                {
+                    state[*dialogue_pos].affects.remove(affect_class);
+                }
+            }
+            ActionTarget::ContentEvent(class_id, state_id, dialogue_pos) => {
+                if let Some(class) = data.dialogues.get_mut(class_id)
+                    && let Some(state) = class.get_mut(state_id)
+                {
+                    state[*dialogue_pos].events.remove(value);
+                }
+            }
+            ActionTarget::NamemapClass(class_name) => {
+                data.class_name_map.remove(class_name);
+            }
+            ActionTarget::NamemapState(state_name) => {
+                data.state_name_map.remove(state_name);
+            }
+            ActionTarget::NamemapEvent(event_name) => {
+                data.event_name_map.remove(event_name);
+            }
+            _ => {}
+        },
+        ActionType::UpdateId(_, new_id) => match &action.target {
+            ActionTarget::NamemapClass(class_name) => {
+                data.class_name_map.insert(class_name.clone(), *new_id);
+            }
+            ActionTarget::NamemapState(state_name) => {
+                data.state_name_map.insert(state_name.clone(), *new_id);
+            }
+            ActionTarget::NamemapEvent(event_name) => {
+                data.event_name_map.insert(event_name.clone(), *new_id);
+            }
+            _ => {}
+        },
     }
 }
 

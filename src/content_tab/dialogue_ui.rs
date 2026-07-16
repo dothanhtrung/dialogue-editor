@@ -173,7 +173,7 @@ pub fn add_affect(
             let dialogue_pos = config.selected_dialogue;
             config.history.add_undo(
                 Action {
-                    action: ActionType::DeleteStr(affect_state.to_string()),
+                    action: ActionType::DeleteId(affect_state),
                     target: ActionTarget::ContentAffect(class_id, state_id, dialogue_pos, affect_class),
                 },
                 &ui,
@@ -205,7 +205,7 @@ pub fn add_event(
             let dialogue_pos = config.selected_dialogue;
             config.history.add_undo(
                 Action {
-                    action: ActionType::DeleteStr(event_id.to_string()),
+                    action: ActionType::DeleteId(event_id),
                     target: ActionTarget::ContentEvent(class_id, state_id, dialogue_pos),
                 },
                 &ui,
@@ -293,7 +293,7 @@ pub fn delete_affect(
                 let dialogue_pos = config.selected_dialogue;
                 config.history.add_undo(
                     Action {
-                        action: ActionType::AddStr(affect_state.to_string()),
+                        action: ActionType::AddId(affect_state),
                         target: ActionTarget::ContentAffect(class_id, state_id, dialogue_pos, affect_class),
                     },
                     &ui,
@@ -326,7 +326,7 @@ pub fn delete_event(
             let dialogue_pos = config.selected_dialogue;
             config.history.add_undo(
                 Action {
-                    action: ActionType::AddStr(event_id.to_string()),
+                    action: ActionType::AddId(event_id),
                     target: ActionTarget::ContentEvent(class_id, state_id, dialogue_pos),
                 },
                 &ui,
