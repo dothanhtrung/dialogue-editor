@@ -78,9 +78,15 @@ pub fn file_picker(
                     .unwrap_or("/"),
             );
         config.file_path = if load_true_save_false {
-            file_dialog.pick_file().unwrap_or_default()
+            let Some(file_path) = file_dialog.pick_file() else {
+                return;
+            };
+            file_path
         } else {
-            file_dialog.save_file().unwrap_or_default()
+            let Some(file_path) = file_dialog.save_file() else {
+                return;
+            };
+            file_path
         };
 
         ui.global::<GFile>()
@@ -95,6 +101,8 @@ pub fn file_picker(
             // Show warning when data is empty and the save file is not empty
             save(&data, &config, &ui);
         }
+
+        ui.global::<GFile>().set_is_loading(false);
     }
 }
 
@@ -122,6 +130,7 @@ pub fn request_load(
                 NotiLevel::Error,
                 format!("Not a file: {}", config.file_path.display()).as_str(),
             );
+            ui.global::<GFile>().set_is_loading(false);
             return;
         }
 
@@ -129,6 +138,7 @@ pub fn request_load(
         let is_saved = ui.get_is_saved();
         if !force && !is_saved {
             let Ok(dialog) = UnsaveLoadDialog::new() else {
+                ui.global::<GFile>().set_is_loading(false);
                 return;
             };
             dialog.on_cancel_clicked({
@@ -154,6 +164,7 @@ pub fn request_load(
                 }
             });
             let _ = dialog.run();
+            ui.global::<GFile>().set_is_loading(false);
             return;
         }
 
@@ -194,6 +205,7 @@ fn load(data: &mut AppData, config: &mut Config, ui: &AppWindow) {
     reload_content(data, ui, config);
     reload_all_map(data, ui);
     ui.set_is_saved(true);
+    ui.global::<GFile>().set_is_loading(false);
 }
 
 // TODO: Shortcut Ctrl-S
@@ -262,6 +274,7 @@ fn save(data: &AppData, config: &Config, ui: &AppWindow) {
             }
         }
     }
+    ui.global::<GFile>().set_is_loading(false);
 }
 
 pub fn on_close(ui_handle: Weak<AppWindow>) -> impl FnMut() -> CloseRequestResponse + 'static {
