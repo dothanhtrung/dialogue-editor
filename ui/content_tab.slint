@@ -79,7 +79,7 @@ export global GContent {
     callback add_lang_content(string, string); // lang, content
     callback add_affect(string, string); // affect_class, affect_state
     callback add_event(string);
-    callback update_content(UiDialogue); // TODO: This is alrready in GContent, do not need to pass it again
+    callback update_content(string, string);
     callback delete_content(string);
     callback delete_affect(string);
     callback delete_event(string);
@@ -90,23 +90,35 @@ export global GContent {
 }
 
 export component DialogueBox inherits Rectangle {
-    in property <[string]> class_list; // TODO: Class list from name map toos
     property <int> content_selecting;
     property <bool> is_edited: false;
 
     Vertical {
         Vertical {
+            height: 50%;
+
             ListView {
                 for dialog[i] in GContent.dialogue.contents: Horizontal {
                     alignment: start;
-                    Text {
-                        text: dialog.language;
+                    Vertical {
+                        Text {
+                            text: dialog.language;
+                        }
+
+                        IconButton {
+                            icon: Icons.edit;
+                            tooltip: "Submit";
+                            visible: is_edited;
+                            clicked => {
+                                GContent.update_content(dialog.language, content_view.text);
+                                is_edited = false;
+                            }
+                        }
                     }
 
                     content_view := TextEdit {
                         height: 96px;
                         width: 80%;
-                        placeholder-text: "Your dialogue";
                         text: dialog.content;
                         edited(value) => {
                             GContent.dialogue.contents[i].content = value;
@@ -126,14 +138,6 @@ export component DialogueBox inherits Rectangle {
                 }
             }
 
-            if is_edited: TextButton {
-                text: "Submit";
-                clicked => {
-                    GContent.update_content(GContent.dialogue);
-                    is_edited = false;
-                };
-            }
-
             Horizontal {
                 alignment: start;
                 Rectangle {
@@ -150,7 +154,6 @@ export component DialogueBox inherits Rectangle {
                 TextButton {
                     text: "Add";
                     clicked => {
-                        GContent.update_content(GContent.dialogue);
                         GContent.add_lang_content(new_lang.current-value, new_content.text);
                         new_content.text = "";
                         is_edited = false;
@@ -181,7 +184,7 @@ export component DialogueBox inherits Rectangle {
 
             Horizontal {
                 new_affect_class := ComboBox {
-                    model: class_list;
+                    model: GContent.classes;
                     current-index: 0;
                 }
                 // TODO: Filter state by class
@@ -193,7 +196,6 @@ export component DialogueBox inherits Rectangle {
                 TextButton {
                     text: "Add";
                     clicked => {
-                        GContent.update_content(GContent.dialogue);
                         GContent.add_affect(new_affect_class.current-value, new_affect_state.current-value);
                     };
                 }
@@ -227,7 +229,6 @@ export component DialogueBox inherits Rectangle {
                 TextButton {
                     text: "Add";
                     clicked => {
-                        GContent.update_content(GContent.dialogue);
                         GContent.add_event(new_event.text);
                     };
                 }
@@ -418,7 +419,6 @@ export component ContentTab inherits TabReload {
                 visible: {
                     GContent.selecting_dialog >= 0
                 };
-                class_list: GContent.classes;
             }
         }
     }

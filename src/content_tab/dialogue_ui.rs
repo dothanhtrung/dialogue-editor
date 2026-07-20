@@ -8,12 +8,14 @@ use crate::{
     GContent,
     UiDialogue,
     common::{
+        NotiLevel,
         class_to_id,
         event_to_id,
         id_to_class,
         id_to_event,
         id_to_state,
         new_regex,
+        show_noti,
         state_to_id,
     },
     history::{
@@ -218,21 +220,39 @@ pub fn update_content(
     data: Rc<RefCell<AppData>>,
     config: Rc<RefCell<Config>>,
     ui_handle: Weak<AppWindow>,
-) -> impl Fn(UiDialogue) {
-    move |ui_dialogue| {
+) -> impl Fn(SharedString, SharedString) {
+    move |update_lang, update_content| {
         let ui = ui_handle.unwrap();
         let mut data = data.borrow_mut();
-        let config = config.borrow();
-        let ui_dialogue = Dialogue::from(ui_dialogue, &mut data);
+        let mut config = config.borrow_mut();
+
+        let class_id = config.selected_class;
+        let state_id = config.selected_state;
+        let dialogue_pos = config.selected_dialogue;
 
         if let Some(class) = data.dialogues.get_mut(&config.selected_class)
             && let Some(state) = class.get_mut(&config.selected_state)
             && let Some(dialogue) = state.get_mut(config.selected_dialogue)
         {
-            dialogue.contents = ui_dialogue.contents;
+            let Ok(lang) = Language::from_str(&update_lang) else {
+                show_noti(
+                    &ui,
+                    NotiLevel::Error,
+                    format!("Invalid language: {}", update_lang).as_str(),
+                );
+                return;
+            };
+            if let Some(old_content) = dialogue.contents.get(&lang) {
+                config.history.add_undo(
+                    Action {
+                        action: ActionType::UpdateStr(update_content.to_string(), old_content.clone()),
+                        target: ActionTarget::ContentLang(class_id, state_id, dialogue_pos, lang),
+                    },
+                    &ui,
+                );
+            }
+            dialogue.contents.insert(lang, update_content.into());
             reload_dialogue_detail(&data, &ui, &config);
-
-            // TODO: Implement history for this action
         }
     }
 }

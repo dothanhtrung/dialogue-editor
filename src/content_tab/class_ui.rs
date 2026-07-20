@@ -37,6 +37,12 @@ pub fn add_class(
 ) -> impl Fn(SharedString) {
     move |class_name| {
         let ui = ui_handle.unwrap();
+
+        if class_name.is_empty() {
+            show_noti(&ui, NotiLevel::Error, "Class name is empty");
+            return;
+        }
+
         let mut data = data.borrow_mut();
         let mut config = config.borrow_mut();
         let class_id = class_to_id(class_name.as_str(), &mut data);

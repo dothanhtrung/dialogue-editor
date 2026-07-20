@@ -78,7 +78,7 @@ pub struct History {
     #[serde(skip)]
     pub redo_actions: Vec<Action>,
     /// Maximum undo actions
-    pub limit: usize,
+    pub limit: usize, // TODO: make this configurable
 }
 
 impl Default for History {

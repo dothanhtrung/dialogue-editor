@@ -79,6 +79,7 @@ pub fn name_to_id(name: &str, data: &mut AppData, name_type: NameType) -> u64 {
     } else {
         let lower = name.to_lowercase();
         let id = xxh3_64(lower.as_bytes());
+        // TODO: History
         data.insert(name.to_string(), id);
         id
     }

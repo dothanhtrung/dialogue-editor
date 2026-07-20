@@ -8,7 +8,6 @@ mod file_handle;
 mod history;
 mod namemap_tab;
 
-use crate::common::*;
 use crate::config_tab::*;
 use crate::content_tab::class_ui::*;
 use crate::content_tab::dialogue_ui::*;
@@ -26,7 +25,6 @@ use serde::{
     Deserialize,
     Serialize,
 };
-use slint::Model;
 use std::collections::BTreeSet;
 use std::{
     cell::RefCell,
@@ -37,7 +35,6 @@ use std::{
         PathBuf,
     },
     rc::Rc,
-    str::FromStr,
 };
 use tracing::warn;
 use tracing_subscriber::EnvFilter;
@@ -88,7 +85,7 @@ impl AppData {
     }
 }
 
-#[derive(Serialize, Deserialize, Default)]
+#[derive(Serialize, Deserialize)]
 struct Config {
     #[serde(skip)]
     config_path: PathBuf,
@@ -107,10 +104,27 @@ struct Config {
     file_format: FileFormat,
     #[serde(default)]
     save_without_name: bool,
-    #[serde(default)]
+    #[serde(default = "default_lang")]
     langs: BTreeSet<Language>,
     #[serde(default)]
     history: History,
+}
+
+impl Default for Config {
+    fn default() -> Self {
+        Self {
+            config_path: PathBuf::from("dialogue_editor.ron"),
+            file_path: PathBuf::new(),
+            selected_class: 0,
+            selected_state: 0,
+            selected_dialogue: 0,
+            encrypt_key: String::new(),
+            file_format: FileFormat::default(),
+            save_without_name: false,
+            langs: BTreeSet::from([Language::Eng]),
+            history: History::default(),
+        }
+    }
 }
 
 impl Config {
@@ -262,20 +276,6 @@ fn main() -> Result<(), Box<dyn Error>> {
     Ok(())
 }
 
-impl Dialogue {
-    pub fn from(ui_dialog: UiDialogue, data: &mut AppData) -> Self {
-        let mut ret = Self::default();
-        for affect in ui_dialog.affects.iter() {
-            let class_id = class_to_id(affect.class.as_str(), data);
-            let state_id = state_to_id(affect.state.as_str(), data);
-            ret.affects.insert(class_id, state_id);
-        }
-        for content in ui_dialog.contents.iter() {
-            ret.contents.insert(
-                Language::from_str(content.language.as_str()).unwrap_or_default(),
-                content.content.to_string(),
-            );
-        }
-        ret
-    }
+fn default_lang() -> BTreeSet<Language> {
+    BTreeSet::from([Language::Eng])
 }
