@@ -27,6 +27,9 @@ import {
 } from "material-1.0/material.slint";
 import { Icons } from "material-1.0/ui/icons/icons.slint";
 import { VerticalDivider } from "material-1.0/ui/components/divider.slint";
+import { GConfig } from "common.slint";
+import { ListItem } from "material-1.0/material.slint";
+import { SearchBar } from "material-1.0/ui/components/search_bar.slint";
 
 
 export struct ContentLang {
@@ -50,9 +53,8 @@ export global GContent {
     in-out property <[string]> states;
     in-out property <[string]> dialogues;
     in-out property <UiDialogue> dialogue;
-    in-out property <[string]> lang_list;
     in-out property <[string]> state_list;
-    in-out property <[string]> event_list;
+    in-out property <[ListItem]> event_list;
 
     in-out property <string> selecting_class: "";
     in-out property <string> selecting_state: "";
@@ -94,7 +96,6 @@ export component DialogueBox inherits Rectangle {
 
     Vertical {
         Vertical {
-            height: 60%;
             ListView {
                 for dialog[i] in GContent.dialogue.contents: Horizontal {
                     alignment: start;
@@ -137,7 +138,7 @@ export component DialogueBox inherits Rectangle {
                 alignment: start;
                 Rectangle {
                     new_lang := ComboBox {
-                        model: GContent.lang_list;
+                        model: GConfig.lang_list;
                         current-index: 0;
                     }
                 }
@@ -219,15 +220,15 @@ export component DialogueBox inherits Rectangle {
             }
 
             Horizontal {
-                new_event := ComboBox {
-                    model: GContent.event_list;
+                new_event := SearchBar {
+                    items: GContent.event_list;
                 }
 
                 TextButton {
                     text: "Add";
                     clicked => {
                         GContent.update_content(GContent.dialogue);
-                        GContent.add_event(new_event.current-value);
+                        GContent.add_event(new_event.text);
                     };
                 }
             }

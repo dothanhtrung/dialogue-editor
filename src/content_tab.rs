@@ -3,6 +3,11 @@ pub mod dialogue_ui;
 pub mod state_ui;
 
 use crate::{
+    AppData,
+    AppWindow,
+    Config,
+    GContent,
+    ListItem,
     content_tab::{
         class_ui::reload_class,
         dialogue_ui::{
@@ -11,10 +16,6 @@ use crate::{
         },
         state_ui::reload_state,
     },
-    AppData,
-    AppWindow,
-    Config,
-    GContent,
 };
 use slint::{
     ComponentHandle,
@@ -40,15 +41,12 @@ pub fn reload_content(data: &mut AppData, ui: &AppWindow, config: &Config) {
     reload_dialogue(data, ui, config, "");
     reload_dialogue_detail(data, ui, config);
 
-    let mut lang_list: Vec<SharedString> = Vec::new();
-    for lang in config.langs.iter() {
-        lang_list.push(lang.to_639_3().to_string().into());
-    }
-    ui.global::<GContent>().set_lang_list(lang_list.as_slice().into());
-
-    let mut event_list: Vec<SharedString> = Vec::new();
+    let mut event_list: Vec<ListItem> = Vec::new();
     for event in data.event_name_map.keys() {
-        event_list.push(event.into());
+        event_list.push(ListItem {
+            text: event.into(),
+            ..Default::default()
+        });
     }
     ui.global::<GContent>().set_event_list(event_list.as_slice().into());
 

@@ -16,7 +16,8 @@ import { FileSection, GFile, UnsaveLoadDialog } from "file_section.slint";
 import { NotiBox, GNoti } from "noti.slint";
 import { StringId, GNameMap, NameMapTab } from "namemap_tab.slint";
 import { ContentTab, GContent } from "content_tab.slint";
-import { ConfigTab, GConfig } from "config_tab.slint";
+import { ConfigTab } from "config_tab.slint";
+import { GConfig } from "common.slint";
 import {
     Vertical,
     ElevatedButton,
@@ -27,6 +28,7 @@ import {
 export { GNoti, GNameMap, GContent, GConfig, GFile, UnsaveLoadDialog }
 export component AppWindow inherits MaterialWindow {
     title: "Dialogue Editor";
+    maximized: true;
 
     in-out property <bool> is_saved: true;
     in-out property <bool> undo_available: false;

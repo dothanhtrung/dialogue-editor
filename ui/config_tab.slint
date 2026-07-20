@@ -19,14 +19,7 @@ import {
 } from "material-1.0/material.slint";
 import { GFile } from "file_section.slint";
 import { Icons } from "material-1.0/ui/icons/icons.slint";
-
-export global GConfig {
-    in-out property <[string]> lang_list;
-    in-out property <[string]> all_langs;
-
-    callback delete_lang(string);
-    callback add_lang(string);
-}
+import { GConfig } from "common.slint";
 
 export component Tag inherits Rectangle {
     in property <string> value;
