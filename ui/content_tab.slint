@@ -28,7 +28,7 @@ import {
 import { Icons } from "material-1.0/ui/icons/icons.slint";
 import { VerticalDivider } from "material-1.0/ui/components/divider.slint";
 import { GConfig } from "common.slint";
-import { ListItem } from "material-1.0/material.slint";
+import { ListItem, Grid } from "material-1.0/material.slint";
 import { SearchBar } from "material-1.0/ui/components/search_bar.slint";
 
 
@@ -174,9 +174,10 @@ export component DialogueBox inherits Rectangle {
                 text: "Affect list";
             }
 
-            ListView {
-                // TODO: Add "Go to" the affected state
+            Grid {
                 for affect[i] in GContent.dialogue.affects: Rectangle {
+                    row: i / 2;
+                    col: Math.mod(i, 2);
                     InputChip {
                         text: { affect.class + ":" + affect.state };
                         trailing_icon: Icons.remove;
@@ -213,8 +214,10 @@ export component DialogueBox inherits Rectangle {
                 text: "Event List";
             }
 
-            ListView {
+            Grid {
                 for event[i] in GContent.dialogue.events: Rectangle {
+                    row: i / 2;
+                    col: Math.mod(i, 2);
                     InputChip {
                         text: event;
                         trailing_icon: Icons.remove;
