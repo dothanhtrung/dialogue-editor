@@ -223,13 +223,13 @@ pub fn request_save(
         config.file_path = PathBuf::from(file_path.as_str());
         config.save_without_name = save_without_name;
         config.file_format = get_file_format(&config.file_path);
-        config.save();
 
         save(&data, &config, &ui);
     }
 }
 
 fn save(data: &AppData, config: &Config, ui: &AppWindow) {
+    config.save();
     match config.file_format {
         FileFormat::Bin => {
             if let Err(e) = bin_file::save_to::<AppData>(data, &config.file_path, &config.encrypt_key) {
