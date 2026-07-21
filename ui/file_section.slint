@@ -51,48 +51,42 @@ export component UnsaveLoadDialog inherits Dialog {
 }
 
 export component FileSection inherits Rectangle {
-    Vertical {
-        Horizontal {
-            alignment: start;
+    Horizontal {
+        alignment: start;
 
-            Rectangle {
-                ElevatedButton {
-                    text: "Open";
-                    clicked => {
-                        GFile.file_picker(true);
-                        GFile.is_loading = true;
-                    }
+        Rectangle {
+            ElevatedButton {
+                text: "Open";
+                clicked => {
+                    GFile.file_picker(true);
+                    GFile.is_loading = true;
                 }
             }
+        }
 
-            Rectangle {
-                ElevatedButton {
-                    text: "Save";
-                    clicked => {
-                        if (GFile.file_path == "") {
-                            GFile.file_picker(false);
-                            GFile.is_loading = true;
-                        } else {
-                            GFile.save(GFile.file_path, GFile.encrypt_key, GFile.save_without_name, false);
-                            GFile.is_loading = true;
-                        }
-                    }
-                }
-            }
-
-            Rectangle {
-                ElevatedButton {
-                    text: "Save As";
-                    clicked => {
+        Rectangle {
+            ElevatedButton {
+                text: "Save";
+                clicked => {
+                    if (GFile.file_path == "") {
                         GFile.file_picker(false);
+                        GFile.is_loading = true;
+                    } else {
+                        GFile.save(GFile.file_path, GFile.encrypt_key, GFile.save_without_name, false);
                         GFile.is_loading = true;
                     }
                 }
             }
         }
 
-        if (GFile.is_loading): LinearProgressIndicator {
-            indeterminate: true;
+        Rectangle {
+            ElevatedButton {
+                text: "Save As";
+                clicked => {
+                    GFile.file_picker(false);
+                    GFile.is_loading = true;
+                }
+            }
         }
     }
 }
