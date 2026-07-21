@@ -51,7 +51,7 @@ export global GNameMap {
 
 
 // TODO: Allow rename
-component NameMapItem inherits ElevatedCard {
+component NameMapItem inherits Rectangle {
     in property <StringId> value;
     property <bool> is_edited: false;
 
@@ -110,16 +110,14 @@ export component StringIdContainer inherits Rectangle {
         }
 
         ListView {
-            for value[i] in values: Rectangle {
-                ElevatedCard {
-                    NameMapItem {
-                        value: value;
-                        update(name, id) => {
-                            update(name,id);
-                        }
-                        delete(name) => {
-                            delete(name);
-                        }
+            for value[i] in values: ElevatedCard {
+                NameMapItem {
+                    value: value;
+                    update(name, id) => {
+                        update(name,id);
+                    }
+                    delete(name) => {
+                        delete(name);
                     }
                 }
             }
