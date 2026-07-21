@@ -8,6 +8,10 @@ use crate::{
     Config,
     GContent,
     ListItem,
+    common::{
+        class_to_id,
+        state_to_id,
+    },
     content_tab::{
         class_ui::reload_class,
         dialogue_ui::{
@@ -30,6 +34,28 @@ pub fn refresh(data: Rc<RefCell<AppData>>, config: Rc<RefCell<Config>>, ui: Weak
         let mut data = data.borrow_mut();
         let config = config.borrow();
         let ui = ui.unwrap();
+
+        reload_content(&mut data, &ui, &config);
+    }
+}
+
+pub fn goto(
+    data: Rc<RefCell<AppData>>,
+    config: Rc<RefCell<Config>>,
+    ui: Weak<AppWindow>,
+) -> impl Fn(SharedString, SharedString) {
+    move |class_name, state_name| {
+        let mut data = data.borrow_mut();
+        let mut config = config.borrow_mut();
+        let ui = ui.unwrap();
+
+        config.selected_class = class_to_id(class_name.as_str(), &mut data);
+        config.selected_state = state_to_id(&state_name, &mut data);
+        config.selected_dialogue = 0;
+
+        ui.global::<GContent>().set_selecting_class(class_name);
+        ui.global::<GContent>().set_selecting_state(state_name);
+        ui.global::<GContent>().set_selecting_dialogue(0);
 
         reload_content(&mut data, &ui, &config);
     }

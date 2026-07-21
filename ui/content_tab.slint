@@ -61,7 +61,7 @@ export global GContent {
 
     in-out property <string> selecting_class: "";
     in-out property <string> selecting_state: "";
-    in-out property <int> selecting_dialog: -1;
+    in-out property <int> selecting_dialogue: -1;
 
     callback refresh();
 
@@ -90,6 +90,8 @@ export global GContent {
     callback search_class(string);
     callback search_state(string);
     callback search_dialogue(string);
+
+    callback goto(string, string);
 }
 
 export component DialogueBox inherits Rectangle {
@@ -181,6 +183,7 @@ export component DialogueBox inherits Rectangle {
                         trailing_icon_clicked => {
                             GContent.delete_affect(affect.class);
                         }
+                        clicked => { GContent.goto(affect.class, affect.state); }
                     }
                 }
             }
@@ -252,7 +255,7 @@ export component ContentTab inherits TabReload {
                         GContent.search_class(text);
                         GContent.selecting_class = "";
                         GContent.selecting_state = "";
-                        GContent.selecting_dialog = -1;
+                        GContent.selecting_dialogue = -1;
                     }
                 }
 
@@ -273,7 +276,7 @@ export component ContentTab inherits TabReload {
                             GContent.select-class(class_name);
                             GContent.selecting_class = class_name;
                             GContent.selecting_state = "";
-                            GContent.selecting_dialog = -1;
+                            GContent.selecting_dialogue = -1;
                         };
                         submit(new_name) => {
                             GContent.rename-class(class_name, new_name);
@@ -313,7 +316,7 @@ export component ContentTab inherits TabReload {
                     search(text) => {
                         GContent.search_state(text);
                         GContent.selecting_state = "";
-                        GContent.selecting_dialog = -1;
+                        GContent.selecting_dialogue = -1;
                     }
                 }
 
@@ -334,7 +337,7 @@ export component ContentTab inherits TabReload {
                         select => {
                             GContent.select-state(state_name);
                             GContent.selecting_state = state_name;
-                            GContent.selecting_dialog = -1;
+                            GContent.selecting_dialogue = -1;
                         };
                         submit(new_name) => {
                             GContent.rename-state(state_name, new_name);
@@ -378,7 +381,7 @@ export component ContentTab inherits TabReload {
                 SearchBox {
                     search(text) => {
                         GContent.search_dialogue(text);
-                        GContent.selecting_dialog = -1;
+                        GContent.selecting_dialogue = -1;
                     }
                 }
 
@@ -386,12 +389,12 @@ export component ContentTab inherits TabReload {
                     for dialog[i] in GContent.dialogues: SelectableBox {
                         value: dialog;
                         selected: {
-                            GContent.selecting_dialog == i
+                            GContent.selecting_dialogue == i
                         };
 
                         select => {
                             GContent.select-dialog(i);
-                            GContent.selecting_dialog = i;
+                            GContent.selecting_dialogue = i;
                         };
                         delete => {
                             GContent.remove-dialog(i);
@@ -418,7 +421,7 @@ export component ContentTab inherits TabReload {
         Rectangle {
             DialogueBox {
                 visible: {
-                    GContent.selecting_dialog >= 0
+                    GContent.selecting_dialogue >= 0
                 };
             }
         }

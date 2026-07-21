@@ -61,7 +61,7 @@ pub fn add_dialogue(data: Rc<RefCell<AppData>>, config: Rc<RefCell<Config>>, ui_
             );
 
             ui.global::<GContent>()
-                .set_selecting_dialog(config.selected_dialogue as i32);
+                .set_selecting_dialogue(config.selected_dialogue as i32);
         }
     }
 }
@@ -80,7 +80,7 @@ pub fn select_dialogue(
         reload_dialogue_detail(&data, &ui, &config);
 
         ui.global::<GContent>()
-            .set_selecting_dialog(config.selected_dialogue as i32);
+            .set_selecting_dialogue(config.selected_dialogue as i32);
     }
 }
 
@@ -113,7 +113,7 @@ pub fn remove_dialogue(
             );
 
             ui.global::<GContent>()
-                .set_selecting_dialog(config.selected_dialogue as i32);
+                .set_selecting_dialogue(config.selected_dialogue as i32);
         }
     }
 }
@@ -370,7 +370,7 @@ pub fn search_dialogue(
         reload_dialogue(&data, &ui, &config, search.as_str());
 
         ui.global::<GContent>()
-            .set_selecting_dialog(config.selected_dialogue as i32);
+            .set_selecting_dialogue(config.selected_dialogue as i32);
     }
 }
 

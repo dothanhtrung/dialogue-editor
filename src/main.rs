@@ -11,6 +11,7 @@ mod namemap_tab;
 use crate::config_tab::*;
 use crate::content_tab::class_ui::*;
 use crate::content_tab::dialogue_ui::*;
+use crate::content_tab::goto;
 use crate::content_tab::state_ui::*;
 use crate::file_handle::*;
 use crate::history::{
@@ -236,6 +237,9 @@ fn main() -> Result<(), Box<dyn Error>> {
         .on_search_state(search_state(data.clone(), config.clone(), ui.as_weak()));
     ui.global::<GContent>()
         .on_search_dialogue(search_dialogue(data.clone(), config.clone(), ui.as_weak()));
+
+    ui.global::<GContent>()
+        .on_goto(goto(data.clone(), config.clone(), ui.as_weak()));
 
     // --------------------- Namemap Tab -------------------------
     ui.global::<GNameMap>()
