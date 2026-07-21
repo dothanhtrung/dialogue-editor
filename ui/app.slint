@@ -36,6 +36,8 @@ export component AppWindow inherits MaterialWindow {
     callback undo();
     callback redo();
 
+    forward-focus: my-key-handler;
+
     public function show_notification() {
         noti_box.show();
     }
@@ -45,8 +47,46 @@ export component AppWindow inherits MaterialWindow {
         y: 20px;
     }
 
+    // TODO: Fix focus does not receive key press from child component
+    my-key-handler := FocusScope {
+        KeyBinding {
+            keys: @keys(Control + Z);
+            activated => {
+                undo();
+            }
+        }
+
+        KeyBinding {
+            keys: @keys(Control + Shift + Z);
+            activated => {
+                redo();
+            }
+        }
+
+        KeyBinding {
+            keys: @keys(Control + O);
+            activated => {
+                file_section.open();
+            }
+        }
+
+        KeyBinding {
+            keys: @keys(Control + S);
+            activated => {
+                file_section.save();
+            }
+        }
+
+        KeyBinding {
+            keys: @keys(Control + Shift + S);
+            activated => {
+                file_section.save_as();
+            }
+        }
+    }
+
     Vertical {
-        FileSection { }
+        file_section := FileSection { }
 
         Horizontal {
             Horizontal {

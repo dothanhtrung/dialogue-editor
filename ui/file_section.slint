@@ -51,6 +51,26 @@ export component UnsaveLoadDialog inherits Dialog {
 }
 
 export component FileSection inherits Rectangle {
+    public function save() {
+        if (GFile.file_path == "") {
+            GFile.file_picker(false);
+            GFile.is_loading = true;
+        } else {
+            GFile.save(GFile.file_path, GFile.encrypt_key, GFile.save_without_name, false);
+            GFile.is_loading = true;
+        }
+    }
+
+    public function save_as() {
+        GFile.file_picker(false);
+        GFile.is_loading = true;
+    }
+
+    public function open() {
+        GFile.file_picker(true);
+        GFile.is_loading = true;
+    }
+
     Horizontal {
         alignment: start;
 
@@ -58,8 +78,7 @@ export component FileSection inherits Rectangle {
             ElevatedButton {
                 text: "Open";
                 clicked => {
-                    GFile.file_picker(true);
-                    GFile.is_loading = true;
+                    open();
                 }
             }
         }
@@ -68,13 +87,7 @@ export component FileSection inherits Rectangle {
             ElevatedButton {
                 text: "Save";
                 clicked => {
-                    if (GFile.file_path == "") {
-                        GFile.file_picker(false);
-                        GFile.is_loading = true;
-                    } else {
-                        GFile.save(GFile.file_path, GFile.encrypt_key, GFile.save_without_name, false);
-                        GFile.is_loading = true;
-                    }
+                    save();
                 }
             }
         }
@@ -83,8 +96,7 @@ export component FileSection inherits Rectangle {
             ElevatedButton {
                 text: "Save As";
                 clicked => {
-                    GFile.file_picker(false);
-                    GFile.is_loading = true;
+                    save_as();
                 }
             }
         }
