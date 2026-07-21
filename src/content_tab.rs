@@ -41,7 +41,7 @@ pub fn reload_content(data: &mut AppData, ui: &AppWindow, config: &Config) {
     reload_dialogue(data, ui, config, "");
     reload_dialogue_detail(data, ui, config);
 
-    let mut event_list: Vec<ListItem> = Vec::new();
+    let mut event_list = Vec::new();
     for event in data.event_name_map.keys() {
         event_list.push(ListItem {
             text: event.into(),
@@ -51,9 +51,21 @@ pub fn reload_content(data: &mut AppData, ui: &AppWindow, config: &Config) {
     ui.global::<GContent>().set_event_list(event_list.as_slice().into());
 
     // TODO: state list by affected class
-    let mut state_list: Vec<SharedString> = Vec::new();
+    let mut state_list = Vec::new();
     for state in data.state_name_map.keys() {
-        state_list.push(state.into());
+        state_list.push(ListItem {
+            text: state.into(),
+            ..Default::default()
+        });
     }
     ui.global::<GContent>().set_state_list(state_list.as_slice().into());
+
+    let mut class_list = Vec::new();
+    for class in data.class_name_map.keys() {
+        class_list.push(ListItem {
+            text: class.into(),
+            ..Default::default()
+        });
+    }
+    ui.global::<GContent>().set_class_list(class_list.as_slice().into());
 }

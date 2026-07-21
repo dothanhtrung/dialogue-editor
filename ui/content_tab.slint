@@ -53,7 +53,10 @@ export global GContent {
     in-out property <[string]> states;
     in-out property <[string]> dialogues;
     in-out property <UiDialogue> dialogue;
-    in-out property <[string]> state_list;
+
+    // Used for dialogue affect and event selection
+    in-out property <[ListItem]> class_list;
+    in-out property <[ListItem]> state_list;
     in-out property <[ListItem]> event_list;
 
     in-out property <string> selecting_class: "";
@@ -183,20 +186,18 @@ export component DialogueBox inherits Rectangle {
             }
 
             Horizontal {
-                new_affect_class := ComboBox {
-                    model: GContent.classes;
-                    current-index: 0;
+                new_affect_class := SearchBar {
+                    items: GContent.class_list;
                 }
                 // TODO: Filter state by class
-                new_affect_state := ComboBox {
-                    model: GContent.state_list;
-                    current-index: 0;
+                new_affect_state := SearchBar {
+                    items: GContent.state_list;
                 }
 
                 TextButton {
                     text: "Add";
                     clicked => {
-                        GContent.add_affect(new_affect_class.current-value, new_affect_state.current-value);
+                        GContent.add_affect(new_affect_class.text, new_affect_state.text);
                     };
                 }
             }
