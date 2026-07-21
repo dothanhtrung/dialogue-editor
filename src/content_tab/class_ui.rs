@@ -1,3 +1,4 @@
+use crate::content_tab::dialogue_ui::reload_dialogue_detail;
 use crate::history::{
     Action,
     ActionTarget,
@@ -96,12 +97,7 @@ pub fn rename_class(
         let new_class_id = class_to_id(new_name.as_str(), &mut data);
 
         if !data.dialogues.contains_key(&new_class_id) {
-            if let Some(value) = data.dialogues.remove(&old_class_id) {
-                data.dialogues.insert(new_class_id, value);
-                config.selected_class = new_class_id;
-                reload_class(&mut data, &ui, "");
-                reload_class_map(&data, &ui, "");
-
+            if update_class(&mut data, old_class_id, new_class_id).is_ok() {
                 config.history.add_undo(
                     Action {
                         action: ActionType::UpdateStr(new_name.to_string(), old_name.to_string()),
@@ -110,12 +106,37 @@ pub fn rename_class(
                     &ui,
                 );
 
+                config.selected_class = new_class_id;
+                reload_class(&mut data, &ui, "");
+                reload_class_map(&data, &ui, "");
+                reload_dialogue_detail(&data, &ui, &config);
+
                 ui.global::<GContent>().set_selecting_class(new_name);
             }
         } else {
             show_noti(&ui, NotiLevel::Error, format!("Duplicated class {}", new_name).as_str());
         }
     }
+}
+
+pub fn update_class(data: &mut AppData, old_class_id: u64, new_class_id: u64) -> Result<(), ()> {
+    if let Some(value) = data.dialogues.remove(&old_class_id) {
+        data.dialogues.insert(new_class_id, value);
+
+        // Update affect list
+        for (_, class) in data.dialogues.iter_mut() {
+            for (_, state) in class.iter_mut() {
+                for dialogue in state.iter_mut() {
+                    if let Some(affect_state) = dialogue.affects.remove(&old_class_id) {
+                        dialogue.affects.insert(new_class_id, affect_state);
+                    }
+                }
+            }
+        }
+
+        return Ok(());
+    }
+    Err(())
 }
 
 pub fn remove_class(

@@ -1,3 +1,4 @@
+use crate::content_tab::dialogue_ui::reload_dialogue_detail;
 use crate::history::{
     Action,
     ActionTarget,
@@ -147,11 +148,11 @@ pub fn rename_state(
 
         if let Some(class) = data.dialogues.get_mut(&class_id) {
             if !class.contains_key(&new_id) {
-                if let Some(dialog) = class.remove(&old_id) {
-                    class.insert(new_id, dialog);
+                if update_state(&mut data, class_id, old_id, new_id).is_ok() {
                     config.selected_state = new_id;
                     reload_state(&mut data, &ui, &config, "");
                     reload_state_map(&data, &ui, "");
+                    reload_dialogue_detail(&data, &ui, &config);
 
                     config.history.add_undo(
                         Action {
@@ -168,6 +169,30 @@ pub fn rename_state(
             }
         }
     }
+}
+
+pub fn update_state(data: &mut AppData, class_id: u64, old_id: u64, new_id: u64) -> Result<(), ()> {
+    if let Some(class) = data.dialogues.get_mut(&class_id)
+        && let Some(dialog) = class.remove(&old_id)
+    {
+        class.insert(new_id, dialog);
+
+        // Update affect list
+        for (_, class) in data.dialogues.iter_mut() {
+            for (_, state) in class.iter_mut() {
+                for dialogue in state.iter_mut() {
+                    for (affect_class, affect_state) in dialogue.affects.iter_mut() {
+                        if *affect_class == class_id && *affect_state == old_id {
+                            *affect_state = new_id;
+                        }
+                    }
+                }
+            }
+        }
+
+        return Ok(());
+    }
+    Err(())
 }
 
 pub fn search_state(

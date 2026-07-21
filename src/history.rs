@@ -7,7 +7,11 @@ use crate::{
         class_to_id,
         state_to_id,
     },
-    content_tab::reload_content,
+    content_tab::{
+        class_ui::update_class,
+        reload_content,
+        state_ui::update_state,
+    },
     namemap_tab::reload_all_map,
 };
 use isolang::Language;
@@ -186,18 +190,12 @@ fn apply_action(action: &Action, data: &mut AppData) {
             ActionTarget::ContentClass(_) => {
                 let old_id = class_to_id(old_value, data);
                 let new_id = class_to_id(new_value, data);
-                if let Some(states) = data.dialogues.remove(&old_id) {
-                    data.dialogues.insert(new_id, states);
-                }
+                let _ = update_class(data, old_id, new_id);
             }
             ActionTarget::ContentState(class_id, _) => {
                 let old_id = state_to_id(old_value, data);
                 let new_id = state_to_id(new_value, data);
-                if let Some(class) = data.dialogues.get_mut(class_id)
-                    && let Some(dialogues) = class.remove(&old_id)
-                {
-                    class.insert(new_id, dialogues);
-                }
+                let _ = update_state(data, *class_id, old_id, new_id);
             }
             ActionTarget::ContentDialogue(_, _, _, _) => {
                 warn!("Undo/Redo: Replacing whole dialogue is not supported");
