@@ -6,6 +6,7 @@ import {
     LineEdit,
     ListView,
     CheckBox,
+    Slider,
     ScrollView,
 } from "std-widgets.slint";
 import {
@@ -15,7 +16,6 @@ import {
     InputChip,
     OutlinedCard,
     Grid,
-    Slider,
     HorizontalDivider,
     Switch,
 } from "material-1.0/material.slint";
@@ -96,7 +96,7 @@ export component ConfigTab inherits TabReload {
             }
 
             Horizontal {
-                Text {
+                max_undo := Text {
                     text: "Maximum undo: " + GConfig.max_undo;
                 }
 
@@ -104,9 +104,12 @@ export component ConfigTab inherits TabReload {
                     value: GConfig.max_undo;
                     minimum: 10;
                     maximum: 100;
-                    stop-count: 1;
+                    step: 1;
                     released(value) => {
                         GConfig.set_max_undo(value.round());
+                    }
+                    changed(value) => {
+                        max_undo.text = "Maximum undo: " + value.round();
                     }
                 }
             }
