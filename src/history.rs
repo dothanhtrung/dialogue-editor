@@ -310,3 +310,10 @@ pub fn redo(data: Rc<RefCell<AppData>>, config: Rc<RefCell<Config>>, ui: Weak<Ap
         ui.set_undo_available(true);
     }
 }
+
+pub fn set_max_undo(config: Rc<RefCell<Config>>) -> impl Fn(i32) {
+    move |max_undo| {
+        let mut config = config.borrow_mut();
+        config.history.limit = max_undo as usize;
+    }
+}

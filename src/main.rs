@@ -14,6 +14,7 @@ use crate::content_tab::dialogue_ui::*;
 use crate::content_tab::goto;
 use crate::content_tab::state_ui::*;
 use crate::file_handle::*;
+use crate::history::set_max_undo;
 use crate::history::{
     History,
     redo,
@@ -272,6 +273,7 @@ fn main() -> Result<(), Box<dyn Error>> {
         .on_add_lang(add_lang(config.clone(), ui.as_weak()));
     ui.global::<GConfig>()
         .on_delete_lang(delete_lang(data.clone(), config.clone(), ui.as_weak()));
+    ui.global::<GConfig>().on_set_max_undo(set_max_undo(config.clone()));
 
     ui.run()?;
 

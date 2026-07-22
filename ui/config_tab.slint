@@ -6,6 +6,7 @@ import {
     LineEdit,
     ListView,
     CheckBox,
+    ScrollView,
 } from "std-widgets.slint";
 import {
     Horizontal,
@@ -14,6 +15,7 @@ import {
     InputChip,
     OutlinedCard,
     Grid,
+    Slider,
     HorizontalDivider,
     Switch,
 } from "material-1.0/material.slint";
@@ -40,8 +42,47 @@ export component Tag inherits Rectangle {
 }
 
 export component ConfigTab inherits TabReload {
-    Vertical {
-        Rectangle {
+    ScrollView {
+        Vertical {
+            Vertical {
+                alignment: start;
+
+                Text {
+                    text: "Dialogue languages";
+                }
+
+                Grid {
+                    for lang[i] in GConfig.lang_list: Rectangle {
+                        row: i / 9;
+                        col: Math.mod(i, 9);
+
+                        InputChip {
+                            text: lang;
+                            trailing_icon: Icons.close;
+                            trailing_icon_clicked => {
+                                GConfig.delete_lang(lang);
+                            }
+                        }
+                    }
+                }
+
+                Horizontal {
+                    new_lang := LineEdit {
+                        placeholder-text: "Language code in ISO-639-3";
+                    }
+
+                    ElevatedButton {
+                        text: "Add";
+                        clicked => {
+                            GConfig.add_lang(new_lang.text);
+                            self.text = "";
+                        }
+                    }
+                }
+            }
+
+            HorizontalDivider { }
+
             Horizontal {
                 Text {
                     text: "Save dialogue without name map";
@@ -53,55 +94,27 @@ export component ConfigTab inherits TabReload {
                     }
                 }
             }
-        }
 
-        if (GFile.enable_crypt):
-        Rectangle {
-            LineEdit {
-                text <=> GFile.encrypt_key;
-                placeholder-text: "Encryption key";
-            }
-        }
-
-        HorizontalDivider { }
-
-        Rectangle {
-            Vertical {
-                alignment: start;
-
+            Horizontal {
                 Text {
-                    text: "Dialogue languages";
+                    text: "Maximum undo: " + GConfig.max_undo;
                 }
 
-                Rectangle {
-                    Horizontal {
-                        alignment: start;
-                        for lang[i] in GConfig.lang_list: Rectangle {
-                            InputChip {
-                                text: lang;
-                                trailing_icon: Icons.close;
-                                trailing_icon_clicked => {
-                                    GConfig.delete_lang(lang);
-                                }
-                            }
-                        }
+                Slider {
+                    value: GConfig.max_undo;
+                    minimum: 10;
+                    maximum: 100;
+                    stop-count: 1;
+                    released(value) => {
+                        GConfig.set_max_undo(value.round());
                     }
                 }
+            }
 
-                Rectangle {
-                    Horizontal {
-                        new_lang := LineEdit {
-                            placeholder-text: "Language code in ISO-639-3";
-                        }
-
-                        ElevatedButton {
-                            text: "Add";
-                            clicked => {
-                                GConfig.add_lang(new_lang.text);
-                                self.text = "";
-                            }
-                        }
-                    }
+            if (GFile.enable_crypt): Rectangle {
+                LineEdit {
+                    text <=> GFile.encrypt_key;
+                    placeholder-text: "Encryption key";
                 }
             }
         }
