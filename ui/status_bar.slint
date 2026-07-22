@@ -1,10 +1,20 @@
 
-import { Horizontal } from "material-1.0/material.slint";
+import { Horizontal, VerticalDivider } from "material-1.0/material.slint";
+import { GFile } from "file_section.slint";
 
 export component StatusBar inherits Rectangle {
     in property <bool> is_saved: true;
 
     Horizontal {
+        alignment: LayoutAlignment.space-between;
+
+        Text {
+            text: GFile.file_path;
+            font-italic: {
+                if is_saved { false } else { true }
+            }
+        }
+
         Text {
             text: {
                 if is_saved {
@@ -13,6 +23,7 @@ export component StatusBar inherits Rectangle {
                     "* Unsave"
                 }
             }
+            horizontal-alignment: end;
         }
     }
 }
