@@ -161,7 +161,7 @@ fn load(data: &mut AppData, config: &mut Config, ui: &AppWindow) {
 
     if (config.selected_state == 0 || id_to_state(config.selected_state, data).is_none())
         && let Some(selected_class) = data.dialogues.get(&config.selected_class)
-        && let Some((first_state, _)) = selected_class.first_key_value()
+        && let Some((first_state, _)) = selected_class.first()
     {
         config.selected_state = *first_state;
     }

@@ -21,6 +21,7 @@ use crate::history::{
 };
 use crate::namemap_tab::*;
 use clap::Parser;
+use indexmap::IndexMap;
 use isolang::Language;
 use serde::{
     Deserialize,
@@ -52,8 +53,8 @@ struct Cli {
 #[derive(Serialize, Deserialize, Default, Clone)]
 struct Dialogue {
     #[serde(default)]
-    #[serde(skip_serializing_if = "BTreeMap::is_empty")]
-    contents: BTreeMap<Language, String>,
+    #[serde(skip_serializing_if = "IndexMap::is_empty")]
+    contents: IndexMap<Language, String>,
     /// The class this dialogue will affect and the state that class will change to
     #[serde(default)]
     #[serde(skip_serializing_if = "BTreeMap::is_empty")]
@@ -66,7 +67,7 @@ struct Dialogue {
 #[derive(Serialize, Deserialize, Default, Clone)]
 struct AppData {
     #[serde(default)]
-    dialogues: BTreeMap<u64, BTreeMap<u64, Vec<Dialogue>>>,
+    dialogues: IndexMap<u64, IndexMap<u64, Vec<Dialogue>>>,
     #[serde(default)]
     #[serde(skip_serializing_if = "BTreeMap::is_empty")]
     class_name_map: BTreeMap<String, u64>,

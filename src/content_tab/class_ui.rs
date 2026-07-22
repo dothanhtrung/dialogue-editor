@@ -20,6 +20,7 @@ use crate::{
     },
     content_tab::state_ui::reload_state,
 };
+use indexmap::IndexMap;
 use slint::{
     ComponentHandle,
     SharedString,
@@ -27,7 +28,6 @@ use slint::{
 };
 use std::{
     cell::RefCell,
-    collections::BTreeMap,
     rc::Rc,
 };
 
@@ -53,7 +53,7 @@ pub fn add_class(
                 format!("Dialogue for class {} already exists", class_name).as_str(),
             );
         } else {
-            data.dialogues.insert(class_id, BTreeMap::new());
+            data.dialogues.insert(class_id, IndexMap::new());
             config.history.add_undo(
                 Action {
                     action: ActionType::DeleteStr(class_name.to_string()),
@@ -121,7 +121,7 @@ pub fn rename_class(
 }
 
 pub fn update_class(data: &mut AppData, old_class_id: u64, new_class_id: u64) -> Result<(), ()> {
-    if let Some(value) = data.dialogues.remove(&old_class_id) {
+    if let Some(value) = data.dialogues.shift_remove(&old_class_id) {
         data.dialogues.insert(new_class_id, value);
 
         // Update affect list
@@ -151,7 +151,7 @@ pub fn remove_class(
         let mut config = config.borrow_mut();
         let class_id = class_to_id(class_name.as_str(), &mut data);
 
-        let states = data.dialogues.remove(&class_id);
+        let states = data.dialogues.shift_remove(&class_id);
         config.selected_class = 0;
         reload_class(&mut data, &ui, "");
 

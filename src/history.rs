@@ -14,6 +14,7 @@ use crate::{
     },
     namemap_tab::reload_all_map,
 };
+use indexmap::IndexMap;
 use isolang::Language;
 use serde::{
     Deserialize,
@@ -22,7 +23,6 @@ use serde::{
 use slint::Weak;
 use std::{
     cell::RefCell,
-    collections::BTreeMap,
     rc::Rc,
 };
 use tracing::warn;
@@ -43,7 +43,7 @@ pub enum ActionType {
 pub enum ActionTarget {
     #[default]
     None,
-    ContentClass(Option<BTreeMap<u64, Vec<Dialogue>>>),
+    ContentClass(Option<IndexMap<u64, Vec<Dialogue>>>),
     ContentState(u64, Option<Vec<Dialogue>>),
     ContentDialogue(u64, u64, usize, Dialogue),
     ContentLang(u64, u64, usize, Language),
@@ -160,12 +160,12 @@ fn apply_action(action: &Action, data: &mut AppData) {
             ActionTarget::None => {}
             ActionTarget::ContentClass(_) => {
                 let class_id = class_to_id(value.as_str(), data);
-                data.dialogues.remove(&class_id);
+                data.dialogues.shift_remove(&class_id);
             }
             ActionTarget::ContentState(class_id, _) => {
                 let state_id = state_to_id(value.as_str(), data);
                 if let Some(class) = data.dialogues.get_mut(class_id) {
-                    class.remove(&state_id);
+                    class.shift_remove(&state_id);
                 }
             }
             ActionTarget::ContentDialogue(class_id, state_id, dialogue_pos, _) => {
@@ -179,7 +179,7 @@ fn apply_action(action: &Action, data: &mut AppData) {
                 if let Some(class) = data.dialogues.get_mut(class_id)
                     && let Some(state) = class.get_mut(state_id)
                 {
-                    state[*dialogue_pos].contents.remove(language);
+                    state[*dialogue_pos].contents.shift_remove(language);
                 }
             }
 

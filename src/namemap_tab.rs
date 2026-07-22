@@ -173,7 +173,7 @@ pub fn update_class_id(
         let old_id = class_to_id(name.as_str(), &mut data);
 
         if let Ok(new_id) = update_id(&mut data, &ui, name.to_string(), old_id, id.as_str(), NameType::Class)
-            && let Some(value) = data.dialogues.remove(&old_id)
+            && let Some(value) = data.dialogues.shift_remove(&old_id)
         {
             data.dialogues.insert(new_id, value);
             config.history.add_undo(
@@ -200,7 +200,7 @@ pub fn update_state_id(
 
         if let Ok(new_id) = update_id(&mut data, &ui, name.to_string(), old_id, id.as_str(), NameType::State) {
             for (_, class) in data.dialogues.iter_mut() {
-                if let Some(value) = class.remove(&old_id) {
+                if let Some(value) = class.shift_remove(&old_id) {
                     class.insert(new_id, value);
                 }
             }

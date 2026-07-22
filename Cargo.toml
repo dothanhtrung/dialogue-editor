@@ -17,6 +17,7 @@ tracing-subscriber = { version = "0.3" , default-features = false, features = ["
 regex = {version = "1.13", default-features = false, features = ["std", "unicode", "perf"]}
 rfd = {version = "0.17", default-features = false, features = ["wayland", "xdg-portal"]}
 clap = { version = "4.6", default-features = false, features = ["derive", "std", "color", "help", "usage", "error-context"] }
+indexmap = {version = "2.14", default-features = false, features = ["std", "serde"] }
 
 [build-dependencies]
 slint-build = "1.17"

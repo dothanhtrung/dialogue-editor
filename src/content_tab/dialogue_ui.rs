@@ -274,7 +274,7 @@ pub fn delete_content(
             let Ok(lang) = Language::from_str(lang.to_string().as_str()) else {
                 return;
             };
-            if let Some(content) = dialogue.contents.remove(&lang) {
+            if let Some(content) = dialogue.contents.shift_remove(&lang) {
                 let class_id = config.selected_class;
                 let state_id = config.selected_state;
                 let dialogue_pos = config.selected_dialogue;
@@ -385,7 +385,7 @@ pub fn reload_dialogue(data: &AppData, ui: &AppWindow, config: &Config, search: 
                 && let Some(content) = dialog.contents.get(config.langs.first().unwrap())
             {
                 content.into()
-            } else if let Some((_, content)) = dialog.contents.first_key_value() {
+            } else if let Some((_, content)) = dialog.contents.first() {
                 content.into()
             } else {
                 SharedString::new()

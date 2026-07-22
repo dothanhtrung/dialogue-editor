@@ -107,7 +107,7 @@ pub fn remove_state(
         let class_id = config.selected_class;
 
         if let Some(class) = data.dialogues.get_mut(&class_id) {
-            let removed_data = class.remove(&state_id);
+            let removed_data = class.shift_remove(&state_id);
             config.selected_state = 0;
             reload_state(&mut data, &ui, &config, "");
 
@@ -174,7 +174,7 @@ pub fn rename_state(
 
 pub fn update_state(data: &mut AppData, class_id: u64, old_id: u64, new_id: u64) -> Result<(), ()> {
     if let Some(class) = data.dialogues.get_mut(&class_id)
-        && let Some(dialog) = class.remove(&old_id)
+        && let Some(dialog) = class.shift_remove(&old_id)
     {
         class.insert(new_id, dialog);
 
