@@ -60,11 +60,41 @@ pub fn file_picker(
     data: Rc<RefCell<AppData>>,
     config: Rc<RefCell<Config>>,
     ui_handle: Weak<AppWindow>,
-) -> impl Fn(bool) {
-    move |load_true_save_false| {
+) -> impl Fn(bool, bool) {
+    // TODO: Loading icon
+    move |load_true_save_false, force| {
         let mut data = data.borrow_mut();
         let ui = ui_handle.unwrap();
         let mut config = config.borrow_mut();
+
+        let is_saved = ui.get_is_saved();
+        if load_true_save_false && !is_saved && !force {
+            let Ok(dialog) = UnsaveLoadDialog::new() else {
+                ui.global::<GFile>().set_is_loading(false);
+                return;
+            };
+            dialog.on_cancel_clicked({
+                let dialog_handle = dialog.as_weak();
+                move || {
+                    let dialog = dialog_handle.unwrap();
+                    let _ = dialog.hide();
+                }
+            });
+            dialog.on_yes_clicked({
+                let dialog_handle = dialog.as_weak();
+                let ui_handle = ui.as_weak();
+                move || {
+                    let ui = ui_handle.unwrap();
+                    let ui = ui.global::<GFile>();
+                    let dialog = dialog_handle.unwrap();
+                    let _ = dialog.hide();
+                    ui.invoke_file_picker(true, true);
+                }
+            });
+            let _ = dialog.run();
+            ui.global::<GFile>().set_is_loading(false);
+            return;
+        }
 
         let file_dialog = FileDialog::new()
             .add_filter("Ron", &["ron"])
@@ -103,72 +133,6 @@ pub fn file_picker(
         }
 
         ui.global::<GFile>().set_is_loading(false);
-    }
-}
-
-pub fn request_load(
-    data: Rc<RefCell<AppData>>,
-    config: Rc<RefCell<Config>>,
-    ui_handle: Weak<AppWindow>,
-) -> impl Fn(SharedString, SharedString, bool) {
-    // TODO: Loading icon
-    // TODO: Warn if there is unsave content
-
-    move |file_path, encrypt_key, force| {
-        let ui = ui_handle.unwrap();
-        let mut config = config.borrow_mut();
-        let mut data = data.borrow_mut();
-
-        config.encrypt_key = encrypt_key.to_string();
-        config.file_path = PathBuf::from(file_path.as_str());
-        config.file_format = get_file_format(&config.file_path);
-        config.save();
-
-        if !config.file_path.is_file() {
-            show_noti(
-                &ui,
-                NotiLevel::Error,
-                format!("Not a file: {}", config.file_path.display()).as_str(),
-            );
-            ui.global::<GFile>().set_is_loading(false);
-            return;
-        }
-
-        // If there is unsave work. Show warning dialog
-        let is_saved = ui.get_is_saved();
-        if !force && !is_saved {
-            let Ok(dialog) = UnsaveLoadDialog::new() else {
-                ui.global::<GFile>().set_is_loading(false);
-                return;
-            };
-            dialog.on_cancel_clicked({
-                let dialog_handle = dialog.as_weak();
-                move || {
-                    let dialog = dialog_handle.unwrap();
-                    let _ = dialog.hide();
-                }
-            });
-            dialog.on_yes_clicked({
-                let dialog_handle = dialog.as_weak();
-                let ui_handle = ui.as_weak();
-                move || {
-                    let ui = ui_handle.unwrap();
-                    let ui = ui.global::<GFile>();
-                    let dialog = dialog_handle.unwrap();
-
-                    let file_path = ui.get_file_path();
-                    let encrypt_key = ui.get_encrypt_key();
-                    ui.invoke_load(file_path, encrypt_key, true);
-
-                    let _ = dialog.hide();
-                }
-            });
-            let _ = dialog.run();
-            ui.global::<GFile>().set_is_loading(false);
-            return;
-        }
-
-        load(&mut data, &mut config, &ui);
     }
 }
 
@@ -213,8 +177,8 @@ pub fn request_save(
     data: Rc<RefCell<AppData>>,
     config: Rc<RefCell<Config>>,
     ui_handle: Weak<AppWindow>,
-) -> impl Fn(SharedString, SharedString, bool, bool) {
-    move |file_path, encrypt_key, save_without_name, _force| {
+) -> impl Fn(SharedString, SharedString, bool) {
+    move |file_path, encrypt_key, save_without_name| {
         let mut config = config.borrow_mut();
         let data = data.borrow();
         let ui = ui_handle.unwrap();

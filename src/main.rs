@@ -181,8 +181,6 @@ fn main() -> Result<(), Box<dyn Error>> {
     ui.global::<GFile>()
         .on_file_picker(file_picker(data.clone(), config.clone(), ui.as_weak()));
     ui.global::<GFile>()
-        .on_load(request_load(data.clone(), config.clone(), ui.as_weak()));
-    ui.global::<GFile>()
         .on_save(request_save(data.clone(), config.clone(), ui.as_weak()));
 
     ui.on_undo(undo(data.clone(), config.clone(), ui.as_weak()));

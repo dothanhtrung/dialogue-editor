@@ -26,10 +26,9 @@ export global GFile {
     in-out property <bool> save_without_name;
     in-out property <bool> is_loading: false;
 
-    // file_format, load_true_save_false
-    callback file_picker(bool);
-    callback load(string, string, bool);
-    callback save(string, string, bool, bool);
+    // file_picker(load_true_save_false, force)
+    callback file_picker(bool, bool);
+    callback save(string, string, bool);
 }
 
 export component UnsaveLoadDialog inherits Dialog {
@@ -53,21 +52,21 @@ export component UnsaveLoadDialog inherits Dialog {
 export component FileSection inherits Rectangle {
     public function save() {
         if (GFile.file_path == "") {
-            GFile.file_picker(false);
+            GFile.file_picker(false, false);
             GFile.is_loading = true;
         } else {
-            GFile.save(GFile.file_path, GFile.encrypt_key, GFile.save_without_name, false);
+            GFile.save(GFile.file_path, GFile.encrypt_key, GFile.save_without_name);
             GFile.is_loading = true;
         }
     }
 
     public function save_as() {
-        GFile.file_picker(false);
+        GFile.file_picker(false, false);
         GFile.is_loading = true;
     }
 
     public function open() {
-        GFile.file_picker(true);
+        GFile.file_picker(true, false);
         GFile.is_loading = true;
     }
 
