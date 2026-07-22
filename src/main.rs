@@ -164,8 +164,6 @@ fn main() -> Result<(), Box<dyn Error>> {
     let data = AppData::default();
 
     // ======== File section ===========
-    ui.global::<GFile>()
-        .set_file_path(config.file_path.to_str().unwrap_or_default().into());
     ui.global::<GFile>().set_encrypt_key(config.encrypt_key.as_str().into());
     ui.global::<GFile>().set_file_format(config.file_format as i32);
     ui.global::<GFile>().set_save_without_name(config.save_without_name);
