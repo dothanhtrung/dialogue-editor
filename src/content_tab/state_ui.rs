@@ -36,13 +36,11 @@ pub fn add_state(
     ui_handle: Weak<AppWindow>,
 ) -> impl Fn(SharedString) {
     move |state_name| {
-        let ui = ui_handle.unwrap();
-
         if state_name.is_empty() {
-            show_noti(&ui, NotiLevel::Error, "State name is empty");
             return;
         }
 
+        let ui = ui_handle.unwrap();
         let mut data = data.borrow_mut();
         let mut config = config.borrow_mut();
         let state_id = state_to_id(state_name.as_str(), &mut data);

@@ -17,9 +17,9 @@ TODO:
 
 * High priority
     * [ ] Better UI
-    * [ ] Jump between dialogue in field `affects`
 
 * Low priority
+    * [ ] Change font
     * [ ] Disable dialogue without deletion
     * [ ] Dialogue condition
     * [ ] Metadata (e.g. schema version)

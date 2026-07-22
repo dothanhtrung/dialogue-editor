@@ -11,6 +11,8 @@ use crate::{
         NotiLevel,
         class_to_id,
         event_to_id,
+        id_to_class,
+        id_to_state,
         new_regex,
         show_noti,
         state_to_id,
@@ -44,14 +46,24 @@ pub fn delete_class_map(
         let mut config = config.borrow_mut();
         let ui = ui.unwrap();
 
-        let Some(id) = data.class_name_map.remove(name.as_str()) else {
+        let Some(&class_id) = data.class_name_map.get(name.as_str()) else {
             return;
-        }; // TODO: Check if content is using this
+        };
+        if data.dialogues.contains_key(&class_id) {
+            show_noti(
+                &ui,
+                NotiLevel::Error,
+                format!("Class '{}' is still in used", name).as_str(),
+            );
+            return;
+        }
+
+        data.class_name_map.remove(name.as_str());
         reload_class_map(&data, &ui, "");
 
         config.history.add_undo(
             Action {
-                action: ActionType::AddId(id),
+                action: ActionType::AddId(class_id),
                 target: ActionTarget::NamemapClass(name.to_string()),
             },
             &ui,
@@ -69,14 +81,31 @@ pub fn delete_state_map(
         let mut config = config.borrow_mut();
         let ui = ui.unwrap();
 
-        let Some(id) = data.state_name_map.remove(name.as_str()) else {
+        let Some(&state_id) = data.state_name_map.get(name.as_str()) else {
             return;
-        }; // TODO: Check if content is using this
+        };
+        for (&class_id, class) in data.dialogues.iter() {
+            if class.contains_key(&state_id) {
+                show_noti(
+                    &ui,
+                    NotiLevel::Error,
+                    format!(
+                        "State '{}' is still in used in class '{}'",
+                        name,
+                        id_to_class(class_id, &data).unwrap_or_default()
+                    )
+                    .as_str(),
+                );
+                return;
+            }
+        }
+
+        data.state_name_map.remove(name.as_str());
         reload_state_map(&data, &ui, "");
 
         config.history.add_undo(
             Action {
-                action: ActionType::AddId(id),
+                action: ActionType::AddId(state_id),
                 target: ActionTarget::NamemapState(name.to_string()),
             },
             &ui,
@@ -94,14 +123,37 @@ pub fn delete_event_map(
         let mut config = config.borrow_mut();
         let ui = ui.unwrap();
 
-        let Some(id) = data.event_name_map.remove(name.as_str()) else {
+        let Some(&event_id) = data.event_name_map.get(name.as_str()) else {
             return;
-        }; // TODO: Check if content is using this
+        };
+        for (&class_id, class) in data.dialogues.iter() {
+            for (&state_id, state) in class.iter() {
+                for (i, dialogue) in state.iter().enumerate() {
+                    if dialogue.events.contains(&event_id) {
+                        show_noti(
+                            &ui,
+                            NotiLevel::Error,
+                            format!(
+                                "Event '{}' is still in used in dialogue {} of class '{}', state '{}'",
+                                name,
+                                i,
+                                id_to_class(class_id, &data).unwrap_or_default(),
+                                id_to_state(state_id, &data).unwrap_or_default(),
+                            )
+                            .as_str(),
+                        );
+                        return;
+                    }
+                }
+            }
+        }
+
+        data.event_name_map.remove(name.as_str());
         reload_event_map(&data, &ui, "");
 
         config.history.add_undo(
             Action {
-                action: ActionType::AddId(id),
+                action: ActionType::AddId(event_id),
                 target: ActionTarget::NamemapEvent(name.to_string()),
             },
             &ui,
@@ -200,6 +252,10 @@ pub fn add_new_class(
     ui: Weak<AppWindow>,
 ) -> impl Fn(SharedString, SharedString) {
     move |name, id| {
+        if name.is_empty() {
+            return;
+        }
+
         let mut data = data.borrow_mut();
         let mut config = config.borrow_mut();
         let ui = ui.unwrap();
@@ -223,6 +279,10 @@ pub fn add_new_state(
     ui: Weak<AppWindow>,
 ) -> impl Fn(SharedString, SharedString) {
     move |name, id| {
+        if name.is_empty() {
+            return;
+        }
+
         let mut data = data.borrow_mut();
         let mut config = config.borrow_mut();
         let ui = ui.unwrap();
@@ -247,6 +307,10 @@ pub fn add_new_event(
     ui: Weak<AppWindow>,
 ) -> impl Fn(SharedString, SharedString) {
     move |name, id| {
+        if name.is_empty() {
+            return;
+        }
+
         let mut data = data.borrow_mut();
         let mut config = config.borrow_mut();
         let ui = ui.unwrap();
