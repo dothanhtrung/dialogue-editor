@@ -134,6 +134,7 @@ export component StringIdContainer inherits Rectangle {
 
             new_id := LineEdit {
                 placeholder-text: "New id";
+                input-type: number;
                 accepted(text) => {
                     submit()
                 }

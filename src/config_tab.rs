@@ -89,3 +89,10 @@ pub fn reload_lang_list(config: &Config, ui: &AppWindow) {
 
     ui.global::<GConfig>().set_lang_list(lang_list.as_slice().into());
 }
+
+pub fn set_max_undo(config: Rc<RefCell<Config>>) -> impl Fn(i32) {
+    move |max_undo| {
+        let mut config = config.borrow_mut();
+        config.history.limit = max_undo as usize;
+    }
+}

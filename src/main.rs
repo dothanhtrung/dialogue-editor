@@ -14,7 +14,6 @@ use crate::content_tab::dialogue_ui::*;
 use crate::content_tab::goto;
 use crate::content_tab::state_ui::*;
 use crate::file_handle::*;
-use crate::history::set_max_undo;
 use crate::history::{
     History,
     redo,
@@ -163,6 +162,8 @@ fn main() -> Result<(), Box<dyn Error>> {
     let config = Config::load(&args.config);
 
     let data = AppData::default();
+
+    ui.global::<GConfig>().set_max_undo(config.history.limit as i32);
 
     // ======== File section ===========
     ui.global::<GFile>().set_encrypt_key(config.encrypt_key.as_str().into());
