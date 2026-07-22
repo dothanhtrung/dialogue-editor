@@ -83,75 +83,75 @@ export component AppWindow inherits MaterialWindow {
                 file_section.save_as();
             }
         }
-    }
 
-    Vertical {
-        file_section := FileSection { }
+        Vertical {
+            file_section := FileSection { }
 
-        Horizontal {
             Horizontal {
-                alignment: start;
+                Horizontal {
+                    alignment: start;
 
-                Rectangle {
-                    ElevatedButton {
-                        visible: undo_available;
-                        text: "Undo";
-                        clicked => {
-                            root.undo();
+                    Rectangle {
+                        ElevatedButton {
+                            visible: undo_available;
+                            text: "Undo";
+                            clicked => {
+                                root.undo();
+                            }
+                        }
+                    }
+
+                    Rectangle {
+                        ElevatedButton {
+                            visible: redo_available;
+                            text: "Redo";
+                            clicked => {
+                                root.redo();
+                            }
                         }
                     }
                 }
 
                 Rectangle {
                     ElevatedButton {
-                        visible: redo_available;
-                        text: "Redo";
+                        text: "Refresh";
                         clicked => {
-                            root.redo();
+                            GContent.refresh();
+                            GNameMap.refresh();
                         }
                     }
                 }
             }
 
-            Rectangle {
-                ElevatedButton {
-                    text: "Refresh";
-                    clicked => {
-                        GContent.refresh();
-                        GNameMap.refresh();
+            TabWidget {
+                orientation: Orientation.vertical;
+
+                Tab {
+                    title: "C";
+
+                    ContentTab {
+                        is_saved <=> root.is_saved;
                     }
                 }
-            }
-        }
 
-        TabWidget {
-            orientation: Orientation.vertical;
+                Tab {
+                    title: "E";
 
-            Tab {
-                title: "C";
+                    NameMapTab {
+                        is_saved <=> root.is_saved;
+                    }
+                }
 
-                ContentTab {
-                    is_saved <=> root.is_saved;
+                Tab {
+                    title: "S";
+
+                    ConfigTab { }
                 }
             }
 
-            Tab {
-                title: "E";
-
-                NameMapTab {
-                    is_saved <=> root.is_saved;
-                }
+            StatusBar {
+                is_saved <=> root.is_saved;
             }
-
-            Tab {
-                title: "S";
-
-                ConfigTab { }
-            }
-        }
-
-        StatusBar {
-            is_saved <=> root.is_saved;
         }
     }
 }

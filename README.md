@@ -16,14 +16,13 @@ Dialogue editor for [bevy-dialogue](https://gitlab.com/245project/bevy-plugin/be
 TODO:
 
 * High priority
-    * [ ] Undo/Redo
     * [ ] Better UI
+    * [ ] Jump between dialogue in field `affects`
 
 * Low priority
     * [ ] Disable dialogue without deletion
     * [ ] Dialogue condition
     * [ ] Metadata (e.g. schema version)
-    * [ ] Jump between dialogue in field `affects`
     * [ ] Resizable UI
     * [ ] Autosave
 

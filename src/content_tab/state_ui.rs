@@ -168,6 +168,9 @@ pub fn rename_state(
                 show_noti(&ui, NotiLevel::Error, format!("Duplicated state {}", new_name).as_str());
             }
         }
+
+        // Avoid missing focus on global keybinding
+        ui.invoke_focus();
     }
 }
 

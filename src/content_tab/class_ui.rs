@@ -116,6 +116,9 @@ pub fn rename_class(
         } else {
             show_noti(&ui, NotiLevel::Error, format!("Duplicated class {}", new_name).as_str());
         }
+
+        // Avoid missing focus on global keybinding
+        ui.invoke_focus();
     }
 }
 
