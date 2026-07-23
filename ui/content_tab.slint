@@ -214,6 +214,20 @@ export component DialogueBox inherits Rectangle {
                 text: "Event List";
             }
 
+            Horizontal {
+                // TODO: Self implement a new search bar
+                new_event := SearchBar {
+                    items: GContent.event_list;
+                }
+
+                TextButton {
+                    text: "Add";
+                    clicked => {
+                        GContent.add_event(new_event.text);
+                    };
+                }
+            }
+
             Grid {
                 for event[i] in GContent.dialogue.events: Rectangle {
                     row: i / 2;
@@ -225,19 +239,6 @@ export component DialogueBox inherits Rectangle {
                             GContent.delete_event(event);
                         }
                     }
-                }
-            }
-
-            Horizontal {
-                new_event := SearchBar {
-                    items: GContent.event_list;
-                }
-
-                TextButton {
-                    text: "Add";
-                    clicked => {
-                        GContent.add_event(new_event.text);
-                    };
                 }
             }
         }

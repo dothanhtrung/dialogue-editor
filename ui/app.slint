@@ -53,14 +53,20 @@ export component AppWindow inherits MaterialWindow {
         KeyBinding {
             keys: @keys(Control + Z);
             activated => {
-                undo();
+                if (undo_available) {
+                    root.undo();
+                    root.is_saved = false;
+                }
             }
         }
 
         KeyBinding {
             keys: @keys(Control + Shift + Z);
             activated => {
-                redo();
+                if (redo_available) {
+                    root.redo();
+                    root.is_saved = false;
+                }
             }
         }
 
@@ -98,7 +104,9 @@ export component AppWindow inherits MaterialWindow {
                             text: "Undo";
                             clicked => {
                                 root.undo();
+                                is_saved = false;
                             }
+                            tooltip: "Ctrl + Z";
                         }
                     }
 
@@ -108,7 +116,9 @@ export component AppWindow inherits MaterialWindow {
                             text: "Redo";
                             clicked => {
                                 root.redo();
+                                is_saved = false;
                             }
+                            tooltip: "Ctrl + Shift + Z";
                         }
                     }
                 }

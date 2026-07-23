@@ -76,6 +76,7 @@ export component FileSection inherits Rectangle {
         Rectangle {
             ElevatedButton {
                 text: "Open";
+                tooltip: "Ctrl + O";
                 clicked => {
                     open();
                 }
@@ -85,6 +86,7 @@ export component FileSection inherits Rectangle {
         Rectangle {
             ElevatedButton {
                 text: "Save";
+                tooltip: "Ctrl + S";
                 clicked => {
                     save();
                 }
@@ -94,6 +96,7 @@ export component FileSection inherits Rectangle {
         Rectangle {
             ElevatedButton {
                 text: "Save As";
+                tooltip: "Ctrl + Shift + S";
                 clicked => {
                     save_as();
                 }
