@@ -17,6 +17,7 @@ TODO:
 
 * High priority
     * [ ] Better UI
+    * [ ] Reorder class and state
 
 * Low priority
     * [ ] Change font
