@@ -56,7 +56,12 @@ impl From<i32> for FileFormat {
     }
 }
 
-pub fn file_picker(
+pub fn setup(ui_file: &mut GFile, data: Rc<RefCell<AppData>>, config: Rc<RefCell<Config>>, ui: Weak<AppWindow>) {
+    ui_file.on_file_picker(file_picker(data.clone(), config.clone(), ui.clone()));
+    ui_file.on_save(request_save(data.clone(), config.clone(), ui.clone()));
+}
+
+fn file_picker(
     data: Rc<RefCell<AppData>>,
     config: Rc<RefCell<Config>>,
     ui_handle: Weak<AppWindow>,
@@ -172,8 +177,7 @@ fn load(data: &mut AppData, config: &mut Config, ui: &AppWindow) {
     ui.global::<GFile>().set_is_loading(false);
 }
 
-// TODO: Shortcut Ctrl-S
-pub fn request_save(
+fn request_save(
     data: Rc<RefCell<AppData>>,
     config: Rc<RefCell<Config>>,
     ui_handle: Weak<AppWindow>,

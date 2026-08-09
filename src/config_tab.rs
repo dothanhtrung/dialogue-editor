@@ -16,10 +16,17 @@ use slint::{
 };
 use std::{
     cell::RefCell,
-    rc::Rc, str::FromStr,
+    rc::Rc,
+    str::FromStr,
 };
 
-pub fn add_lang(config: Rc<RefCell<Config>>, ui: Weak<AppWindow>) -> impl Fn(SharedString) {
+pub fn setup(ui_config: &mut GConfig, data: Rc<RefCell<AppData>>, config: Rc<RefCell<Config>>, ui: Weak<AppWindow>) {
+    ui_config.on_add_lang(add_lang(config.clone(), ui.clone()));
+    ui_config.on_delete_lang(delete_lang(data.clone(), config.clone(), ui.clone()));
+    ui_config.on_set_max_undo(set_max_undo(config.clone()));
+}
+
+fn add_lang(config: Rc<RefCell<Config>>, ui: Weak<AppWindow>) -> impl Fn(SharedString) {
     move |lang| {
         let mut config = config.borrow_mut();
         let ui = ui.unwrap();
@@ -48,11 +55,7 @@ pub fn add_lang(config: Rc<RefCell<Config>>, ui: Weak<AppWindow>) -> impl Fn(Sha
     }
 }
 
-pub fn delete_lang(
-    data: Rc<RefCell<AppData>>,
-    config: Rc<RefCell<Config>>,
-    ui: Weak<AppWindow>,
-) -> impl Fn(SharedString) {
+fn delete_lang(data: Rc<RefCell<AppData>>, config: Rc<RefCell<Config>>, ui: Weak<AppWindow>) -> impl Fn(SharedString) {
     move |lang| {
         let data = data.borrow();
         let mut config = config.borrow_mut();
@@ -90,7 +93,7 @@ pub fn reload_lang_list(config: &Config, ui: &AppWindow) {
     ui.global::<GConfig>().set_lang_list(lang_list.as_slice().into());
 }
 
-pub fn set_max_undo(config: Rc<RefCell<Config>>) -> impl Fn(i32) {
+fn set_max_undo(config: Rc<RefCell<Config>>) -> impl Fn(i32) {
     move |max_undo| {
         let mut config = config.borrow_mut();
         config.history.limit = max_undo as usize;

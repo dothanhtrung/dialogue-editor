@@ -36,7 +36,23 @@ use xxhash_rust::xxh3::xxh3_64;
 
 // TODO: Update selected class, selected state
 
-pub fn delete_class_map(
+pub fn setup(ui_namemap: &mut GNameMap, data: Rc<RefCell<AppData>>, config: Rc<RefCell<Config>>, ui: Weak<AppWindow>) {
+    ui_namemap.on_refresh(refresh(data.clone(), ui.clone()));
+    ui_namemap.on_delete_class(delete_class_map(data.clone(), config.clone(), ui.clone()));
+    ui_namemap.on_delete_state(delete_state_map(data.clone(), config.clone(), ui.clone()));
+    ui_namemap.on_delete_event(delete_event_map(data.clone(), config.clone(), ui.clone()));
+    ui_namemap.on_update_class_id(update_class_id(data.clone(), config.clone(), ui.clone()));
+    ui_namemap.on_update_state_id(update_state_id(data.clone(), config.clone(), ui.clone()));
+    ui_namemap.on_update_event_id(update_event_id(data.clone(), config.clone(), ui.clone()));
+    ui_namemap.on_new_class(add_new_class(data.clone(), config.clone(), ui.clone()));
+    ui_namemap.on_new_state(add_new_state(data.clone(), config.clone(), ui.clone()));
+    ui_namemap.on_new_event(add_new_event(data.clone(), config.clone(), ui.clone()));
+    ui_namemap.on_search_class(search_class_map(data.clone(), ui.clone()));
+    ui_namemap.on_search_state(search_state_map(data.clone(), ui.clone()));
+    ui_namemap.on_search_event(search_event_map(data.clone(), ui.clone()));
+}
+
+fn delete_class_map(
     data: Rc<RefCell<AppData>>,
     config: Rc<RefCell<Config>>,
     ui: Weak<AppWindow>,
@@ -71,7 +87,7 @@ pub fn delete_class_map(
     }
 }
 
-pub fn delete_state_map(
+fn delete_state_map(
     data: Rc<RefCell<AppData>>,
     config: Rc<RefCell<Config>>,
     ui: Weak<AppWindow>,
@@ -113,7 +129,7 @@ pub fn delete_state_map(
     }
 }
 
-pub fn delete_event_map(
+fn delete_event_map(
     data: Rc<RefCell<AppData>>,
     config: Rc<RefCell<Config>>,
     ui: Weak<AppWindow>,
@@ -161,7 +177,7 @@ pub fn delete_event_map(
     }
 }
 
-pub fn update_class_id(
+fn update_class_id(
     data: Rc<RefCell<AppData>>,
     config: Rc<RefCell<Config>>,
     ui: Weak<AppWindow>,
@@ -187,7 +203,7 @@ pub fn update_class_id(
     }
 }
 
-pub fn update_state_id(
+fn update_state_id(
     data: Rc<RefCell<AppData>>,
     config: Rc<RefCell<Config>>,
     ui: Weak<AppWindow>,
@@ -215,7 +231,7 @@ pub fn update_state_id(
     }
 }
 
-pub fn update_event_id(
+fn update_event_id(
     data: Rc<RefCell<AppData>>,
     config: Rc<RefCell<Config>>,
     ui: Weak<AppWindow>,
@@ -246,7 +262,7 @@ pub fn update_event_id(
     }
 }
 
-pub fn add_new_class(
+fn add_new_class(
     data: Rc<RefCell<AppData>>,
     config: Rc<RefCell<Config>>,
     ui: Weak<AppWindow>,
@@ -273,7 +289,7 @@ pub fn add_new_class(
     }
 }
 
-pub fn add_new_state(
+fn add_new_state(
     data: Rc<RefCell<AppData>>,
     config: Rc<RefCell<Config>>,
     ui: Weak<AppWindow>,
@@ -301,7 +317,7 @@ pub fn add_new_state(
     }
 }
 
-pub fn add_new_event(
+fn add_new_event(
     data: Rc<RefCell<AppData>>,
     config: Rc<RefCell<Config>>,
     ui: Weak<AppWindow>,
@@ -329,7 +345,7 @@ pub fn add_new_event(
     }
 }
 
-pub fn search_class_map(data: Rc<RefCell<AppData>>, ui: Weak<AppWindow>) -> impl Fn(SharedString) {
+fn search_class_map(data: Rc<RefCell<AppData>>, ui: Weak<AppWindow>) -> impl Fn(SharedString) {
     move |search| {
         let data = data.borrow();
         let ui = ui.unwrap();
@@ -337,14 +353,14 @@ pub fn search_class_map(data: Rc<RefCell<AppData>>, ui: Weak<AppWindow>) -> impl
     }
 }
 
-pub fn search_state_map(data: Rc<RefCell<AppData>>, ui: Weak<AppWindow>) -> impl Fn(SharedString) {
+fn search_state_map(data: Rc<RefCell<AppData>>, ui: Weak<AppWindow>) -> impl Fn(SharedString) {
     move |search| {
         let data = data.borrow();
         let ui = ui.unwrap();
         reload_state_map(&data, &ui, search.as_str());
     }
 }
-pub fn search_event_map(data: Rc<RefCell<AppData>>, ui: Weak<AppWindow>) -> impl Fn(SharedString) {
+fn search_event_map(data: Rc<RefCell<AppData>>, ui: Weak<AppWindow>) -> impl Fn(SharedString) {
     move |search| {
         let data = data.borrow();
         let ui = ui.unwrap();
@@ -416,7 +432,7 @@ fn update_id(
     }
 }
 
-pub fn refresh(data: Rc<RefCell<AppData>>, ui: Weak<AppWindow>) -> impl Fn() {
+fn refresh(data: Rc<RefCell<AppData>>, ui: Weak<AppWindow>) -> impl Fn() {
     move || {
         let data = data.borrow();
         let ui = ui.unwrap();
@@ -458,7 +474,7 @@ pub fn reload_state_map(data: &AppData, ui: &AppWindow, search: &str) {
     ui.global::<GContent>().set_state_list(state_list.as_slice().into());
 }
 
-pub fn reload_event_map(data: &AppData, ui: &AppWindow, search: &str) {
+fn reload_event_map(data: &AppData, ui: &AppWindow, search: &str) {
     let event_map = reload_map(data, NameType::Event, search);
 
     ui.global::<GNameMap>().set_events(event_map.as_slice().into());

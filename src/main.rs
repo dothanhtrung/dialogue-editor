@@ -8,18 +8,15 @@ mod file_handle;
 mod history;
 mod namemap_tab;
 
-use crate::config_tab::*;
-use crate::content_tab::class_ui::*;
-use crate::content_tab::dialogue_ui::*;
-use crate::content_tab::goto;
-use crate::content_tab::state_ui::*;
-use crate::file_handle::*;
+use crate::file_handle::{
+    FileFormat,
+    ron_file,
+};
 use crate::history::{
     History,
     redo,
     undo,
 };
-use crate::namemap_tab::*;
 use clap::Parser;
 use indexmap::IndexMap;
 use isolang::Language;
@@ -174,106 +171,31 @@ fn main() -> Result<(), Box<dyn Error>> {
     #[cfg(feature = "crypt")]
     ui.global::<GFile>().set_enable_crypt(true);
 
-    reload_lang_list(&config, &ui);
+    config_tab::reload_lang_list(&config, &ui);
 
     let config = Rc::new(RefCell::new(config));
     let data = Rc::new(RefCell::new(data));
 
-    ui.window().on_close_requested(on_close(ui.as_weak()));
-    ui.global::<GFile>()
-        .on_file_picker(file_picker(data.clone(), config.clone(), ui.as_weak()));
-    ui.global::<GFile>()
-        .on_save(request_save(data.clone(), config.clone(), ui.as_weak()));
+    ui.window().on_close_requested(file_handle::on_close(ui.as_weak()));
 
     ui.on_undo(undo(data.clone(), config.clone(), ui.as_weak()));
     ui.on_redo(redo(data.clone(), config.clone(), ui.as_weak()));
 
+    // ======== File ============
+    let mut ui_file = ui.global::<GFile>();
+    file_handle::setup(&mut ui_file, data.clone(), config.clone(), ui.as_weak());
+
     // ======== Content tab ===========
-    // TODO: Move these to content_tab internally
-    ui.global::<GContent>()
-        .on_refresh(content_tab::refresh(data.clone(), config.clone(), ui.as_weak()));
-    ui.global::<GContent>()
-        .on_add_class(add_class(data.clone(), config.clone(), ui.as_weak()));
-    ui.global::<GContent>()
-        .on_rename_class(rename_class(data.clone(), config.clone(), ui.as_weak()));
-    ui.global::<GContent>()
-        .on_remove_class(remove_class(data.clone(), config.clone(), ui.as_weak()));
-    ui.global::<GContent>()
-        .on_select_class(select_class(data.clone(), config.clone(), ui.as_weak()));
-
-    ui.global::<GContent>()
-        .on_add_state(add_state(data.clone(), config.clone(), ui.as_weak()));
-    ui.global::<GContent>()
-        .on_select_state(select_state(data.clone(), config.clone(), ui.as_weak()));
-    ui.global::<GContent>()
-        .on_remove_state(remove_state(data.clone(), config.clone(), ui.as_weak()));
-    ui.global::<GContent>()
-        .on_rename_state(rename_state(data.clone(), config.clone(), ui.as_weak()));
-
-    ui.global::<GContent>()
-        .on_add_dialog(add_dialogue(data.clone(), config.clone(), ui.as_weak()));
-    ui.global::<GContent>()
-        .on_select_dialog(select_dialogue(data.clone(), config.clone(), ui.as_weak()));
-    ui.global::<GContent>()
-        .on_remove_dialog(remove_dialogue(data.clone(), config.clone(), ui.as_weak()));
-    ui.global::<GContent>()
-        .on_add_lang_content(add_lang_content(data.clone(), config.clone(), ui.as_weak()));
-    ui.global::<GContent>()
-        .on_add_affect(add_affect(data.clone(), config.clone(), ui.as_weak()));
-    ui.global::<GContent>()
-        .on_update_content(update_content(data.clone(), config.clone(), ui.as_weak()));
-    ui.global::<GContent>()
-        .on_delete_content(delete_content(data.clone(), config.clone(), ui.as_weak()));
-    ui.global::<GContent>()
-        .on_delete_affect(delete_affect(data.clone(), config.clone(), ui.as_weak()));
-    ui.global::<GContent>()
-        .on_add_event(add_event(data.clone(), config.clone(), ui.as_weak()));
-    ui.global::<GContent>()
-        .on_delete_event(delete_event(data.clone(), config.clone(), ui.as_weak()));
-    ui.global::<GContent>()
-        .on_search_class(search_class(data.clone(), ui.as_weak()));
-    ui.global::<GContent>()
-        .on_search_state(search_state(data.clone(), config.clone(), ui.as_weak()));
-    ui.global::<GContent>()
-        .on_search_dialogue(search_dialogue(data.clone(), config.clone(), ui.as_weak()));
-
-    ui.global::<GContent>()
-        .on_goto(goto(data.clone(), config.clone(), ui.as_weak()));
+    let mut ui_content = ui.global::<GContent>();
+    content_tab::setup(&mut ui_content, data.clone(), config.clone(), ui.as_weak());
 
     // --------------------- Namemap Tab -------------------------
-    ui.global::<GNameMap>()
-        .on_refresh(namemap_tab::refresh(data.clone(), ui.as_weak()));
-    ui.global::<GNameMap>()
-        .on_delete_class(delete_class_map(data.clone(), config.clone(), ui.as_weak()));
-    ui.global::<GNameMap>()
-        .on_delete_state(delete_state_map(data.clone(), config.clone(), ui.as_weak()));
-    ui.global::<GNameMap>()
-        .on_delete_event(delete_event_map(data.clone(), config.clone(), ui.as_weak()));
-    ui.global::<GNameMap>()
-        .on_update_class_id(update_class_id(data.clone(), config.clone(), ui.as_weak()));
-    ui.global::<GNameMap>()
-        .on_update_state_id(update_state_id(data.clone(), config.clone(), ui.as_weak()));
-    ui.global::<GNameMap>()
-        .on_update_event_id(update_event_id(data.clone(), config.clone(), ui.as_weak()));
-    ui.global::<GNameMap>()
-        .on_new_class(add_new_class(data.clone(), config.clone(), ui.as_weak()));
-    ui.global::<GNameMap>()
-        .on_new_state(add_new_state(data.clone(), config.clone(), ui.as_weak()));
-    ui.global::<GNameMap>()
-        .on_new_event(add_new_event(data.clone(), config.clone(), ui.as_weak()));
-    ui.global::<GNameMap>()
-        .on_search_class(search_class_map(data.clone(), ui.as_weak()));
-    ui.global::<GNameMap>()
-        .on_search_state(search_state_map(data.clone(), ui.as_weak()));
-    ui.global::<GNameMap>()
-        .on_search_event(search_event_map(data.clone(), ui.as_weak()));
+    let mut ui_namemap = ui.global::<GNameMap>();
+    namemap_tab::setup(&mut ui_namemap, data.clone(), config.clone(), ui.as_weak());
 
     // ----------------------- Config Tab ---------------------------
-    ui.global::<GConfig>()
-        .on_add_lang(add_lang(config.clone(), ui.as_weak()));
-    ui.global::<GConfig>()
-        .on_delete_lang(delete_lang(data.clone(), config.clone(), ui.as_weak()));
-    ui.global::<GConfig>().on_set_max_undo(set_max_undo(config.clone()));
+    let mut ui_config = ui.global::<GConfig>();
+    config_tab::setup(&mut ui_config, data.clone(), config.clone(), ui.as_weak());
 
     ui.run()?;
 

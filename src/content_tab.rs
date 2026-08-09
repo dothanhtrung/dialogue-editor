@@ -12,24 +12,48 @@ use crate::{
         class_to_id,
         state_to_id,
     },
-    content_tab::{
-        class_ui::reload_class,
-        dialogue_ui::{
-            reload_dialogue,
-            reload_dialogue_detail,
-        },
-        state_ui::reload_state,
-    },
 };
+use class_ui::*;
+use dialogue_ui::*;
 use slint::{
     ComponentHandle,
     SharedString,
     Weak,
 };
+use state_ui::*;
 use std::cell::RefCell;
 use std::rc::Rc;
 
-pub fn refresh(data: Rc<RefCell<AppData>>, config: Rc<RefCell<Config>>, ui: Weak<AppWindow>) -> impl Fn() {
+pub fn setup(ui_content: &mut GContent, data: Rc<RefCell<AppData>>, config: Rc<RefCell<Config>>, ui: Weak<AppWindow>) {
+    ui_content.on_refresh(refresh(data.clone(), config.clone(), ui.clone()));
+    ui_content.on_add_class(add_class(data.clone(), config.clone(), ui.clone()));
+    ui_content.on_rename_class(rename_class(data.clone(), config.clone(), ui.clone()));
+    ui_content.on_remove_class(remove_class(data.clone(), config.clone(), ui.clone()));
+    ui_content.on_select_class(select_class(data.clone(), config.clone(), ui.clone()));
+
+    ui_content.on_add_state(add_state(data.clone(), config.clone(), ui.clone()));
+    ui_content.on_select_state(select_state(data.clone(), config.clone(), ui.clone()));
+    ui_content.on_remove_state(remove_state(data.clone(), config.clone(), ui.clone()));
+    ui_content.on_rename_state(rename_state(data.clone(), config.clone(), ui.clone()));
+
+    ui_content.on_add_dialog(add_dialogue(data.clone(), config.clone(), ui.clone()));
+    ui_content.on_select_dialog(select_dialogue(data.clone(), config.clone(), ui.clone()));
+    ui_content.on_remove_dialog(remove_dialogue(data.clone(), config.clone(), ui.clone()));
+    ui_content.on_add_lang_content(add_lang_content(data.clone(), config.clone(), ui.clone()));
+    ui_content.on_add_affect(add_affect(data.clone(), config.clone(), ui.clone()));
+    ui_content.on_update_content(update_content(data.clone(), config.clone(), ui.clone()));
+    ui_content.on_delete_content(delete_content(data.clone(), config.clone(), ui.clone()));
+    ui_content.on_delete_affect(delete_affect(data.clone(), config.clone(), ui.clone()));
+    ui_content.on_add_event(add_event(data.clone(), config.clone(), ui.clone()));
+    ui_content.on_delete_event(delete_event(data.clone(), config.clone(), ui.clone()));
+    ui_content.on_search_class(search_class(data.clone(), ui.clone()));
+    ui_content.on_search_state(search_state(data.clone(), config.clone(), ui.clone()));
+    ui_content.on_search_dialogue(search_dialogue(data.clone(), config.clone(), ui.clone()));
+
+    ui_content.on_goto(goto(data.clone(), config.clone(), ui.clone()));
+}
+
+fn refresh(data: Rc<RefCell<AppData>>, config: Rc<RefCell<Config>>, ui: Weak<AppWindow>) -> impl Fn() {
     move || {
         let mut data = data.borrow_mut();
         let config = config.borrow();
@@ -39,7 +63,7 @@ pub fn refresh(data: Rc<RefCell<AppData>>, config: Rc<RefCell<Config>>, ui: Weak
     }
 }
 
-pub fn goto(
+fn goto(
     data: Rc<RefCell<AppData>>,
     config: Rc<RefCell<Config>>,
     ui: Weak<AppWindow>,
