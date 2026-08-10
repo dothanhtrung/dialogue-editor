@@ -3,6 +3,7 @@ import {
     EditableTextBox,
     SelectableBox,
     SearchBox,
+    SelectionBox,
 } from "app_widgets.slint";
 import {
     Palette,
@@ -57,7 +58,8 @@ export global GContent {
     // Used for dialogue affect and event selection
     in-out property <[ListItem]> class_list;
     in-out property <[ListItem]> state_list;
-    in-out property <[ListItem]> event_list;
+    in-out property <[string]> event_list;
+    in-out property <[string]> filtered_event_list;
 
     in-out property <string> selecting_class: "";
     in-out property <string> selecting_state: "";
@@ -90,6 +92,7 @@ export global GContent {
     callback search_class(string);
     callback search_state(string);
     callback search_dialogue(string);
+    callback search_event(string);
 
     callback goto(string, string);
 }
@@ -216,8 +219,15 @@ export component DialogueBox inherits Rectangle {
 
             Horizontal {
                 // TODO: Self implement a new search bar
-                new_event := SearchBar {
+                new_event := SelectionBox {
                     items: GContent.event_list;
+                    filtered-items: GContent.filtered_event_list;
+                    filter(text) => {
+                        GContent.search_event(text);
+                    }
+                    accepted(text) => {
+                        GContent.add_event(text);
+                    }
                 }
 
                 TextButton {

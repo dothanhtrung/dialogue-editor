@@ -49,6 +49,7 @@ pub fn setup(ui_content: &mut GContent, data: Rc<RefCell<AppData>>, config: Rc<R
     ui_content.on_search_class(search_class(data.clone(), ui.clone()));
     ui_content.on_search_state(search_state(data.clone(), config.clone(), ui.clone()));
     ui_content.on_search_dialogue(search_dialogue(data.clone(), config.clone(), ui.clone()));
+    ui_content.on_search_event(search_event(data.clone(), ui.clone()));
 
     ui_content.on_goto(goto(data.clone(), config.clone(), ui.clone()));
 }
@@ -91,12 +92,9 @@ pub fn reload_content(data: &mut AppData, ui: &AppWindow, config: &Config) {
     reload_dialogue(data, ui, config, "");
     reload_dialogue_detail(data, ui, config);
 
-    let mut event_list = Vec::new();
+    let mut event_list :Vec<SharedString> = Vec::new();
     for event in data.event_name_map.keys() {
-        event_list.push(ListItem {
-            text: event.into(),
-            ..Default::default()
-        });
+        event_list.push(event.into());
     }
     ui.global::<GContent>().set_event_list(event_list.as_slice().into());
 

@@ -479,12 +479,9 @@ fn reload_event_map(data: &AppData, ui: &AppWindow, search: &str) {
 
     ui.global::<GNameMap>().set_events(event_map.as_slice().into());
 
-    let mut event_list: Vec<ListItem> = Vec::new();
+    let mut event_list: Vec<SharedString> = Vec::new();
     for event in data.event_name_map.keys() {
-        event_list.push(ListItem {
-            text: event.into(),
-            ..Default::default()
-        });
+        event_list.push(event.into());
     }
     ui.global::<GContent>().set_event_list(event_list.as_slice().into());
 }
