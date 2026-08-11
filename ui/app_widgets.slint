@@ -130,10 +130,10 @@ export component SearchBox inherits ElevatedCard {
 
 export component SelectionBox inherits Rectangle {
     in property <[string]> items: [];
-    in property <[string]> filtered-items: items;  // Override with parent's filtered list
-    in property <string> placeholder-text: "Select or search...";
+    in property <string> placeholder-text;
     in property <length> dropdown-max-height: 480px;
-    out property <string> text;
+    out property <string> text <=> input-field.text;
+    property <bool> show_dropdown: input-field.has-focus;
 
     callback filter(string);
     callback accepted(string);
@@ -146,58 +146,52 @@ export component SelectionBox inherits Rectangle {
             placeholder-text: root.placeholder-text;
 
             edited(text) => {
-                search_popup.show();
+                root.show_dropdown = true;
                 root.filter(text);
             }
 
             accepted(text) => {
-                self.clear-focus();
-                search_popup.close();
+                root.show_dropdown = false;
                 root.accepted(self.text);
             }
         }
 
         // Dropdown list
-        search_popup := PopupWindow {
-            width: 160px;
-            height: 240px;
-            y: input-field.height + 4px;
-
+        if (input-field.has-focus && show_dropdown): 
             Rectangle {
-                background: Palette.background;
-                border-color: Palette.border;
-                border-width: 1px;
-                clip: false;
-                max-height: root.dropdown-max-height;
-                width: 100%;
+            background: Palette.background;
+            border-color: Palette.border;
+            border-width: 1px;
+            clip: false;
+            max-height: root.dropdown-max-height;
+            width: 100%;
 
-                ListView {
-                    for item in root.filtered-items: Rectangle {
-                        background: item-touch.has-hover ?
-                            Palette.accent-background : transparent;
-                        border-radius: 2px;
-                        height: 32px;
+            ListView {
+                for item in root.items: Rectangle {
+                    background: item-touch.has-hover ?
+                        Palette.accent-background : transparent;
+                    border-radius: 2px;
+                    height: 32px;
 
-                        Rectangle {
-                            width: 100%;
-                            height: 100%;
+                    Rectangle {
+                        width: 100%;
+                        height: 100%;
 
-                            Text {
-                                text: item;
-                                vertical-alignment: center;
-                                x: 8px;
-                                color: Palette.foreground;
-                            }
+                        Text {
+                            text: item;
+                            vertical-alignment: center;
+                            x: 8px;
+                            color: Palette.foreground;
                         }
+                    }
 
-                        item-touch := TouchArea {
-                            width: 100%;
-                            height: 100%;
+                    item-touch := TouchArea {
+                        width: 100%;
+                        height: 100%;
 
-                            clicked => {
-                                input-field.text = item;
-                                root.text = item;
-                            }
+                        clicked => {
+                            input-field.text = item;
+                            root.show_dropdown = false;
                         }
                     }
                 }

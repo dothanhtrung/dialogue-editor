@@ -444,19 +444,19 @@ pub fn search_event(
     move |search| {
         let data = data.borrow();
         let ui = ui_handle.unwrap();
-        let mut events: Vec<SharedString> = Vec::new(); 
+        let mut events: Vec<SharedString> = Vec::new();
         let re = new_regex(search.as_str());
 
         for event in data.event_name_map.keys() {
             if search.is_empty() {
                 events.push(event.into());
             } else if let Ok(re) = re.as_ref()
-                && re.is_match(&event)
+                && re.is_match(event)
             {
                 events.push(event.into());
             }
         }
 
-        ui.global::<GContent>().set_filtered_event_list(events.as_slice().into());
+        ui.global::<GContent>().set_event_list(events.as_slice().into());
     }
 }

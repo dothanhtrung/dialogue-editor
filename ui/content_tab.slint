@@ -12,6 +12,9 @@ import {
     Button,
     ComboBox,
     TextEdit,
+    HorizontalBox,
+    VerticalBox,
+    ScrollView,
 } from "std-widgets.slint";
 import {
     Vertical,
@@ -59,7 +62,6 @@ export global GContent {
     in-out property <[ListItem]> class_list;
     in-out property <[ListItem]> state_list;
     in-out property <[string]> event_list;
-    in-out property <[string]> filtered_event_list;
 
     in-out property <string> selecting_class: "";
     in-out property <string> selecting_state: "";
@@ -213,40 +215,45 @@ export component DialogueBox inherits Rectangle {
         HorizontalDivider { }
 
         Vertical {
-            Text {
+            event_label := Text {
                 text: "Event List";
             }
 
-            Horizontal {
-                // TODO: Self implement a new search bar
-                new_event := SelectionBox {
-                    items: GContent.event_list;
-                    filtered-items: GContent.filtered_event_list;
-                    filter(text) => {
-                        GContent.search_event(text);
+            Rectangle {
+                HorizontalBox {
+                    new_event := SelectionBox {
+                        items: GContent.event_list;
+                        filter(text) => {
+                            GContent.search_event(text);
+                        }
+                        accepted(text) => {
+                            GContent.add_event(text);
+                        }
                     }
-                    accepted(text) => {
-                        GContent.add_event(text);
+
+                    Rectangle {
+                        new_event_btn := TextButton {
+                            text: "Add";
+                            clicked => {
+                                GContent.add_event(new_event.text);
+                            };
+                        }
                     }
                 }
 
-                TextButton {
-                    text: "Add";
-                    clicked => {
-                        GContent.add_event(new_event.text);
-                    };
-                }
-            }
-
-            Grid {
-                for event[i] in GContent.dialogue.events: Rectangle {
-                    row: i / 2;
-                    col: Math.mod(i, 2);
-                    InputChip {
-                        text: event;
-                        trailing_icon: Icons.remove;
-                        trailing_icon_clicked => {
-                            GContent.delete_event(event);
+                ScrollView {
+                    y: new_event_btn.height + 10px;
+                    Grid {
+                        for event[i] in GContent.dialogue.events: Rectangle {
+                            row: i / 2;
+                            col: Math.mod(i, 2);
+                            InputChip {
+                                text: event;
+                                trailing_icon: Icons.remove;
+                                trailing_icon_clicked => {
+                                    GContent.delete_event(event);
+                                }
+                            }
                         }
                     }
                 }
@@ -306,14 +313,17 @@ export component ContentTab inherits TabReload {
                 Horizontal {
                     new_class := LineEdit {
                         placeholder-text: "New class";
+                        accepted(text) => {
+                            GContent.add-class(new_class.text);
+                            self.text = "";
+                            root.is_saved = false;
+                        }
                     }
 
                     ElevatedButton {
                         text: "Add";
                         clicked => {
-                            GContent.add-class(new_class.text);
-                            new_class.text = "";
-                            root.is_saved = false;
+                            new_class.accepted(new_class.text);
                         };
                     }
                 }
@@ -371,14 +381,17 @@ export component ContentTab inherits TabReload {
                     Horizontal {
                         new_state := LineEdit {
                             placeholder-text: "New state";
+                            accepted(text) => {
+                                GContent.add-state(new_state.text);
+                                root.is_saved = false;
+                                self.text = "";
+                            }
                         }
 
                         ElevatedButton {
                             text: "Add";
                             clicked => {
-                                GContent.add-state(new_state.text);
-                                root.is_saved = false;
-                                new_state.text = "";
+                                new_state.accepted(new_state.text);
                             }
                         }
                     }
