@@ -4,7 +4,6 @@ use crate::{
     Config,
     GContent,
     GNameMap,
-    ListItem,
     StringId,
     common::{
         NameType,
@@ -450,12 +449,9 @@ pub fn reload_class_map(data: &AppData, ui: &AppWindow, search: &str) {
     let class_map = reload_map(data, NameType::Class, search);
     ui.global::<GNameMap>().set_classes(class_map.as_slice().into());
 
-    let mut class_list = Vec::new();
+    let mut class_list: Vec<SharedString> = Vec::new();
     for class in data.class_name_map.keys() {
-        class_list.push(ListItem {
-            text: class.into(),
-            ..Default::default()
-        });
+        class_list.push(class.into());
     }
     ui.global::<GContent>().set_class_list(class_list.as_slice().into());
 }
@@ -464,12 +460,9 @@ pub fn reload_state_map(data: &AppData, ui: &AppWindow, search: &str) {
     let class_map = reload_map(data, NameType::State, search);
     ui.global::<GNameMap>().set_states(class_map.as_slice().into());
 
-    let mut state_list = Vec::new();
+    let mut state_list: Vec<SharedString> = Vec::new();
     for state in data.state_name_map.keys() {
-        state_list.push(ListItem {
-            text: state.into(),
-            ..Default::default()
-        });
+        state_list.push(state.into());
     }
     ui.global::<GContent>().set_state_list(state_list.as_slice().into());
 }

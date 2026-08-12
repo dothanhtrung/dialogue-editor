@@ -59,8 +59,8 @@ export global GContent {
     in-out property <UiDialogue> dialogue;
 
     // Used for dialogue affect and event selection
-    in-out property <[ListItem]> class_list;
-    in-out property <[ListItem]> state_list;
+    in-out property <[string]> class_list;
+    in-out property <[string]> state_list;
     in-out property <[string]> event_list;
 
     in-out property <string> selecting_class: "";
@@ -95,6 +95,8 @@ export global GContent {
     callback search_state(string);
     callback search_dialogue(string);
     callback search_event(string);
+    callback search_affect_class(string);
+    callback search_affect_state(string);
 
     callback goto(string, string);
 }
@@ -174,7 +176,7 @@ export component DialogueBox inherits Rectangle {
 
         HorizontalDivider { }
 
-        Vertical {
+        VerticalBox {
             Text {
                 text: "Affect list";
             }
@@ -195,12 +197,18 @@ export component DialogueBox inherits Rectangle {
             }
 
             Horizontal {
-                new_affect_class := SearchBar {
+                new_affect_class := SelectionBox {
                     items: GContent.class_list;
+                    filter(text) => {
+                        GContent.search_affect_class(text);
+                    }
                 }
                 // TODO: Filter state by class
-                new_affect_state := SearchBar {
+                new_affect_state := SelectionBox {
                     items: GContent.state_list;
+                    filter(text) => {
+                        GContent.search_affect_state(text);
+                    }
                 }
 
                 TextButton {
@@ -219,7 +227,7 @@ export component DialogueBox inherits Rectangle {
                 text: "Event List";
             }
 
-            Rectangle {
+            VerticalBox {
                 HorizontalBox {
                     new_event := SelectionBox {
                         items: GContent.event_list;
@@ -236,13 +244,13 @@ export component DialogueBox inherits Rectangle {
                             text: "Add";
                             clicked => {
                                 GContent.add_event(new_event.text);
+                                new_event.clear();
                             };
                         }
                     }
                 }
 
                 ScrollView {
-                    y: new_event_btn.height + 10px;
                     Grid {
                         for event[i] in GContent.dialogue.events: Rectangle {
                             row: i / 2;
