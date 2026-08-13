@@ -8,13 +8,10 @@ use crate::{
     common::{
         NameType,
         NotiLevel,
-        class_to_id,
-        event_to_id,
-        id_to_class,
-        id_to_state,
+        id_to_name,
+        name_to_id,
         new_regex,
         show_noti,
-        state_to_id,
     },
     history::{
         Action,
@@ -107,7 +104,7 @@ fn delete_state_map(
                     format!(
                         "State '{}' is still in used in class '{}'",
                         name,
-                        id_to_class(class_id, &data).unwrap_or_default()
+                        id_to_name(class_id, &data.class_name_map).unwrap_or_default()
                     )
                     .as_str(),
                 );
@@ -152,8 +149,8 @@ fn delete_event_map(
                                 "Event '{}' is still in used in dialogue {} of class '{}', state '{}'",
                                 name,
                                 i,
-                                id_to_class(class_id, &data).unwrap_or_default(),
-                                id_to_state(state_id, &data).unwrap_or_default(),
+                                id_to_name(class_id, &data.class_name_map).unwrap_or_default(),
+                                id_to_name(state_id, &data.state_name_map).unwrap_or_default(),
                             )
                             .as_str(),
                         );
@@ -185,7 +182,7 @@ fn update_class_id(
         let mut data = data.borrow_mut();
         let mut config = config.borrow_mut();
         let ui = ui.unwrap();
-        let old_id = class_to_id(name.as_str(), &mut data);
+        let old_id = name_to_id(name.as_str(), &mut data.class_name_map);
 
         if let Ok(new_id) = update_id(&mut data, &ui, name.to_string(), old_id, id.as_str(), NameType::Class)
             && let Some(value) = data.dialogues.shift_remove(&old_id)
@@ -211,7 +208,7 @@ fn update_state_id(
         let mut data = data.borrow_mut();
         let mut config = config.borrow_mut();
         let ui = ui.unwrap();
-        let old_id = state_to_id(name.as_str(), &mut data);
+        let old_id = name_to_id(name.as_str(), &mut data.state_name_map);
 
         if let Ok(new_id) = update_id(&mut data, &ui, name.to_string(), old_id, id.as_str(), NameType::State) {
             for (_, class) in data.dialogues.iter_mut() {
@@ -239,7 +236,7 @@ fn update_event_id(
         let mut data = data.borrow_mut();
         let mut config = config.borrow_mut();
         let ui = ui.unwrap();
-        let old_id = event_to_id(name.as_str(), &mut data);
+        let old_id = name_to_id(name.as_str(), &mut data.event_name_map);
 
         if let Ok(new_id) = update_id(&mut data, &ui, name.to_string(), old_id, id.as_str(), NameType::Event) {
             for (_, class) in data.dialogues.iter_mut() {

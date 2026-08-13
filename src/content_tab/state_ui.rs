@@ -13,10 +13,10 @@ use crate::{
     UiDialogue,
     common::{
         NotiLevel,
-        id_to_state,
+        id_to_name,
+        name_to_id,
         new_regex,
         show_noti,
-        state_to_id,
     },
     content_tab::dialogue_ui::reload_dialogue,
 };
@@ -43,7 +43,7 @@ pub fn add_state(
         let ui = ui_handle.unwrap();
         let mut data = data.borrow_mut();
         let mut config = config.borrow_mut();
-        let state_id = state_to_id(state_name.as_str(), &mut data);
+        let state_id = name_to_id(state_name.as_str(), &mut data.state_name_map);
         let class_id = config.selected_class;
 
         if let Some(class) = data.dialogues.get_mut(&class_id) {
@@ -85,7 +85,7 @@ pub fn select_state(
         let ui = ui_handle.unwrap();
         let mut data = data.borrow_mut();
         let mut config = config.borrow_mut();
-        let state_id = state_to_id(state_name.as_str(), &mut data);
+        let state_id = name_to_id(state_name.as_str(), &mut data.state_name_map);
         config.selected_state = state_id;
         reload_dialogue(&data, &ui, &config, "");
 
@@ -103,7 +103,7 @@ pub fn remove_state(
         let ui = ui_handle.unwrap();
         let mut data = data.borrow_mut();
         let mut config = config.borrow_mut();
-        let state_id = state_to_id(state_name.as_str(), &mut data);
+        let state_id = name_to_id(state_name.as_str(), &mut data.state_name_map);
         let class_id = config.selected_class;
 
         if let Some(class) = data.dialogues.get_mut(&class_id) {
@@ -141,8 +141,8 @@ pub fn rename_state(
         let mut config = config.borrow_mut();
         let class_id = config.selected_class;
 
-        let old_id = state_to_id(old_name.as_str(), &mut data);
-        let new_id = state_to_id(new_name.as_str(), &mut data);
+        let old_id = name_to_id(old_name.as_str(), &mut data.state_name_map);
+        let new_id = name_to_id(new_name.as_str(), &mut data.state_name_map);
 
         if let Some(class) = data.dialogues.get_mut(&class_id) {
             if !class.contains_key(&new_id) {
@@ -219,7 +219,7 @@ pub fn reload_state(data: &mut AppData, ui: &AppWindow, config: &Config, search_
     if let Some(class) = data.dialogues.get(&config.selected_class) {
         let mut states: Vec<SharedString> = Vec::new();
         for state_id in class.keys() {
-            let state_name = match id_to_state(*state_id, data) {
+            let state_name = match id_to_name(*state_id, &data.state_name_map) {
                 Some(ret) => ret,
                 None => {
                     let id_string = state_id.to_string();

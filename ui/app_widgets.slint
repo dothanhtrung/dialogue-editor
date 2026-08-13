@@ -150,31 +150,21 @@ export component SelectionBox inherits Rectangle {
         focus-field := LineEdit {
             width: root.width;
             placeholder-text: root.placeholder-text;
-            enabled: false;
+            edited(text) => {
+                root.filter(text);
+                popup.show();
+            }
         }
     }
 
     popup := PopupWindow {
         width: root.width;
-        forward-focus: input-field;
+        forward-focus: focus-field;
         close-policy: PopupClosePolicy.close-on-click-outside;
         x: 0;
-        y: 0;
+        y: focus-field.height + 5px;
 
         VerticalBox {
-            input-field := LineEdit {
-                text <=> focus-field.text;
-                width: focus-field.width;
-                edited(text) => {
-                    root.filter(text);
-                }
-                accepted(text) => {
-                    root.accepted(self.text);
-                    popup.close();
-                    self.text = "";
-                }
-            }
-
             Rectangle {
                 background: Palette.background;
                 border-color: Palette.border;
@@ -207,7 +197,7 @@ export component SelectionBox inherits Rectangle {
                             height: 100%;
 
                             clicked => {
-                                input-field.text = item;
+                                focus-field.text = item;
                             }
                         }
                     }

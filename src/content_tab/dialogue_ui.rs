@@ -9,14 +9,10 @@ use crate::{
     UiDialogue,
     common::{
         NotiLevel,
-        class_to_id,
-        event_to_id,
-        id_to_class,
-        id_to_event,
-        id_to_state,
+        id_to_name,
+        name_to_id,
         new_regex,
         show_noti,
-        state_to_id,
     },
     history::{
         Action,
@@ -160,8 +156,8 @@ pub fn add_affect(
         let mut data = data.borrow_mut();
         let mut config = config.borrow_mut();
 
-        let affect_class = class_to_id(class_name.as_str(), &mut data);
-        let affect_state = state_to_id(state_name.as_str(), &mut data);
+        let affect_class = name_to_id(class_name.as_str(), &mut data.class_name_map);
+        let affect_state = name_to_id(state_name.as_str(), &mut data.state_name_map);
 
         if let Some(class) = data.dialogues.get_mut(&config.selected_class)
             && let Some(state) = class.get_mut(&config.selected_state)
@@ -193,7 +189,7 @@ pub fn add_event(
         let ui = ui_handle.unwrap();
         let mut data = data.borrow_mut();
         let mut config = config.borrow_mut();
-        let event_id = event_to_id(event_name.as_str(), &mut data);
+        let event_id = name_to_id(event_name.as_str(), &mut data.event_name_map);
 
         if let Some(class) = data.dialogues.get_mut(&config.selected_class)
             && let Some(state) = class.get_mut(&config.selected_state)
@@ -301,7 +297,7 @@ pub fn delete_affect(
         let ui = ui_handle.unwrap();
         let mut data = data.borrow_mut();
         let mut config = config.borrow_mut();
-        let affect_class = class_to_id(class_name.as_str(), &mut data);
+        let affect_class = name_to_id(class_name.as_str(), &mut data.class_name_map);
 
         if let Some(class) = data.dialogues.get_mut(&config.selected_class)
             && let Some(state) = class.get_mut(&config.selected_state)
@@ -333,7 +329,7 @@ pub fn delete_event(
         let ui = ui_handle.unwrap();
         let mut data = data.borrow_mut();
         let mut config = config.borrow_mut();
-        let event_id = event_to_id(event.as_str(), &mut data);
+        let event_id = name_to_id(event.as_str(), &mut data.event_name_map);
 
         if let Some(class) = data.dialogues.get_mut(&config.selected_class)
             && let Some(state) = class.get_mut(&config.selected_state)
@@ -416,15 +412,15 @@ pub fn reload_dialogue_detail(data: &AppData, ui: &AppWindow, config: &Config) {
             });
         }
         for (class, state) in dialog.affects.iter() {
-            let class_name = id_to_class(*class, data).unwrap_or(class.to_string());
-            let state_name = id_to_state(*state, data).unwrap_or(state.to_string());
+            let class_name = id_to_name(*class, &data.class_name_map).unwrap_or(class.to_string());
+            let state_name = id_to_name(*state, &data.state_name_map).unwrap_or(state.to_string());
             affects.push(Affect {
                 class: class_name.into(),
                 state: state_name.into(),
             });
         }
         for event in dialog.events.iter() {
-            let event = id_to_event(*event, data).unwrap_or(event.to_string());
+            let event = id_to_name(*event, &data.event_name_map).unwrap_or(event.to_string());
             events.push(event.into());
         }
 
@@ -437,10 +433,7 @@ pub fn reload_dialogue_detail(data: &AppData, ui: &AppWindow, config: &Config) {
     }
 }
 
-pub fn search_event(
-    data: Rc<RefCell<AppData>>,
-    ui_handle: Weak<AppWindow>,
-) -> impl Fn(SharedString) {
+pub fn search_event(data: Rc<RefCell<AppData>>, ui_handle: Weak<AppWindow>) -> impl Fn(SharedString) {
     move |search| {
         let data = data.borrow();
         let ui = ui_handle.unwrap();
@@ -458,5 +451,65 @@ pub fn search_event(
         }
 
         ui.global::<GContent>().set_event_list(events.as_slice().into());
+    }
+}
+
+pub fn search_affect_class(data: Rc<RefCell<AppData>>, ui_handle: Weak<AppWindow>) -> impl Fn(SharedString) {
+    move |search| {
+        let data = data.borrow();
+        let ui = ui_handle.unwrap();
+        let mut classes = Vec::new();
+        let re = new_regex(search.as_str());
+
+        for class in data.class_name_map.keys() {
+            if search.is_empty() {
+                classes.push(class.into());
+            } else if let Ok(re) = re.as_ref()
+                && re.is_match(class)
+            {
+                classes.push(class.into());
+            }
+        }
+        ui.global::<GContent>().set_class_list(classes.as_slice().into());
+    }
+}
+
+pub fn search_affect_state(
+    data: Rc<RefCell<AppData>>,
+    ui_handle: Weak<AppWindow>,
+) -> impl Fn(SharedString, SharedString) {
+    move |search_class, search| {
+        let mut data = data.borrow_mut();
+        let ui = ui_handle.unwrap();
+        let mut states = Vec::new();
+        let re = new_regex(search.as_str());
+
+        let mut base_list: Vec<String> = Vec::new();
+        if search_class.is_empty() {
+            base_list = data.state_name_map.keys().map(|keys| keys.clone()).collect();
+        } else {
+            let class_id = name_to_id(search_class.as_str(), &mut data.class_name_map);
+            // Only search in the state of selected class
+            if let Some(class) = data.dialogues.get(&class_id) {
+                for state_id in class.keys() {
+                    if let Some(state_name) = id_to_name(*state_id, &data.state_name_map) {
+                        base_list.push(state_name);
+                    }
+                }
+            } else {
+                base_list = data.state_name_map.keys().map(|keys| keys.clone()).collect();
+            }
+        }
+
+        for state in base_list {
+            if search.is_empty() {
+                states.push(state.into());
+            } else if let Ok(re) = re.as_ref()
+                && re.is_match(&state)
+            {
+                states.push(state.into());
+            }
+        }
+        ui.global::<GContent>().set_state_list(states.as_slice().into());
     }
 }

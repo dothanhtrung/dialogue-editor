@@ -9,8 +9,7 @@ use crate::{
     UnsaveLoadDialog,
     common::{
         NotiLevel,
-        id_to_class,
-        id_to_state,
+        id_to_name,
         show_noti,
     },
     content_tab::reload_content,
@@ -158,13 +157,13 @@ fn load(data: &mut AppData, config: &mut Config, ui: &AppWindow) {
             }
         },
     };
-    if (config.selected_class == 0 || id_to_class(config.selected_class, data).is_none())
+    if (config.selected_class == 0 || id_to_name(config.selected_class, &data.class_name_map).is_none())
         && let Some(first_class) = data.dialogues.keys().next()
     {
         config.selected_class = *first_class;
     }
 
-    if (config.selected_state == 0 || id_to_state(config.selected_state, data).is_none())
+    if (config.selected_state == 0 || id_to_name(config.selected_state, &data.state_name_map).is_none())
         && let Some(selected_class) = data.dialogues.get(&config.selected_class)
         && let Some((first_state, _)) = selected_class.first()
     {

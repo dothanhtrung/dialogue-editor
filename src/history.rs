@@ -3,10 +3,7 @@ use crate::{
     AppWindow,
     Config,
     Dialogue,
-    common::{
-        class_to_id,
-        state_to_id,
-    },
+    common::name_to_id,
     content_tab::{
         class_ui::update_class,
         reload_content,
@@ -130,11 +127,11 @@ fn apply_action(action: &Action, data: &mut AppData) {
         ActionType::AddStr(value) => match &action.target {
             ActionTarget::None => {}
             ActionTarget::ContentClass(states) => {
-                let class_id = class_to_id(value.as_str(), data);
+                let class_id = name_to_id(value.as_str(), &mut data.class_name_map);
                 data.dialogues.insert(class_id, states.clone().unwrap_or_default());
             }
             ActionTarget::ContentState(class_id, dialogues) => {
-                let state_id = state_to_id(value.as_str(), data);
+                let state_id = name_to_id(value.as_str(), &mut data.state_name_map);
                 if let Some(class) = data.dialogues.get_mut(class_id) {
                     class.insert(state_id, dialogues.clone().unwrap_or_default());
                 }
@@ -159,11 +156,11 @@ fn apply_action(action: &Action, data: &mut AppData) {
         ActionType::DeleteStr(value) => match &action.target {
             ActionTarget::None => {}
             ActionTarget::ContentClass(_) => {
-                let class_id = class_to_id(value.as_str(), data);
+                let class_id = name_to_id(value.as_str(), &mut data.class_name_map);
                 data.dialogues.shift_remove(&class_id);
             }
             ActionTarget::ContentState(class_id, _) => {
-                let state_id = state_to_id(value.as_str(), data);
+                let state_id = name_to_id(value.as_str(), &mut data.state_name_map);
                 if let Some(class) = data.dialogues.get_mut(class_id) {
                     class.shift_remove(&state_id);
                 }
@@ -188,13 +185,13 @@ fn apply_action(action: &Action, data: &mut AppData) {
         ActionType::UpdateStr(old_value, new_value) => match &action.target {
             ActionTarget::None => {}
             ActionTarget::ContentClass(_) => {
-                let old_id = class_to_id(old_value, data);
-                let new_id = class_to_id(new_value, data);
+                let old_id = name_to_id(old_value, &mut data.class_name_map);
+                let new_id = name_to_id(new_value, &mut data.class_name_map);
                 let _ = update_class(data, old_id, new_id);
             }
             ActionTarget::ContentState(class_id, _) => {
-                let old_id = state_to_id(old_value, data);
-                let new_id = state_to_id(new_value, data);
+                let old_id = name_to_id(old_value, &mut data.state_name_map);
+                let new_id = name_to_id(new_value, &mut data.state_name_map);
                 let _ = update_state(data, *class_id, old_id, new_id);
             }
             ActionTarget::ContentDialogue(_, _, _, _) => {

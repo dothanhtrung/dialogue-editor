@@ -1,3 +1,4 @@
+use crate::common::id_to_name;
 use crate::content_tab::dialogue_ui::reload_dialogue_detail;
 use crate::history::{
     Action,
@@ -13,8 +14,7 @@ use crate::{
     UiDialogue,
     common::{
         NotiLevel,
-        class_to_id,
-        id_to_class,
+        name_to_id,
         new_regex,
         show_noti,
     },
@@ -44,7 +44,7 @@ pub fn add_class(
         let ui = ui_handle.unwrap();
         let mut data = data.borrow_mut();
         let mut config = config.borrow_mut();
-        let class_id = class_to_id(class_name.as_str(), &mut data);
+        let class_id = name_to_id(class_name.as_str(), &mut data.class_name_map);
 
         if data.dialogues.contains_key(&class_id) {
             show_noti(
@@ -91,8 +91,8 @@ pub fn rename_class(
         let mut data = data.borrow_mut();
         let mut config = config.borrow_mut();
 
-        let old_class_id = class_to_id(old_name.as_str(), &mut data);
-        let new_class_id = class_to_id(new_name.as_str(), &mut data);
+        let old_class_id = name_to_id(old_name.as_str(), &mut data.class_name_map);
+        let new_class_id = name_to_id(new_name.as_str(), &mut data.class_name_map);
 
         if !data.dialogues.contains_key(&new_class_id) {
             if update_class(&mut data, old_class_id, new_class_id).is_ok() {
@@ -149,7 +149,7 @@ pub fn remove_class(
         let ui = ui_handle.unwrap();
         let mut data = data.borrow_mut();
         let mut config = config.borrow_mut();
-        let class_id = class_to_id(class_name.as_str(), &mut data);
+        let class_id = name_to_id(class_name.as_str(), &mut data.class_name_map);
 
         let states = data.dialogues.shift_remove(&class_id);
         config.selected_class = 0;
@@ -180,7 +180,7 @@ pub fn select_class(
         let ui = ui_handle.unwrap();
         let mut data = data.borrow_mut();
         let mut config = config.borrow_mut();
-        let class_id = class_to_id(class_name.as_str(), &mut data);
+        let class_id = name_to_id(class_name.as_str(), &mut data.class_name_map);
         config.selected_class = class_id;
         reload_state(&mut data, &ui, &config, "");
 
@@ -207,7 +207,7 @@ pub fn reload_class(data: &mut AppData, ui: &AppWindow, search_class: &str) {
 
     let re = new_regex(search_class);
     for id in data.dialogues.keys() {
-        let name = id_to_class(*id, data);
+        let name = id_to_name(*id, &data.class_name_map);
         let name = match name {
             Some(ret) => ret,
             None => {

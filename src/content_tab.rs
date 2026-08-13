@@ -7,10 +7,7 @@ use crate::{
     AppWindow,
     Config,
     GContent,
-    common::{
-        class_to_id,
-        state_to_id,
-    },
+    common::name_to_id,
 };
 use class_ui::*;
 use dialogue_ui::*;
@@ -49,6 +46,8 @@ pub fn setup(ui_content: &mut GContent, data: Rc<RefCell<AppData>>, config: Rc<R
     ui_content.on_search_state(search_state(data.clone(), config.clone(), ui.clone()));
     ui_content.on_search_dialogue(search_dialogue(data.clone(), config.clone(), ui.clone()));
     ui_content.on_search_event(search_event(data.clone(), ui.clone()));
+    ui_content.on_search_affect_class(search_affect_class(data.clone(), ui.clone()));
+    ui_content.on_search_affect_state(search_affect_state(data.clone(), ui.clone()));
 
     ui_content.on_goto(goto(data.clone(), config.clone(), ui.clone()));
 }
@@ -73,8 +72,8 @@ fn goto(
         let mut config = config.borrow_mut();
         let ui = ui.unwrap();
 
-        config.selected_class = class_to_id(class_name.as_str(), &mut data);
-        config.selected_state = state_to_id(&state_name, &mut data);
+        config.selected_class = name_to_id(class_name.as_str(), &mut data.class_name_map);
+        config.selected_state = name_to_id(&state_name, &mut data.state_name_map);
         config.selected_dialogue = 0;
 
         ui.global::<GContent>().set_selecting_class(class_name);

@@ -96,7 +96,7 @@ export global GContent {
     callback search_dialogue(string);
     callback search_event(string);
     callback search_affect_class(string);
-    callback search_affect_state(string);
+    callback search_affect_state(string, string);
 
     callback goto(string, string);
 }
@@ -207,7 +207,7 @@ export component DialogueBox inherits Rectangle {
                 new_affect_state := SelectionBox {
                     items: GContent.state_list;
                     filter(text) => {
-                        GContent.search_affect_state(text);
+                        GContent.search_affect_state(new_affect_class.text, text);
                     }
                 }
 
