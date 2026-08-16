@@ -16,6 +16,7 @@ import { FileSection, GFile, UnsaveLoadDialog } from "file_section.slint";
 import { NotiBox, GNoti } from "noti.slint";
 import { StringId, GNameMap, NameMapTab } from "namemap_tab.slint";
 import { ContentTab, GContent } from "content_tab.slint";
+import { GSequence, SequenceTab } from "sequence_tab.slint";
 import { ConfigTab } from "config_tab.slint";
 import { GConfig } from "common.slint";
 import {
@@ -26,7 +27,7 @@ import {
     SnackBar,
 } from "material-1.0/material.slint";
 
-export { GNoti, GNameMap, GContent, GConfig, GFile, UnsaveLoadDialog }
+export { GNoti, GNameMap, GContent, GConfig, GFile, GSequence, UnsaveLoadDialog }
 export component AppWindow inherits MaterialWindow {
     title: "Dialogue Editor";
     maximized: true;
@@ -91,11 +92,11 @@ export component AppWindow inherits MaterialWindow {
             }
         }
 
-        Vertical {
+        VerticalLayout {
             file_section := FileSection { }
 
-            Horizontal {
-                Horizontal {
+            HorizontalLayout {
+                HorizontalLayout {
                     alignment: start;
 
                     Rectangle {
@@ -135,10 +136,10 @@ export component AppWindow inherits MaterialWindow {
             }
 
             TabWidget {
-                orientation: Orientation.vertical;
+                orientation: Orientation.horizontal;
 
                 Tab {
-                    title: "C";
+                    title: "Content";
 
                     ContentTab {
                         is_saved <=> root.is_saved;
@@ -146,7 +147,15 @@ export component AppWindow inherits MaterialWindow {
                 }
 
                 Tab {
-                    title: "E";
+                    title: "Sequence";
+
+                    SequenceTab {
+                        is_saved <=> root.is_saved;
+                    }
+                }
+
+                Tab {
+                    title: "Namemap";
 
                     NameMapTab {
                         is_saved <=> root.is_saved;
@@ -154,7 +163,7 @@ export component AppWindow inherits MaterialWindow {
                 }
 
                 Tab {
-                    title: "S";
+                    title: "Config";
 
                     ConfigTab { }
                 }

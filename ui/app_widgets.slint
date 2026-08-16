@@ -150,6 +150,7 @@ export component SelectionBox inherits Rectangle {
         focus-field := LineEdit {
             width: root.width;
             placeholder-text: root.placeholder-text;
+            input-type: InputType.search;
             edited(text) => {
                 root.filter(text);
                 popup.show();

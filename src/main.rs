@@ -7,6 +7,7 @@ mod content_tab;
 mod file_handle;
 mod history;
 mod namemap_tab;
+mod sequence_tab;
 
 use crate::file_handle::{
     FileFormat,
@@ -62,18 +63,26 @@ struct Dialogue {
 }
 
 #[derive(Serialize, Deserialize, Default, Clone)]
+pub struct SequenceItem {
+    pub class: u64,
+    pub state: u64,
+    pub dialogue: Option<usize>,
+}
+
+#[derive(Serialize, Deserialize, Default, Clone)]
 struct AppData {
     #[serde(default)]
     dialogues: IndexMap<u64, IndexMap<u64, Vec<Dialogue>>>,
-    #[serde(default)]
-    #[serde(skip_serializing_if = "BTreeMap::is_empty")]
+    #[serde(default, skip_serializing_if = "IndexMap::is_empty")]
+    sequences: IndexMap<u64, Vec<SequenceItem>>,
+    #[serde(default, skip_serializing_if = "BTreeMap::is_empty")]
     class_name_map: BTreeMap<String, u64>,
-    #[serde(default)]
-    #[serde(skip_serializing_if = "BTreeMap::is_empty")]
+    #[serde(default, skip_serializing_if = "BTreeMap::is_empty")]
     state_name_map: BTreeMap<String, u64>,
-    #[serde(skip_serializing_if = "BTreeMap::is_empty")]
-    #[serde(default)]
+    #[serde(default, skip_serializing_if = "BTreeMap::is_empty")]
     event_name_map: BTreeMap<String, u64>,
+    #[serde(default, skip_serializing_if = "BTreeMap::is_empty")]
+    sequence_name_map: BTreeMap<String, u64>,
 }
 
 impl AppData {
@@ -90,12 +99,14 @@ struct Config {
     config_path: PathBuf,
     #[serde(default)]
     file_path: PathBuf,
-    #[serde(default)]
+    #[serde(default, skip)]
     selected_class: u64, // TODO: Support history of select
-    #[serde(default)]
+    #[serde(default, skip)]
     selected_state: u64,
-    #[serde(default)]
+    #[serde(default, skip)]
     selected_dialogue: usize,
+    #[serde(default, skip)]
+    selected_sequence: u64,
     #[serde(default)]
     /// Used when file_format is Bin
     encrypt_key: String,
@@ -117,6 +128,7 @@ impl Default for Config {
             selected_class: 0,
             selected_state: 0,
             selected_dialogue: 0,
+            selected_sequence: 0,
             encrypt_key: String::new(),
             file_format: FileFormat::default(),
             save_without_name: false,
@@ -188,6 +200,10 @@ fn main() -> Result<(), Box<dyn Error>> {
     // ======== Content tab ===========
     let mut ui_content = ui.global::<GContent>();
     content_tab::setup(&mut ui_content, data.clone(), config.clone(), ui.as_weak());
+
+    // ========= Sequence ===========
+    let mut ui_sequence = ui.global::<GSequence>();
+    sequence_tab::setup(&mut ui_sequence, data.clone(), config.clone(), ui.as_weak());
 
     // --------------------- Namemap Tab -------------------------
     let mut ui_namemap = ui.global::<GNameMap>();

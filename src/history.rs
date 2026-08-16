@@ -3,6 +3,7 @@ use crate::{
     AppWindow,
     Config,
     Dialogue,
+    SequenceItem,
     common::name_to_id,
     content_tab::{
         class_ui::update_class,
@@ -46,8 +47,10 @@ pub enum ActionTarget {
     ContentLang(u64, u64, usize, Language),
     ContentAffect(u64, u64, usize, u64),
     ContentEvent(u64, u64, usize),
+    Sequence(Option<SequenceItem>),
     NamemapClass(String),
     NamemapState(String),
+    NamemapSequence(String),
     NamemapEvent(String),
 }
 
@@ -202,6 +205,13 @@ fn apply_action(action: &Action, data: &mut AppData) {
                     && let Some(state) = class.get_mut(state_id)
                 {
                     state[*dialogue_pos].contents.insert(*lang, new_value.clone());
+                }
+            }
+            ActionTarget::Sequence(_) => {
+                let old_id = name_to_id(old_value, &mut data.sequence_name_map);
+                let new_id = name_to_id(new_value, &mut data.sequence_name_map);
+                if let Some(sequence) = data.sequences.shift_remove(&old_id) {
+                    data.sequences.insert(new_id, sequence);
                 }
             }
 

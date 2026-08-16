@@ -1,0 +1,137 @@
+import {
+    TabReload,
+    EditableTextBox,
+    SelectableBox,
+    SearchBox,
+    SelectionBox,
+} from "app_widgets.slint";
+import {
+    Palette,
+    LineEdit,
+    ListView,
+    Button,
+    ComboBox,
+    TextEdit,
+    HorizontalBox,
+    VerticalBox,
+    ScrollView,
+} from "std-widgets.slint";
+import {
+    Vertical,
+    Horizontal,
+    OutlinedCard,
+    ElevatedCard,
+    IconButton,
+    TextButton,
+    FilledCard,
+    ElevatedButton,
+    HorizontalDivider,
+    FloatingActionButton,
+    InputChip,
+} from "material-1.0/material.slint";
+import { Icons } from "material-1.0/ui/icons/icons.slint";
+import { VerticalDivider } from "material-1.0/ui/components/divider.slint";
+import { GConfig } from "common.slint";
+import { ListItem, Grid } from "material-1.0/material.slint";
+import { SearchBar } from "material-1.0/ui/components/search_bar.slint";
+
+export struct UiSequenceItem {
+    class: string,
+    state: string,
+    dialogue: string,
+}
+
+export struct SequenceInfo {
+    name: string,
+    id: string,
+}
+
+export global GSequence {
+    in property <[string]> sequences;
+    in property <[UiSequenceItem]> items;
+    in property <SequenceInfo> info;
+    in property <string> selected_sequence;
+
+    callback add(string);
+    callback select(string);
+    callback delete(string);
+    callback rename(string, string);
+    callback search(string);
+
+    callback delete_item(int);
+    callback add_item(string, string, string);
+}
+
+
+export component SequenceTab inherits TabReload {
+    in-out property <bool> is_saved;
+
+    HorizontalLayout {
+        VerticalLayout {
+            SearchBox {
+                search(text) => { GSequence.search(text); }
+            }
+
+            ListView {
+                for sequence in GSequence.sequences: Rectangle {
+                    EditableTextBox {
+                        submit(new_name) => { GSequence.rename(sequence, new_name); }
+                        delete => { GSequence.delete(sequence); }
+                        select => { GSequence.select(sequence); }
+                    }
+                }
+            }
+        }
+
+        VerticalDivider { }
+
+        VerticalLayout {
+            Text {
+                text: GSequence.info.name;
+            }
+
+            HorizontalDivider { }
+
+            ListView {
+                for item[id] in GSequence.items: Rectangle {
+                    HorizontalLayout {
+                        StyledText {
+                            text: @markdown("#{id}: {item.class} / {item.state} / Dialog ID: {item.dialogue}");
+                        }
+
+                        IconButton {
+                            clicked => { GSequence.delete_item(id); }
+                        }
+                    }
+                }
+            }
+
+            HorizontalDivider { }
+
+            Text {
+                text: "APPEND NEW SEQUENCE STEP";
+            }
+
+            HorizontalLayout {
+                new_item_class := SelectionBox {
+                    placeholder-text: "Class";
+                }
+
+                new_item_state := SelectionBox {
+                    placeholder-text: "State";
+                }
+
+                new_item_dialogue := LineEdit {
+                    input-type: InputType.number;
+                }
+
+                Button {
+                    text: "Add";
+                    clicked => {
+                        GSequence.add_item(new_item_class.text, new_item_state.text, new_item_dialogue.text);
+                    }
+                }
+            }
+        }
+    }
+}

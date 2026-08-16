@@ -178,7 +178,7 @@ export component DialogueBox inherits Rectangle {
 
         VerticalBox {
             Text {
-                text: "Affect list";
+                text: "State Affect";
             }
 
             Grid {
@@ -186,7 +186,7 @@ export component DialogueBox inherits Rectangle {
                     row: i / 2;
                     col: Math.mod(i, 2);
                     InputChip {
-                        text: { affect.class + ":" + affect.state };
+                        text: { affect.class + "->" + affect.state };
                         trailing_icon: Icons.remove;
                         trailing_icon_clicked => {
                             GContent.delete_affect(affect.class);
@@ -199,6 +199,7 @@ export component DialogueBox inherits Rectangle {
             Horizontal {
                 new_affect_class := SelectionBox {
                     items: GContent.class_list;
+                    placeholder-text: "Target";
                     filter(text) => {
                         GContent.search_affect_class(text);
                     }
@@ -206,6 +207,7 @@ export component DialogueBox inherits Rectangle {
                 // TODO: Filter state by class
                 new_affect_state := SelectionBox {
                     items: GContent.state_list;
+                    placeholder-text: "Become";
                     filter(text) => {
                         GContent.search_affect_state(new_affect_class.text, text);
                     }
