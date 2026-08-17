@@ -7,14 +7,6 @@ export component StatusBar inherits Rectangle {
 
     Horizontal {
         alignment: LayoutAlignment.space-between;
-
-        Text {
-            text: GFile.file_path;
-            font-italic: {
-                if is_saved { false } else { true }
-            }
-        }
-
         Text {
             text: {
                 if is_saved {

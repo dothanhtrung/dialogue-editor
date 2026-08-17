@@ -125,6 +125,15 @@ fn file_picker(
 
         ui.global::<GFile>()
             .set_file_path(config.file_path.to_str().unwrap_or_default().into());
+        ui.global::<GFile>().set_file_name(
+            config
+                .file_path
+                .file_name()
+                .unwrap_or_default()
+                .to_str()
+                .unwrap_or_default()
+                .into(),
+        );
 
         config.file_format = get_file_format(&config.file_path);
         ui.global::<GFile>().set_file_format(config.file_format as i32);

@@ -4,7 +4,8 @@ import {
     Button,
     CheckBox,
     Palette,
-    StandardButton, HorizontalBox,
+    StandardButton,
+    HorizontalBox,
 } from "std-widgets.slint";
 import { Horizontal, Vertical } from "material-1.0/material.slint";
 import { OutlinedCard } from "material-1.0/ui/components/card.slint";
@@ -23,6 +24,7 @@ export global GFile {
     in-out property <bool> enable_crypt;
     in-out property <string> encrypt_key;
     in-out property <string> file_path;
+    in-out property <string> file_name;
     in-out property <bool> save_without_name;
     in-out property <bool> is_loading: false;
 
@@ -118,6 +120,25 @@ export component FileSection inherits Rectangle {
 
             Tooltip {
                 text: @markdown("Save As");
+            }
+        }
+
+        Rectangle {
+            width: 1px;
+            background: #2d2d2f;
+        }
+
+        Rectangle {
+            Text {
+                text: { if (GFile.file_name != "") { GFile.file_name } else { "Untitled" } };
+                font-size: 13px;
+                font-weight: 600;
+            }
+
+            Tooltip {
+                Text {
+                    text: GFile.file_path;
+                }
             }
         }
     }
