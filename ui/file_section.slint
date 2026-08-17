@@ -4,7 +4,7 @@ import {
     Button,
     CheckBox,
     Palette,
-    StandardButton,
+    StandardButton, HorizontalBox,
 } from "std-widgets.slint";
 import { Horizontal, Vertical } from "material-1.0/material.slint";
 import { OutlinedCard } from "material-1.0/ui/components/card.slint";
@@ -70,36 +70,54 @@ export component FileSection inherits Rectangle {
         GFile.is_loading = true;
     }
 
-    HorizontalLayout {
+    HorizontalBox {
         alignment: start;
 
         Rectangle {
-            ElevatedButton {
-                text: "Open";
-                tooltip: "Ctrl + O";
+            Button {
                 clicked => {
                     open();
                 }
             }
-        }
 
-        Rectangle {
-            ElevatedButton {
-                text: "Save";
-                tooltip: "Ctrl + S";
-                clicked => {
-                    save();
-                }
+            Image {
+                source: @image-url("icons/btn_open.svg");
+            }
+
+            Tooltip {
+                text: @markdown("Open File");
             }
         }
 
         Rectangle {
-            ElevatedButton {
-                text: "Save As";
-                tooltip: "Ctrl + Shift + S";
+            Button {
+                clicked => {
+                    save();
+                }
+            }
+
+            Image {
+                source: @image-url("icons/btn_save.svg");
+            }
+
+            Tooltip {
+                text: @markdown("Save File");
+            }
+        }
+
+        Rectangle {
+            Button {
                 clicked => {
                     save_as();
                 }
+            }
+
+            Image {
+                source: @image-url("icons/btn_saveas.svg");
+            }
+
+            Tooltip {
+                text: @markdown("Save As");
             }
         }
     }

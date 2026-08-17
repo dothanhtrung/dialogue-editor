@@ -6,6 +6,7 @@ import {
     LineEdit,
     Palette,
     TabWidget,
+    HorizontalBox,
 } from "std-widgets.slint";
 import {
     EditableTextBox,
@@ -27,7 +28,15 @@ import {
     SnackBar,
 } from "material-1.0/material.slint";
 
-export { GNoti, GNameMap, GContent, GConfig, GFile, GSequence, UnsaveLoadDialog }
+export {
+    GNoti,
+    GNameMap,
+    GContent,
+    GConfig,
+    GFile,
+    GSequence,
+    UnsaveLoadDialog,
+}
 export component AppWindow inherits MaterialWindow {
     title: "Dialogue Editor";
     maximized: true;
@@ -93,43 +102,63 @@ export component AppWindow inherits MaterialWindow {
         }
 
         VerticalLayout {
-            file_section := FileSection { }
+            HorizontalBox {
+                file_section := FileSection { }
 
-            HorizontalLayout {
-                HorizontalLayout {
-                    alignment: start;
+                HorizontalBox {
+                    alignment: end;
 
                     Rectangle {
-                        ElevatedButton {
-                            visible: undo_available;
-                            text: "Undo";
+                        visible: undo_available;
+                        Button {
                             clicked => {
                                 root.undo();
                                 is_saved = false;
                             }
-                            tooltip: "Ctrl + Z";
+                        }
+
+                        Image {
+                            source: @image-url("icons/btn_undo.svg");
+                        }
+
+                        Tooltip {
+                            text: @markdown("Undo");
                         }
                     }
 
                     Rectangle {
-                        ElevatedButton {
-                            visible: redo_available;
-                            text: "Redo";
+                        visible: redo_available;
+                        Button {
+
                             clicked => {
                                 root.redo();
                                 is_saved = false;
                             }
-                            tooltip: "Ctrl + Shift + Z";
+                        }
+
+                        Image {
+                            source: @image-url("icons/btn_redo.svg");
+                        }
+
+                        Tooltip {
+                            text: @markdown("Redo");
                         }
                     }
-                }
 
-                Rectangle {
-                    ElevatedButton {
-                        text: "Refresh";
-                        clicked => {
-                            GContent.refresh();
-                            GNameMap.refresh();
+                    Rectangle {
+                        Button {
+                            clicked => {
+                                GContent.refresh();
+                                GNameMap.refresh();
+                            }
+                        }
+
+                        Image {
+                            source: @image-url("icons/btn_refresh.svg");
+                        }
+
+                        Tooltip {
+                            text: @markdown("Refresh");
                         }
                     }
                 }
