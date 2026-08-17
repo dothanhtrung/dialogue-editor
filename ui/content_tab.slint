@@ -236,9 +236,6 @@ export component DialogueBox inherits Rectangle {
                         filter(text) => {
                             GContent.search_event(text);
                         }
-                        accepted(text) => {
-                            GContent.add_event(text);
-                        }
                     }
 
                     Rectangle {

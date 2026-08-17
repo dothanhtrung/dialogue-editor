@@ -34,6 +34,7 @@ import { VerticalDivider } from "material-1.0/ui/components/divider.slint";
 import { GConfig } from "common.slint";
 import { ListItem, Grid } from "material-1.0/material.slint";
 import { SearchBar } from "material-1.0/ui/components/search_bar.slint";
+import { GContent } from "content_tab.slint";
 
 export struct UiSequenceItem {
     class: string,
@@ -67,17 +68,35 @@ export component SequenceTab inherits TabReload {
     in-out property <bool> is_saved;
 
     HorizontalLayout {
-        VerticalLayout {
-            SearchBox {
-                search(text) => { GSequence.search(text); }
-            }
+        Rectangle {
+            width: 300px;
 
-            ListView {
-                for sequence in GSequence.sequences: Rectangle {
-                    EditableTextBox {
-                        submit(new_name) => { GSequence.rename(sequence, new_name); }
-                        delete => { GSequence.delete(sequence); }
-                        select => { GSequence.select(sequence); }
+            VerticalLayout {
+                SearchBox {
+                    search(text) => { GSequence.search(text); }
+                }
+
+                ListView {
+                    for sequence in GSequence.sequences: Rectangle {
+                        EditableTextBox {
+                            value: sequence;
+                            selected: sequence == GSequence.selected_sequence;
+
+                            submit(new_name) => { GSequence.rename(sequence, new_name); }
+                            delete => { GSequence.delete(sequence); }
+                            select => { GSequence.select(sequence); GSequence.selected_sequence = sequence; }
+                        }
+                    }
+                }
+
+                HorizontalLayout {
+                    new_sequence_name := LineEdit {
+                        placeholder-text: "New Sequence";
+                    }
+
+                    Button {
+                        text: "Add";
+                        clicked => { GSequence.add(new_sequence_name.text); }
                     }
                 }
             }
@@ -92,22 +111,6 @@ export component SequenceTab inherits TabReload {
 
             HorizontalDivider { }
 
-            ListView {
-                for item[id] in GSequence.items: Rectangle {
-                    HorizontalLayout {
-                        StyledText {
-                            text: @markdown("#{id}: {item.class} / {item.state} / Dialog ID: {item.dialogue}");
-                        }
-
-                        IconButton {
-                            clicked => { GSequence.delete_item(id); }
-                        }
-                    }
-                }
-            }
-
-            HorizontalDivider { }
-
             Text {
                 text: "APPEND NEW SEQUENCE STEP";
             }
@@ -115,10 +118,18 @@ export component SequenceTab inherits TabReload {
             HorizontalLayout {
                 new_item_class := SelectionBox {
                     placeholder-text: "Class";
+                    items: GContent.class_list;
+                    filter(text) => {
+                        GContent.search_affect_class(text);
+                    }
                 }
 
                 new_item_state := SelectionBox {
                     placeholder-text: "State";
+                    items: GContent.state_list;
+                    filter(text) => {
+                        GContent.search_affect_state(new_item_class.text, text);
+                    }
                 }
 
                 new_item_dialogue := LineEdit {
@@ -129,6 +140,34 @@ export component SequenceTab inherits TabReload {
                     text: "Add";
                     clicked => {
                         GSequence.add_item(new_item_class.text, new_item_state.text, new_item_dialogue.text);
+                    }
+                }
+            }
+
+            HorizontalDivider { }
+
+            ListView {
+                for item[id] in GSequence.items: Rectangle {
+                    HorizontalLayout {
+                        Text {
+                            text: "#" + id;
+                        }
+
+                        Text {
+                            text: item.class;
+                        }
+
+                        Text {
+                            text: item.state;
+                        }
+
+                        Text {
+                            text: item.dialogue;
+                        }
+
+                        IconButton {
+                            clicked => { GSequence.delete_item(id); }
+                        }
                     }
                 }
             }
