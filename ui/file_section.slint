@@ -77,13 +77,10 @@ export component FileSection inherits Rectangle {
 
         Rectangle {
             Button {
+                icon: @image-url("icons/btn_open.svg");
                 clicked => {
                     open();
                 }
-            }
-
-            Image {
-                source: @image-url("icons/btn_open.svg");
             }
 
             Tooltip {
@@ -93,13 +90,10 @@ export component FileSection inherits Rectangle {
 
         Rectangle {
             Button {
+                icon: @image-url("icons/btn_save.svg");
                 clicked => {
                     save();
                 }
-            }
-
-            Image {
-                source: @image-url("icons/btn_save.svg");
             }
 
             Tooltip {
@@ -109,13 +103,10 @@ export component FileSection inherits Rectangle {
 
         Rectangle {
             Button {
+                icon: @image-url("icons/btn_saveas.svg");
                 clicked => {
                     save_as();
                 }
-            }
-
-            Image {
-                source: @image-url("icons/btn_saveas.svg");
             }
 
             Tooltip {

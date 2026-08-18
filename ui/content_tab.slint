@@ -4,6 +4,11 @@ import {
     SelectableBox,
     SearchBox,
     SelectionBox,
+    EditButton,
+    DeleteButton,
+    ColumnTitle,
+    AddButton,
+    TagChip,
 } from "app_widgets.slint";
 import {
     Palette,
@@ -15,6 +20,7 @@ import {
     HorizontalBox,
     VerticalBox,
     ScrollView,
+    GridBox,
 } from "std-widgets.slint";
 import {
     Vertical,
@@ -105,32 +111,41 @@ export component DialogueBox inherits Rectangle {
     property <int> content_selecting;
     property <bool> is_edited: false;
 
-    Vertical {
-        Vertical {
+    VerticalBox {
+        VerticalBox {
             height: 50%;
 
-            ListView {
-                for dialog[i] in GContent.dialogue.contents: Horizontal {
-                    alignment: start;
-                    Vertical {
-                        Text {
-                            text: dialog.language;
-                        }
+            Text {
+                text: "CONTENT";
+                font-size: 13px;
+                font-weight: 700;
+            }
 
-                        IconButton {
-                            icon: Icons.check;
-                            tooltip: "Submit";
-                            visible: is_edited;
-                            clicked => {
-                                GContent.update_content(dialog.language, content_view.text);
-                                is_edited = false;
+            ListView {
+                for dialog[i] in GContent.dialogue.contents: HorizontalBox {
+                    alignment: LayoutAlignment.stretch;
+                    cross-axis-alignment: center;
+
+                    VerticalBox {
+                        Rectangle {
+                            background: #2a2a2b;
+                            border-radius: 4px;
+                            border-width: 1px;
+                            border-color: #38383a;
+                            width: 44px;
+                            height: 22px;
+
+                            Text {
+                                color: #f59e0b;
+                                text: dialog.language;
+                                font-size: 11px;
+                                font-weight: 600;
                             }
                         }
                     }
 
                     content_view := TextEdit {
-                        height: 96px;
-                        width: 80%;
+                        height: 72px;
                         text: dialog.content;
                         edited(value) => {
                             GContent.dialogue.contents[i].content = value;
@@ -138,9 +153,16 @@ export component DialogueBox inherits Rectangle {
                         }
                     }
 
-                    Rectangle {
-                        IconButton {
-                            icon: Icons.remove;
+                    VerticalBox {
+                        EditButton {
+                            visible: is_edited;
+                            clicked => {
+                                GContent.update_content(dialog.language, content_view.text);
+                                is_edited = false;
+                            }
+                        }
+
+                        DeleteButton {
                             clicked => {
                                 GContent.delete_content(dialog.language);
                                 is_edited = false;
@@ -150,115 +172,192 @@ export component DialogueBox inherits Rectangle {
                 }
             }
 
-            Horizontal {
-                alignment: start;
-                Rectangle {
+            Rectangle {
+                background: #222223;
+                border-radius: 6px;
+                border-width: 1px;
+                border-color: #2d2d2f;
+                width: 100%;
+
+                HorizontalBox {
+                    cross-axis-alignment: center;
+                    alignment: stretch;
+
                     new_lang := ComboBox {
+                        width: 72px;
                         model: GConfig.lang_list;
                         current-index: 0;
                     }
-                }
 
-                new_content := LineEdit {
-                    placeholder-text: "new dialog";
-                }
+                    new_content := LineEdit {
+                        placeholder-text: "new dialog";
+                    }
 
-                TextButton {
-                    text: "Add";
-                    clicked => {
-                        GContent.add_lang_content(new_lang.current-value, new_content.text);
-                        new_content.text = "";
-                        is_edited = false;
-                    };
+                    AddButton {
+                        width: 48px;
+                        clicked => {
+                            // TODO: DO not overwrite existed dialogue
+                            GContent.add_lang_content(new_lang.current-value, new_content.text);
+                            new_content.text = "";
+                            is_edited = false;
+                        };
+                    }
                 }
             }
         }
-
-        HorizontalDivider { }
 
         VerticalBox {
             Text {
-                text: "State Affect";
+                text: "STATE AFFECT";
+                font-size: 13px;
+                font-weight: 700;
             }
 
             Grid {
-                for affect[i] in GContent.dialogue.affects: Rectangle {
-                    row: i / 2;
-                    col: Math.mod(i, 2);
-                    InputChip {
-                        text: { affect.class + "->" + affect.state };
-                        trailing_icon: Icons.remove;
-                        trailing_icon_clicked => {
-                            GContent.delete_affect(affect.class);
-                        }
+                for affect[i] in GContent.dialogue.affects: TagChip {
+                    row: i / 3;
+                    col: Math.mod(i, 3);
+
+                    TouchArea {
+                        // Slint error?
                         clicked => { GContent.goto(affect.class, affect.state); }
+
+                        HorizontalBox {
+                            cross-axis-alignment: center;
+                            alignment: space-between;
+
+                            HorizontalBox {
+                                cross-axis-alignment: center;
+
+                                Text {
+                                    text: affect.class;
+                                    font-size: 11px;
+                                    font-weight: 400;
+                                    color: #a3a3a8;
+                                }
+
+                                Image {
+                                    source: @image-url("icons/arrow_right.svg");
+                                }
+
+                                Text {
+                                    text: affect.state;
+                                    font-size: 11px;
+                                    font-weight: 600;
+                                    color: #8b5cf6;
+                                }
+                            }
+
+                            TouchArea {
+                                clicked => {
+                                    // Slint error?
+                                    GContent.delete_affect(affect.class);
+                                }
+
+                                Image {
+                                    source: @image-url("icons/x_circle.svg");
+                                }
+                            }
+                        }
                     }
                 }
             }
 
-            Horizontal {
-                new_affect_class := SelectionBox {
-                    items: GContent.class_list;
-                    placeholder-text: "Target";
-                    filter(text) => {
-                        GContent.search_affect_class(text);
-                    }
-                }
-                // TODO: Filter state by class
-                new_affect_state := SelectionBox {
-                    items: GContent.state_list;
-                    placeholder-text: "Become";
-                    filter(text) => {
-                        GContent.search_affect_state(new_affect_class.text, text);
-                    }
-                }
+            Rectangle {
+                width: 100%;
+                background: #222223;
+                border-radius: 6px;
+                border-width: 1px;
+                border-color: #2d2d2f;
 
-                TextButton {
-                    text: "Add";
-                    clicked => {
-                        GContent.add_affect(new_affect_class.text, new_affect_state.text);
-                    };
+                HorizontalBox {
+                    cross-axis-alignment: center;
+
+                    new_affect_class := SelectionBox {
+                        items: GContent.class_list;
+                        placeholder-text: "Target";
+                        filter(text) => {
+                            GContent.search_affect_class(text);
+                        }
+                    }
+
+                    new_affect_state := SelectionBox {
+                        items: GContent.state_list;
+                        placeholder-text: "Become";
+                        filter(text) => {
+                            GContent.search_affect_state(new_affect_class.text, text);
+                        }
+                    }
+
+                    AddButton {
+                        width: 48px;
+                        clicked => {
+                            GContent.add_affect(new_affect_class.text, new_affect_state.text);
+                            new_affect_class.clear();
+                            new_affect_state.clear();
+                        };
+                    }
                 }
             }
         }
 
-        HorizontalDivider { }
-
-        Vertical {
-            event_label := Text {
-                text: "Event List";
+        VerticalBox {
+            Text {
+                text: "EVENTS";
+                font-size: 13px;
+                font-weight: 700;
             }
 
-            VerticalBox {
-                HorizontalBox {
-                    new_event := SelectionBox {
-                        items: GContent.event_list;
-                        filter(text) => {
-                            GContent.search_event(text);
-                        }
-                    }
-
-                    Rectangle {
-                        new_event_btn := TextButton {
-                            text: "Add";
-                            clicked => {
-                                GContent.add_event(new_event.text);
-                                new_event.clear();
-                            };
-                        }
+            HorizontalBox {
+                new_event := SelectionBox {
+                    items: GContent.event_list;
+                    filter(text) => {
+                        GContent.search_event(text);
                     }
                 }
 
-                ScrollView {
-                    Grid {
-                        for event[i] in GContent.dialogue.events: Rectangle {
-                            row: i / 2;
-                            col: Math.mod(i, 2);
-                            InputChip {
-                                text: event;
-                                trailing_icon: Icons.remove;
-                                trailing_icon_clicked => {
-                                    GContent.delete_event(event);
+                Rectangle {
+                    AddButton {
+                        text: "Add Trigger";
+                        clicked => {
+                            GContent.add_event(new_event.text);
+                            new_event.clear();
+                        };
+                    }
+                }
+            }
+
+            ScrollView {
+                Grid {
+                    for event[i] in GContent.dialogue.events: TagChip {
+                        row: i / 3;
+                        col: Math.mod(i, 3);
+
+                        TouchArea {
+                            width: 100%;
+                            height: 100%;
+
+                            HorizontalBox {
+                                alignment: space-between;
+                                cross-axis-alignment: center;
+
+                                Text {
+                                    text: event;
+                                    color: #10b981;
+                                    font-size: 11px;
+                                    font-weight: 600;
+                                }
+
+                                Rectangle {
+                                    Button {
+                                        clicked => {
+                                            GContent.delete_event(event);
+                                        }
+                                    }
+
+                                    Image {
+                                        source: @image-url("icons/x_circle.svg");
+                                    }
                                 }
                             }
                         }
@@ -269,15 +368,40 @@ export component DialogueBox inherits Rectangle {
     }
 }
 
+component AddText inherits Rectangle {
+    in property <string> placeholder;
+    callback add(string);
+
+    HorizontalBox {
+        value := LineEdit {
+            placeholder-text: placeholder;
+            font-size: 12px;
+            accepted(text) => { add(text); self.text = ""; }
+        }
+
+        AddButton {
+            width: 48px;
+            clicked => { add(value.text); value.text = ""; }
+        }
+    }
+}
+
 export component ContentTab inherits TabReload {
     in-out property <bool> is_saved;
 
-    Horizontal {
+    HorizontalBox {
         // TODO: Allow resizeable
+        alignment: stretch;
+
         Rectangle {
             width: 15%;
 
-            Vertical {
+            VerticalBox {
+                ColumnTitle {
+                    title: "Class";
+                    count: GContent.classes.length;
+                }
+
                 SearchBox {
                     search(text) => {
                         GContent.search_class(text);
@@ -317,21 +441,11 @@ export component ContentTab inherits TabReload {
                     }
                 }
 
-                Horizontal {
-                    new_class := LineEdit {
-                        placeholder-text: "New class";
-                        accepted(text) => {
-                            GContent.add-class(new_class.text);
-                            self.text = "";
-                            root.is_saved = false;
-                        }
-                    }
-
-                    ElevatedButton {
-                        text: "Add";
-                        clicked => {
-                            new_class.accepted(new_class.text);
-                        };
+                AddText {
+                    placeholder: "New class";
+                    add(text) => {
+                        GContent.add-class(text);
+                        root.is_saved = false;
                     }
                 }
             }
@@ -343,6 +457,11 @@ export component ContentTab inherits TabReload {
             width: 15%;
 
             Vertical {
+                ColumnTitle {
+                    title: "State";
+                    count: GContent.states.length;
+                }
+
                 SearchBox {
                     search(text) => {
                         GContent.search_state(text);
@@ -385,22 +504,10 @@ export component ContentTab inherits TabReload {
                     visible: {
                         GContent.selecting_class != "" || GContent.selecting_state != ""
                     };
-                    Horizontal {
-                        new_state := LineEdit {
-                            placeholder-text: "New state";
-                            accepted(text) => {
-                                GContent.add-state(new_state.text);
-                                root.is_saved = false;
-                                self.text = "";
-                            }
-                        }
 
-                        ElevatedButton {
-                            text: "Add";
-                            clicked => {
-                                new_state.accepted(new_state.text);
-                            }
-                        }
+                    AddText {
+                        placeholder: "New state";
+                        add(text) => { GContent.add-state(text); root.is_saved = false; }
                     }
                 }
             }
@@ -412,6 +519,11 @@ export component ContentTab inherits TabReload {
             width: 20%;
 
             Vertical {
+                ColumnTitle {
+                    title: "Dialogue";
+                    count: GContent.dialogues.length;
+                }
+
                 SearchBox {
                     search(text) => {
                         GContent.search_dialogue(text);
@@ -437,11 +549,10 @@ export component ContentTab inherits TabReload {
                     }
                 }
 
-                ElevatedButton {
+                AddButton {
                     visible: {
                         GContent.selecting_state != ""
                     };
-                    text: "Add";
                     clicked => {
                         GContent.add-dialog();
                         root.is_saved = false;
@@ -452,12 +563,11 @@ export component ContentTab inherits TabReload {
 
         VerticalDivider { }
 
-        Rectangle {
-            DialogueBox {
-                visible: {
-                    GContent.selecting_dialogue >= 0
-                };
-            }
+        DialogueBox {
+            width: 45%;
+            visible: {
+                GContent.selecting_dialogue >= 0
+            };
         }
     }
 }

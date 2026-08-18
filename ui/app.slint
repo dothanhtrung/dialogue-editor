@@ -111,14 +111,11 @@ export component AppWindow inherits MaterialWindow {
                     Rectangle {
                         visible: undo_available;
                         Button {
+                            icon: @image-url("icons/btn_undo.svg");
                             clicked => {
                                 root.undo();
                                 is_saved = false;
                             }
-                        }
-
-                        Image {
-                            source: @image-url("icons/btn_undo.svg");
                         }
 
                         Tooltip {
@@ -129,15 +126,11 @@ export component AppWindow inherits MaterialWindow {
                     Rectangle {
                         visible: redo_available;
                         Button {
-
+                            icon: @image-url("icons/btn_redo.svg");
                             clicked => {
                                 root.redo();
                                 is_saved = false;
                             }
-                        }
-
-                        Image {
-                            source: @image-url("icons/btn_redo.svg");
                         }
 
                         Tooltip {
@@ -147,14 +140,11 @@ export component AppWindow inherits MaterialWindow {
 
                     Rectangle {
                         Button {
+                            icon: @image-url("icons/btn_refresh.svg");
                             clicked => {
                                 GContent.refresh();
                                 GNameMap.refresh();
                             }
-                        }
-
-                        Image {
-                            source: @image-url("icons/btn_refresh.svg");
                         }
 
                         Tooltip {

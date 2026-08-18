@@ -18,9 +18,71 @@ import {
 import { SearchBar } from "material-1.0/ui/components/search_bar.slint";
 import { Icons } from "material-1.0/ui/icons/icons.slint";
 
+export component TagChip inherits Rectangle {
+    background: #2a2a2b;
+    border-radius: 12px;
+    border-width: 1px;
+    border-color: #2d2d2f;
+
+    callback hover();
+    callback clicked();
+    callback btn_clicked();
+}
+
+export component AddButton inherits Rectangle {
+    in property <string> text: "Add";
+
+    callback clicked;
+
+    background: #3878f5;
+    border-radius: 4px;
+
+    Button {
+        width: 100%;
+        height: 100%;
+
+        clicked => { root.clicked(); }
+    }
+
+    Text {
+        text: "Add";
+        font-size: 12px;
+        font-weight: 600;
+    }
+}
+
+export component InlineButton inherits Rectangle {
+    in property <image> image;
+    in property <styled-text> tooltip;
+
+    callback clicked();
+
+    Button {
+        clicked => { root.clicked(); }
+    }
+
+    Image {
+        source: image;
+    }
+
+    Tooltip {
+        text: tooltip;
+    }
+}
+
+export component EditButton inherits InlineButton {
+    image: @image-url("icons/btn_edit.svg");
+    tooltip: @markdown("Submit");
+}
+
+export component DeleteButton inherits InlineButton {
+    image: @image-url("icons/btn_delete.svg");
+    tooltip: @markdown("Delete");
+}
+
 export component TabReload inherits Rectangle { }
 
-export component SelectableBox inherits ElevatedCard {
+export component SelectableBox inherits Rectangle {
     in property <string> value;
     in property <bool> selected;
 
@@ -44,10 +106,11 @@ export component SelectableBox inherits ElevatedCard {
                         return value;
                     }
                 };
+                font-size: 13px;
+                font-weight: 400;
             }
 
-            del_btn := IconButton {
-                icon: Icons.remove;
+            del_btn := DeleteButton {
                 visible: selected;
                 clicked => {
                     delete();
@@ -58,7 +121,7 @@ export component SelectableBox inherits ElevatedCard {
 }
 
 
-export component EditableTextBox inherits ElevatedCard {
+export component EditableTextBox inherits Rectangle {
     in property <string> value;
     in-out property <bool> selected;
     private property <bool> is_edited: false;
@@ -80,6 +143,7 @@ export component EditableTextBox inherits ElevatedCard {
                 text: value;
                 enabled: selected;
                 read-only: !selected;
+                font-size: 13px;
 
                 accepted(text) => {
                     submit(self.text);
@@ -91,22 +155,15 @@ export component EditableTextBox inherits ElevatedCard {
                 }
             }
 
-            if (root.is_edited): IconButton {
-                icon: Icons.check;
-                tooltip: "Submit";
-                inline: true;
-
+            if (root.is_edited): EditButton {
                 clicked => {
                     submit(edit.text);
                     is_edited = false;
                 }
             }
 
-            del_btn := IconButton {
-                icon: Icons.remove;
+            del_btn := DeleteButton {
                 visible: selected;
-                tooltip: "Remove";
-                inline: true;
 
                 clicked => {
                     delete();
@@ -117,12 +174,18 @@ export component EditableTextBox inherits ElevatedCard {
     }
 }
 
-export component SearchBox inherits ElevatedCard {
+export component SearchBox inherits Rectangle {
+    in property <string> placeholder: "Search...";
+
     callback search(string);
+
+    background: #131314;
+
     LineEdit {
+        placeholder-text: placeholder;
+        font-size: 12px;
         width: 100%;
-        height: 100%;
-        placeholder-text: "Search...";
+
         edited(text) => { search(text); }
         accepted(text) => { search(text); }
     }
@@ -136,6 +199,7 @@ export component SelectionBox inherits Rectangle {
 
     public function clear() {
         focus-field.text = "";
+        popup.close();
     }
 
     callback filter(string);
@@ -150,6 +214,8 @@ export component SelectionBox inherits Rectangle {
             width: root.width;
             placeholder-text: root.placeholder-text;
             input-type: InputType.search;
+            font-size: 12px;
+
             edited(text) => {
                 root.filter(text);
                 popup.show();
@@ -186,6 +252,8 @@ export component SelectionBox inherits Rectangle {
 
                             Text {
                                 text: item;
+                                font-size: 12px;
+                                font-weight: 400;
                                 vertical-alignment: center;
                                 x: 8px;
                                 color: Palette.foreground;
@@ -198,10 +266,36 @@ export component SelectionBox inherits Rectangle {
 
                             clicked => {
                                 focus-field.text = item;
+                                popup.close();
                             }
                         }
                     }
                 }
+            }
+        }
+    }
+}
+
+export component ColumnTitle inherits Rectangle {
+    in property <string> title;
+    in property <string> count;
+
+    HorizontalBox {
+        alignment: space-between;
+        Text {
+            text: title;
+            font-size: 11px;
+            font-weight: 700;
+        }
+
+        Rectangle {
+            border-radius: 4px;
+            background: #2a2a2b;
+
+            Text {
+                text: count;
+                font-weight: 600;
+                font-size: 10px;
             }
         }
     }
