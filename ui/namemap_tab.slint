@@ -5,22 +5,17 @@ import {
     ScrollView,
     Palette,
     ListView,
+    VerticalBox,
+    HorizontalBox,
 } from "std-widgets.slint";
-import { TabReload, EditableTextBox, SearchBox } from "app_widgets.slint";
 import {
-    Vertical,
-    Horizontal,
-    OutlinedCard,
-    FloatingActionButton,
-    VerticalDivider,
-} from "material-1.0/material.slint";
-import { ElevatedCard } from "material-1.0/ui/components/card.slint";
-import {
-    ElevatedButton,
-} from "material-1.0/ui/components/elevated_button.slint";
-import { Icons } from "material-1.0/ui/icons/icons.slint";
-import { Icon } from "material-1.0/ui/components/icon.slint";
-import { IconButton } from "material-1.0/ui/components/icon_button.slint";
+    TabReload,
+    EditableTextBox,
+    SearchBox,
+    EditButton,
+    DeleteButton,
+    AddButton,
+} from "app_widgets.slint";
 
 
 export struct StringId {
@@ -57,67 +52,121 @@ export global GNameMap {
 // TODO: Remove this tab. Intergrate ID into content and sequence tab.
 // TODO: Allow rename
 component NameMapItem inherits Rectangle {
+    border-color: #292e3d;
+
     in property <StringId> value;
     property <bool> is_edited: false;
 
     callback update(string, string);
     callback delete(string);
 
-    Horizontal {
-        Text {
-            text: value.name;
-        }
+    HorizontalBox {
+        cross-axis-alignment: center;
+        alignment: space-between;
 
-        edit := LineEdit {
-            text: value.id;
-            input-type: number;
-            edited(text) => {
-                is_edited = true;
+        HorizontalBox {
+            Path {
+                width: 9.998px;
+                height: 9.998px;
+                commands: "M5.58602 0.999603C5.85123 0.99966 6.10557 1.10506 6.29308 1.29263L10.6454 5.64499C10.8713 5.87227 10.998 6.17966 10.998 6.50006C10.998 6.82047 10.8713 7.12786 10.6454 7.35513L7.35516 10.6454C7.12789 10.8712 6.8205 10.998 6.50009 10.998C6.17969 10.998 5.8723 10.8712 5.64502 10.6454L1.29266 6.29304C1.10509 6.10554 0.99969 5.8512 0.999634 5.58599V1.99969C0.999634 1.73445 1.105 1.48007 1.29255 1.29252C1.4801 1.10497 1.73448 0.999603 1.99972 0.999603H5.58602Z";
+                stroke: #94a3b8;
+                stroke-width: 2px;
             }
-            accepted(text) => {
-                update(value.name, self.text);
-                is_edited = false;
-            }
-        }
 
-        if (is_edited): IconButton {
-            icon: Icons.check;
-            inline: true;
-            clicked => {
-                update(value.name, edit.text);
-                root.is_edited = false;
+            Text {
+                text: value.name;
+                font-size: 14px;
+                font-weight: 500;
             }
         }
 
-        IconButton {
-            icon: Icons.remove;
-            inline: true;
-            clicked => {
-                delete(value.name);
+        HorizontalBox {
+            edit := LineEdit {
+                text: value.id;
+                input-type: number;
+                font-size: 12px;
+
+                edited(text) => {
+                    is_edited = true;
+                }
+                accepted(text) => {
+                    update(value.name, self.text);
+                    is_edited = false;
+                }
+            }
+
+            if (is_edited): EditButton {
+                clicked => {
+                    update(value.name, edit.text);
+                    root.is_edited = false;
+                }
+            }
+
+            DeleteButton {
+                clicked => {
+                    delete(value.name);
+                }
             }
         }
     }
 }
 
 export component StringIdContainer inherits Rectangle {
-    in-out property <[StringId]> values;
+    background: #1b1e28;
+    border-radius: 8px;
+    border-width: 1px;
+    border-color: #292e3d;
+
+    in property <[StringId]> values;
+    in property <string> title;
 
     callback delete(string);
     callback update(string, string); // name, id
     callback new(string, string);
     callback search(string);
 
-    Vertical {
+    VerticalLayout {
+        Rectangle {
+            background: #14161d;
+            height: 48px;
+
+            HorizontalBox {
+                alignment: space-between;
+                cross-axis-alignment: center;
+
+                Text {
+                    text: title + " NAME / ID";
+                    font-size: 15px;
+                    font-weight: 700;
+                }
+
+                Rectangle {
+                    background: #1a2e44;
+                    border-radius: 10px;
+                    Text {
+                        font-size: 11px;
+                        font-weight: 700;
+                        text: values.length + " items";
+                    }
+                }
+            }
+        }
+
         SearchBox {
             search(text) => {
                 root.search(text);
             }
         }
 
-        ListView {
-            for value[i] in values: ElevatedCard {
-                NameMapItem {
+        Rectangle {
+            background: #1b1e28;
+
+            ListView {
+                for value[i] in values: NameMapItem {
                     value: value;
+
+                    background: { if Math.mod(i, 2) == 0 { #14161d } else { #1b1e28; } };
+
                     update(name, id) => {
                         update(name,id);
                     }
@@ -128,27 +177,32 @@ export component StringIdContainer inherits Rectangle {
             }
         }
 
-        Horizontal {
-            new_name := LineEdit {
-                placeholder-text: "New name";
+        Rectangle {
+            background: #14161d;
+            border-color: #292e3d;
 
-                accepted(text) => {
-                    submit()
+            HorizontalBox {
+                new_name := LineEdit {
+                    placeholder-text: "Name";
+
+                    accepted(text) => {
+                        submit()
+                    }
                 }
-            }
 
-            new_id := LineEdit {
-                placeholder-text: "New id";
-                input-type: number;
-                accepted(text) => {
-                    submit()
+                new_id := LineEdit {
+                    placeholder-text: "ID";
+                    input-type: number;
+                    accepted(text) => {
+                        submit()
+                    }
                 }
-            }
 
-            ElevatedButton {
-                text: "Add";
-                clicked => {
-                    submit();
+                AddButton {
+                    width: 48px;
+                    clicked => {
+                        submit();
+                    }
                 }
             }
         }
@@ -165,8 +219,9 @@ export component StringIdContainer inherits Rectangle {
 export component NameMapTab inherits TabReload {
     in-out property <bool> is_saved;
 
-    Horizontal {
+    HorizontalBox {
         StringIdContainer {
+            title: "CLASS";
             values: GNameMap.classes;
             delete(name) => {
                 GNameMap.delete_class(name);
@@ -185,9 +240,8 @@ export component NameMapTab inherits TabReload {
             }
         }
 
-        VerticalDivider { }
-
         StringIdContainer {
+            title: "STATE";
             values: GNameMap.states;
             delete(name) => {
                 GNameMap.delete_state(name);
@@ -206,12 +260,11 @@ export component NameMapTab inherits TabReload {
             }
         }
 
-        VerticalDivider { }
-
         StringIdContainer {
+            title: "EVENT";
             values: GNameMap.events;
-            delete(index) => {
-                GNameMap.delete_event(index);
+            delete(name) => {
+                GNameMap.delete_event(name);
                 is_saved = false;
             }
             update(name, id) => {
@@ -224,6 +277,26 @@ export component NameMapTab inherits TabReload {
             }
             search(text) => {
                 GNameMap.search_event(text);
+            }
+        }
+
+        StringIdContainer {
+            title: "SEQUENCE";
+            values: GNameMap.sequences;
+            delete(name) => {
+                GNameMap.delete_sequence(name);
+                is_saved = false;
+            }
+            update(name, id) => {
+                GNameMap.update_sequence_id(name, id);
+                is_saved = false;
+            }
+            new(name, id) => {
+                GNameMap.new_sequence(name, id);
+                is_saved = false;
+            }
+            search(text) => {
+                GNameMap.search_sequence(text);
             }
         }
     }

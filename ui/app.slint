@@ -20,13 +20,6 @@ import { ContentTab, GContent } from "content_tab.slint";
 import { GSequence, SequenceTab } from "sequence_tab.slint";
 import { ConfigTab } from "config_tab.slint";
 import { GConfig } from "common.slint";
-import {
-    Vertical,
-    ElevatedButton,
-    MaterialWindow,
-    Horizontal,
-    SnackBar,
-} from "material-1.0/material.slint";
 
 export {
     GNoti,
@@ -37,7 +30,7 @@ export {
     GSequence,
     UnsaveLoadDialog,
 }
-export component AppWindow inherits MaterialWindow {
+export component AppWindow inherits Window {
     title: "Dialogue Editor";
     maximized: true;
 

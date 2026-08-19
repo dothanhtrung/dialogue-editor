@@ -9,15 +9,6 @@ import {
     VerticalBox,
     HorizontalBox,
 } from "std-widgets.slint";
-import {
-    IconButton,
-    Horizontal,
-    Vertical,
-    ElevatedCard,
-} from "material-1.0/material.slint";
-import { SearchBar } from "material-1.0/ui/components/search_bar.slint";
-import { Icons } from "material-1.0/ui/icons/icons.slint";
-
 
 
 export component TagChip inherits Rectangle {
@@ -117,7 +108,7 @@ export component SelectableBox inherits Rectangle {
             select();
         }
 
-        Horizontal {
+        HorizontalBox {
             Text {
                 text: {
                     if (value == "") {
@@ -158,7 +149,7 @@ export component EditableTextBox inherits Rectangle {
             select();
         }
 
-        Horizontal {
+        HorizontalBox {
             edit := LineEdit {
                 text: value;
                 enabled: selected;

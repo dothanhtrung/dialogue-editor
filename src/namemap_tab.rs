@@ -1,12 +1,20 @@
 use crate::{
-    AppData, AppWindow, Config, GContent, GNameMap, GSequence, StringId, common::{
+    AppData,
+    AppWindow,
+    Config,
+    GContent,
+    GNameMap,
+    GSequence,
+    StringId,
+    common::{
         NameType,
         NotiLevel,
         id_to_name,
         name_to_id,
         new_regex,
         show_noti,
-    }, history::{
+    },
+    history::{
         Action,
         ActionTarget,
         ActionType,
@@ -166,6 +174,41 @@ fn delete_event_map(
     }
 }
 
+fn delete_sequence_map(
+    data: Rc<RefCell<AppData>>,
+    config: Rc<RefCell<Config>>,
+    ui: Weak<AppWindow>,
+) -> impl Fn(SharedString) {
+    move |name| {
+        let mut data = data.borrow_mut();
+        let mut config = config.borrow_mut();
+        let ui = ui.unwrap();
+
+        let Some(&sequence_id) = data.sequence_name_map.get(name.as_str()) else {
+            return;
+        };
+        if data.sequences.contains_key(&sequence_id) {
+            show_noti(
+                &ui,
+                NotiLevel::Error,
+                format!("Sequence '{}' is still in used", name).as_str(),
+            );
+            return;
+        }
+
+        data.sequence_name_map.remove(name.as_str());
+        reload_sequence_map(&data, &ui, "");
+
+        config.history.add_undo(
+            Action {
+                action: ActionType::AddId(sequence_id),
+                target: ActionTarget::NamemapSequence(name.to_string()),
+            },
+            &ui,
+        );
+    }
+}
+
 fn update_class_id(
     data: Rc<RefCell<AppData>>,
     config: Rc<RefCell<Config>>,
@@ -244,6 +287,38 @@ fn update_event_id(
                 Action {
                     action: ActionType::UpdateId(new_id, old_id),
                     target: ActionTarget::NamemapEvent(name.to_string()),
+                },
+                &ui,
+            );
+        }
+    }
+}
+
+fn update_sequence_id(
+    data: Rc<RefCell<AppData>>,
+    config: Rc<RefCell<Config>>,
+    ui: Weak<AppWindow>,
+) -> impl Fn(SharedString, SharedString) {
+    move |name, id| {
+        let mut data = data.borrow_mut();
+        let mut config = config.borrow_mut();
+        let ui = ui.unwrap();
+        let old_id = name_to_id(name.as_str(), &mut data.sequence_name_map);
+
+        if let Ok(new_id) = update_id(
+            &mut data,
+            &ui,
+            name.to_string(),
+            old_id,
+            id.as_str(),
+            NameType::Sequence,
+        ) && let Some(value) = data.sequences.shift_remove(&old_id)
+        {
+            data.sequences.insert(new_id, value);
+            config.history.add_undo(
+                Action {
+                    action: ActionType::UpdateId(new_id, old_id),
+                    target: ActionTarget::NamemapSequence(name.to_string()),
                 },
                 &ui,
             );
@@ -334,6 +409,34 @@ fn add_new_event(
     }
 }
 
+fn add_new_sequence(
+    data: Rc<RefCell<AppData>>,
+    config: Rc<RefCell<Config>>,
+    ui: Weak<AppWindow>,
+) -> impl Fn(SharedString, SharedString) {
+    move |name, id| {
+        if name.is_empty() {
+            return;
+        }
+
+        let mut data = data.borrow_mut();
+        let mut config = config.borrow_mut();
+        let ui = ui.unwrap();
+
+        if let Ok(new_id) = add_new(&mut data, &ui, name.to_string(), id.as_str(), NameType::Sequence) {
+            reload_sequence_map(&data, &ui, "");
+
+            config.history.add_undo(
+                Action {
+                    action: ActionType::DeleteId(new_id),
+                    target: ActionTarget::NamemapSequence(name.to_string()),
+                },
+                &ui,
+            );
+        }
+    }
+}
+
 fn search_class_map(data: Rc<RefCell<AppData>>, ui: Weak<AppWindow>) -> impl Fn(SharedString) {
     move |search| {
         let data = data.borrow();
@@ -349,11 +452,20 @@ fn search_state_map(data: Rc<RefCell<AppData>>, ui: Weak<AppWindow>) -> impl Fn(
         reload_state_map(&data, &ui, search.as_str());
     }
 }
+
 fn search_event_map(data: Rc<RefCell<AppData>>, ui: Weak<AppWindow>) -> impl Fn(SharedString) {
     move |search| {
         let data = data.borrow();
         let ui = ui.unwrap();
         reload_event_map(&data, &ui, search.as_str());
+    }
+}
+
+fn search_sequence_map(data: Rc<RefCell<AppData>>, ui: Weak<AppWindow>) -> impl Fn(SharedString) {
+    move |search| {
+        let data = data.borrow();
+        let ui = ui.unwrap();
+        reload_sequence_map(&data, &ui, search.as_str());
     }
 }
 
