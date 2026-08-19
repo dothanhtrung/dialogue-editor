@@ -129,6 +129,15 @@ pub fn add_lang_content(
             && let Some(dialogue) = state.get_mut(config.selected_dialogue)
         {
             let lang = Language::from_str(lang.as_str()).unwrap_or_default();
+            if dialogue.contents.contains_key(&lang) {
+                show_noti(
+                    &ui,
+                    NotiLevel::Warn,
+                    format!("Dialogue for language {} already exists", lang).as_str(),
+                );
+                return;
+            }
+
             dialogue.contents.insert(lang, content.to_string());
             reload_dialogue_detail(&data, &ui, &config);
 

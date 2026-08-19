@@ -9,6 +9,7 @@ import {
     ColumnTitle,
     AddButton,
     TagChip,
+    AddText,
 } from "app_widgets.slint";
 import {
     Palette,
@@ -22,24 +23,8 @@ import {
     ScrollView,
     GridBox,
 } from "std-widgets.slint";
-import {
-    Vertical,
-    Horizontal,
-    OutlinedCard,
-    ElevatedCard,
-    IconButton,
-    TextButton,
-    FilledCard,
-    ElevatedButton,
-    HorizontalDivider,
-    FloatingActionButton,
-    InputChip,
-} from "material-1.0/material.slint";
-import { Icons } from "material-1.0/ui/icons/icons.slint";
 import { VerticalDivider } from "material-1.0/ui/components/divider.slint";
 import { GConfig } from "common.slint";
-import { ListItem, Grid } from "material-1.0/material.slint";
-import { SearchBar } from "material-1.0/ui/components/search_bar.slint";
 
 
 export struct ContentLang {
@@ -117,7 +102,7 @@ export component DialogueBox inherits Rectangle {
 
             Text {
                 text: "CONTENT";
-                font-size: 13px;
+                font-size: 14px;
                 font-weight: 700;
             }
 
@@ -138,7 +123,7 @@ export component DialogueBox inherits Rectangle {
                             Text {
                                 color: #f59e0b;
                                 text: dialog.language;
-                                font-size: 11px;
+                                font-size: 12px;
                                 font-weight: 600;
                             }
                         }
@@ -209,11 +194,11 @@ export component DialogueBox inherits Rectangle {
         VerticalBox {
             Text {
                 text: "STATE AFFECT";
-                font-size: 13px;
+                font-size: 14px;
                 font-weight: 700;
             }
 
-            Grid {
+            GridBox {
                 for affect[i] in GContent.dialogue.affects: TagChip {
                     row: i / 3;
                     col: Math.mod(i, 3);
@@ -231,7 +216,7 @@ export component DialogueBox inherits Rectangle {
 
                                 Text {
                                     text: affect.class;
-                                    font-size: 11px;
+                                    font-size: 12px;
                                     font-weight: 400;
                                     color: #a3a3a8;
                                 }
@@ -242,7 +227,7 @@ export component DialogueBox inherits Rectangle {
 
                                 Text {
                                     text: affect.state;
-                                    font-size: 11px;
+                                    font-size: 12px;
                                     font-weight: 600;
                                     color: #8b5cf6;
                                 }
@@ -304,7 +289,7 @@ export component DialogueBox inherits Rectangle {
         VerticalBox {
             Text {
                 text: "EVENTS";
-                font-size: 13px;
+                font-size: 14px;
                 font-weight: 700;
             }
 
@@ -328,7 +313,7 @@ export component DialogueBox inherits Rectangle {
             }
 
             ScrollView {
-                Grid {
+                GridBox {
                     for event[i] in GContent.dialogue.events: TagChip {
                         row: i / 3;
                         col: Math.mod(i, 3);
@@ -344,7 +329,7 @@ export component DialogueBox inherits Rectangle {
                                 Text {
                                     text: event;
                                     color: #10b981;
-                                    font-size: 11px;
+                                    font-size: 12px;
                                     font-weight: 600;
                                 }
 
@@ -364,24 +349,6 @@ export component DialogueBox inherits Rectangle {
                     }
                 }
             }
-        }
-    }
-}
-
-component AddText inherits Rectangle {
-    in property <string> placeholder;
-    callback add(string);
-
-    HorizontalBox {
-        value := LineEdit {
-            placeholder-text: placeholder;
-            font-size: 12px;
-            accepted(text) => { add(text); self.text = ""; }
-        }
-
-        AddButton {
-            width: 48px;
-            clicked => { add(value.text); value.text = ""; }
         }
     }
 }
@@ -456,7 +423,7 @@ export component ContentTab inherits TabReload {
         Rectangle {
             width: 15%;
 
-            Vertical {
+            VerticalBox {
                 ColumnTitle {
                     title: "State";
                     count: GContent.states.length;
@@ -518,7 +485,7 @@ export component ContentTab inherits TabReload {
         Rectangle {
             width: 20%;
 
-            Vertical {
+            VerticalBox {
                 ColumnTitle {
                     title: "Dialogue";
                     count: GContent.dialogues.length;

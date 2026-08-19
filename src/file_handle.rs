@@ -2,18 +2,11 @@ pub mod bin_file;
 pub mod ron_file;
 
 use crate::{
-    AppData,
-    AppWindow,
-    Config,
-    GFile,
-    UnsaveLoadDialog,
-    common::{
+    AppData, AppWindow, Config, GFile, UnsaveLoadDialog, common::{
         NotiLevel,
         id_to_name,
         show_noti,
-    },
-    content_tab::reload_content,
-    namemap_tab::reload_all_map,
+    }, content_tab::reload_content, namemap_tab::reload_all_map, sequence_tab::{reload_sequence, reload_sequence_items},
 };
 use rfd::FileDialog;
 use serde::{
@@ -181,6 +174,8 @@ fn load(data: &mut AppData, config: &mut Config, ui: &AppWindow) {
 
     reload_content(data, ui, config);
     reload_all_map(data, ui);
+    reload_sequence(data, ui, "");
+    reload_sequence_items(data, ui, config.selected_sequence);
     ui.set_is_saved(true);
     ui.global::<GFile>().set_is_loading(false);
 }

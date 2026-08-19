@@ -28,6 +28,7 @@ pub enum NameType {
     Class,
     State,
     Event,
+    Sequence,
 }
 
 pub fn show_noti(ui: &AppWindow, level: NotiLevel, message: &str) {

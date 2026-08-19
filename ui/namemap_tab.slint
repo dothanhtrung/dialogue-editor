@@ -32,21 +32,26 @@ export global GNameMap {
     in-out property <[StringId]> classes;
     in-out property <[StringId]> states;
     in-out property <[StringId]> events;
+    in-out property <[StringId]> sequences;
 
     callback refresh();
 
     callback delete_class(string);
     callback delete_state(string);
     callback delete_event(string);
+    callback delete_sequence(string);
     callback update_class_id(string, string); // name, id
     callback update_state_id(string, string);
     callback update_event_id(string, string);
+    callback update_sequence_id(string, string);
     callback new_class(string, string); // name ,id
     callback new_state(string, string); // name ,id
     callback new_event(string, string); // name ,id
+    callback new_sequence(string, string); // name ,id
     callback search_class(string);
     callback search_state(string);
     callback search_event(string);
+    callback search_sequence(string);
 }
 
 // TODO: Remove this tab. Intergrate ID into content and sequence tab.

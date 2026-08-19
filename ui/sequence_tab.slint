@@ -4,6 +4,9 @@ import {
     SelectableBox,
     SearchBox,
     SelectionBox,
+    AddText,
+    AddButton,
+    DeleteButton,
 } from "app_widgets.slint";
 import {
     Palette,
@@ -17,23 +20,10 @@ import {
     ScrollView,
 } from "std-widgets.slint";
 import {
-    Vertical,
-    Horizontal,
-    OutlinedCard,
-    ElevatedCard,
-    IconButton,
-    TextButton,
-    FilledCard,
-    ElevatedButton,
     HorizontalDivider,
-    FloatingActionButton,
-    InputChip,
+    VerticalDivider,
 } from "material-1.0/material.slint";
-import { Icons } from "material-1.0/ui/icons/icons.slint";
-import { VerticalDivider } from "material-1.0/ui/components/divider.slint";
 import { GConfig } from "common.slint";
-import { ListItem, Grid } from "material-1.0/material.slint";
-import { SearchBar } from "material-1.0/ui/components/search_bar.slint";
 import { GContent } from "content_tab.slint";
 
 export struct UiSequenceItem {
@@ -67,17 +57,51 @@ export global GSequence {
 export component SequenceTab inherits TabReload {
     in-out property <bool> is_saved;
 
-    HorizontalLayout {
+    HorizontalBox {
         Rectangle {
-            width: 300px;
+            width: 340px;
+            background: #1a1b1e;
+            border-radius: 8px;
+            border-width: 1px;
+            border-color: #2e3035;
 
-            VerticalLayout {
+            VerticalBox {
+                HorizontalBox {
+                    alignment: space-between;
+                    cross-axis-alignment: center;
+
+                    HorizontalBox {
+                        cross-axis-alignment: center;
+
+                        Image {
+                            source: @image-url("icons/sequence_icon.svg");
+                            width: 10.5px;
+                            height: 8.168px;
+                        }
+
+                        Text {
+                            text: "SEQUENCE LIST";
+                            font-size: 13px;
+                            font-weight: 700;
+                        }
+                    }
+
+                    Text {
+                        text: GSequence.sequences.length + " total";
+                        font-size: 11px;
+                        font-weight: 600;
+                        color: #9ca3af;
+                    }
+                }
+
                 SearchBox {
                     search(text) => { GSequence.search(text); }
                 }
 
                 ListView {
                     for sequence in GSequence.sequences: Rectangle {
+                        border-color: #2e3035;
+
                         EditableTextBox {
                             value: sequence;
                             selected: sequence == GSequence.selected_sequence;
@@ -89,84 +113,198 @@ export component SequenceTab inherits TabReload {
                     }
                 }
 
-                HorizontalLayout {
-                    new_sequence_name := LineEdit {
-                        placeholder-text: "New Sequence";
-                    }
-
-                    Button {
-                        text: "Add";
-                        clicked => { GSequence.add(new_sequence_name.text); }
+                AddText {
+                    placeholder: "New sequence";
+                    add(text) => {
+                        GSequence.add(text);
+                        root.is_saved = false;
                     }
                 }
             }
         }
 
-        VerticalDivider { }
+        Rectangle {
+            background: #1a1b1e;
+            border-radius: 8px;
+            border-width: 1px;
+            border-color: #2e3035;
 
-        VerticalLayout {
-            Text {
-                text: GSequence.info.name;
-            }
+            VerticalBox {
+                Rectangle {
+                    border-color: #2e3035;
+                    VerticalBox {
+                        Text {
+                            text: GSequence.info.name;
+                            font-size: 17px;
+                            font-weight: 700;
+                        }
 
-            HorizontalDivider { }
-
-            Text {
-                text: "APPEND NEW SEQUENCE STEP";
-            }
-
-            HorizontalLayout {
-                new_item_class := SelectionBox {
-                    placeholder-text: "Class";
-                    items: GContent.class_list;
-                    filter(text) => {
-                        GContent.search_affect_class(text);
+                        Text {
+                            text: {
+                                if GSequence.info.id != "" {
+                                    "ID: " + GSequence.info.id
+                                }
+                                else {
+                                    ""
+                                }
+                            };
+                            font-size: 12px;
+                            font-weight: 400;
+                            color: #9ca3af;
+                        }
                     }
                 }
 
-                new_item_state := SelectionBox {
-                    placeholder-text: "State";
-                    items: GContent.state_list;
-                    filter(text) => {
-                        GContent.search_affect_state(new_item_class.text, text);
+                Rectangle {
+                    background: #222327;
+                    border-radius: 8px;
+                    border-width: 1px;
+                    border-color: #2e3035;
+
+                    VerticalBox {
+                        HorizontalBox {
+                            cross-axis-alignment: center;
+
+                            Path {
+                                width: 7.001px;
+                                height: 7.001px;
+                                commands: "M1 4.5004H8.0008M4.5004 1V8.0008";
+                                stroke: #38bdf8;
+                                stroke-width: 2px;
+                            }
+
+                            Text {
+                                text: "APPEND NEW SEQUENCE STEP";
+                                font-size: 12px;
+                                font-weight: 700;
+                            }
+                        }
+
+                        HorizontalBox {
+                            new_item_class := SelectionBox {
+                                placeholder-text: "Class";
+                                items: GContent.class_list;
+                                filter(text) => {
+                                    GContent.search_affect_class(text);
+                                }
+                            }
+
+                            new_item_state := SelectionBox {
+                                placeholder-text: "State";
+                                items: GContent.state_list;
+                                filter(text) => {
+                                    GContent.search_affect_state(new_item_class.text, text);
+                                }
+                            }
+
+                            new_item_dialogue := LineEdit {
+                                placeholder-text: "Dialogue Index";
+                                input-type: InputType.number;
+                                font-size: 13px;
+                            }
+
+                            AddButton {
+                                width: 48px;
+                                clicked => {
+                                    GSequence.add_item(new_item_class.text, new_item_state.text, new_item_dialogue.text);
+                                    root.is_saved = false;
+                                }
+                            }
+                        }
                     }
                 }
 
-                new_item_dialogue := LineEdit {
-                    input-type: InputType.number;
-                }
-
-                Button {
-                    text: "Add";
-                    clicked => {
-                        GSequence.add_item(new_item_class.text, new_item_state.text, new_item_dialogue.text);
+                VerticalBox {
+                    Text {
+                        text: "Ordered Steps (" + GSequence.items.length + ")";
+                        color: #a3a3a8;
+                        font-size: 12px;
+                        font-weight: 600;
                     }
-                }
-            }
 
-            HorizontalDivider { }
+                    ListView {
+                        for item[id] in GSequence.items: Rectangle {
+                            background: #222327;
+                            border-radius: 6px;
+                            border-width: 1px;
+                            border-color: #2e3035;
 
-            ListView {
-                for item[id] in GSequence.items: Rectangle {
-                    HorizontalLayout {
-                        Text {
-                            text: "#" + id;
-                        }
+                            HorizontalBox {
+                                cross-axis-alignment: center;
+                                alignment: space-between;
 
-                        Text {
-                            text: item.class;
-                        }
+                                HorizontalBox {
+                                    Rectangle {
+                                        background: #121315;
+                                        border-radius: 4px;
+                                        Text {
+                                            text: "#" + (id + 1);
+                                            font-size: 12px;
+                                            font-weight: 700;
+                                            color: #38bdf8;
+                                        }
+                                    }
 
-                        Text {
-                            text: item.state;
-                        }
+                                    HorizontalBox {
+                                        Rectangle {
+                                            background: #1e293b;
+                                            border-radius: 4px;
+                                            Text {
+                                                text: item.class;
+                                                font-size: 13px;
+                                                font-weight: 600;
+                                                color: #93c5fd;
+                                            }
+                                        }
 
-                        Text {
-                            text: item.dialogue;
-                        }
+                                        Text {
+                                            text: "/";
+                                            color: #6b7280;
+                                            font-size: 13px;
+                                            font-weight: 400;
+                                        }
 
-                        IconButton {
-                            clicked => { GSequence.delete_item(id); }
+                                        Rectangle {
+                                            background: #27251f;
+                                            border-radius: 4px;
+                                            Text {
+                                                text: item.state;
+                                                color: #fde047;
+                                                font-size: 13px;
+                                                font-weight: 600;
+                                            }
+                                        }
+
+                                        Text {
+                                            text: "/";
+                                            color: #6b7280;
+                                            font-size: 13px;
+                                            font-weight: 400;
+                                        }
+
+                                        Text {
+                                            text: "Dialogue ID:";
+                                            font-size: 13px;
+                                            color: #6b7280;
+                                            font-weight: 400;
+                                        }
+
+                                        Text {
+                                            text: item.dialogue;
+                                            color: #f3f4f6;
+                                            font-size: 13px;
+                                            font-weight: 700;
+                                        }
+                                    }
+                                }
+
+                                DeleteButton {
+                                    clicked => {
+                                        GSequence.delete_item(id);
+                                        root.is_saved = false;
+                                    }
+                                }
+                            }
                         }
                     }
                 }

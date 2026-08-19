@@ -1,19 +1,12 @@
 use crate::{
-    AppData,
-    AppWindow,
-    Config,
-    GContent,
-    GNameMap,
-    StringId,
-    common::{
+    AppData, AppWindow, Config, GContent, GNameMap, GSequence, StringId, common::{
         NameType,
         NotiLevel,
         id_to_name,
         name_to_id,
         new_regex,
         show_noti,
-    },
-    history::{
+    }, history::{
         Action,
         ActionTarget,
         ActionType,
@@ -369,6 +362,7 @@ fn add_new(data: &mut AppData, ui: &AppWindow, new_name: String, new_id: &str, n
         NameType::Class => &mut data.class_name_map,
         NameType::State => &mut data.state_name_map,
         NameType::Event => &mut data.event_name_map,
+        NameType::Sequence => &mut data.sequence_name_map,
     };
 
     if data.contains_key(&new_name) {
@@ -406,6 +400,7 @@ fn update_id(
         NameType::Class => &mut data.class_name_map,
         NameType::State => &mut data.state_name_map,
         NameType::Event => &mut data.event_name_map,
+        NameType::Sequence => &mut data.sequence_name_map,
     };
 
     if let Ok(new_id) = new_id.parse::<u64>() {
@@ -440,6 +435,7 @@ pub fn reload_all_map(data: &AppData, ui: &AppWindow) {
     reload_class_map(data, ui, "");
     reload_state_map(data, ui, "");
     reload_event_map(data, ui, "");
+    reload_sequence_map(data, ui, "");
 }
 
 pub fn reload_class_map(data: &AppData, ui: &AppWindow, search: &str) {
@@ -476,11 +472,24 @@ fn reload_event_map(data: &AppData, ui: &AppWindow, search: &str) {
     ui.global::<GContent>().set_event_list(event_list.as_slice().into());
 }
 
+fn reload_sequence_map(data: &AppData, ui: &AppWindow, search: &str) {
+    let sequence_map = reload_map(data, NameType::Sequence, search);
+
+    ui.global::<GNameMap>().set_sequences(sequence_map.as_slice().into());
+
+    let mut sequence_list: Vec<SharedString> = Vec::new();
+    for sequence in data.sequence_name_map.keys() {
+        sequence_list.push(sequence.into());
+    }
+    ui.global::<GSequence>().set_sequences(sequence_list.as_slice().into());
+}
+
 fn reload_map(data: &AppData, name_type: NameType, search: &str) -> Vec<StringId> {
     let data = match name_type {
         NameType::Class => &data.class_name_map,
         NameType::State => &data.state_name_map,
         NameType::Event => &data.event_name_map,
+        NameType::Sequence => &data.sequence_name_map,
     };
 
     let mut ret = Vec::new();

@@ -18,6 +18,8 @@ import {
 import { SearchBar } from "material-1.0/ui/components/search_bar.slint";
 import { Icons } from "material-1.0/ui/icons/icons.slint";
 
+
+
 export component TagChip inherits Rectangle {
     background: #2a2a2b;
     border-radius: 12px;
@@ -46,8 +48,26 @@ export component AddButton inherits Rectangle {
 
     Text {
         text: "Add";
-        font-size: 12px;
+        font-size: 13px;
         font-weight: 600;
+    }
+}
+
+export component AddText inherits Rectangle {
+    in property <string> placeholder;
+    callback add(string);
+
+    HorizontalBox {
+        value := LineEdit {
+            placeholder-text: placeholder;
+            font-size: 13px;
+            accepted(text) => { add(text); self.text = ""; }
+        }
+
+        AddButton {
+            width: 48px;
+            clicked => { add(value.text); value.text = ""; }
+        }
     }
 }
 
@@ -183,7 +203,7 @@ export component SearchBox inherits Rectangle {
 
     LineEdit {
         placeholder-text: placeholder;
-        font-size: 12px;
+        font-size: 13px;
         width: 100%;
 
         edited(text) => { search(text); }
@@ -214,7 +234,7 @@ export component SelectionBox inherits Rectangle {
             width: root.width;
             placeholder-text: root.placeholder-text;
             input-type: InputType.search;
-            font-size: 12px;
+            font-size: 13px;
 
             edited(text) => {
                 root.filter(text);
@@ -252,7 +272,7 @@ export component SelectionBox inherits Rectangle {
 
                             Text {
                                 text: item;
-                                font-size: 12px;
+                                font-size: 13px;
                                 font-weight: 400;
                                 vertical-alignment: center;
                                 x: 8px;
@@ -284,7 +304,7 @@ export component ColumnTitle inherits Rectangle {
         alignment: space-between;
         Text {
             text: title;
-            font-size: 11px;
+            font-size: 13px;
             font-weight: 700;
         }
 
@@ -295,7 +315,8 @@ export component ColumnTitle inherits Rectangle {
             Text {
                 text: count;
                 font-weight: 600;
-                font-size: 10px;
+                font-size: 11px;
+                color: #a3a3a8;
             }
         }
     }

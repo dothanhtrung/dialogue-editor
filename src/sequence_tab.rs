@@ -49,13 +49,7 @@ fn select(
         let sequence_id = name_to_id(&name, &mut data.sequence_name_map);
         config.selected_sequence = sequence_id;
 
-        let info = SequenceInfo {
-            name,
-            id: sequence_id.to_string().into(),
-        };
-        ui.global::<GSequence>().set_info(info);
-
-        reload_items(&mut data, &ui, sequence_id);
+        reload_sequence_items(&mut data, &ui, sequence_id);
     }
 }
 
@@ -160,7 +154,7 @@ fn add_item(
                 dialogue: dialogue_pos,
             });
         }
-        reload_items(&mut data, &ui, config.selected_sequence);
+        reload_sequence_items(&mut data, &ui, config.selected_sequence);
     }
 }
 
@@ -173,11 +167,11 @@ fn delete_item(data: Rc<RefCell<AppData>>, config: Rc<RefCell<Config>>, ui_handl
         if let Some(sequence) = data.sequences.get_mut(&config.selected_sequence) {
             sequence.remove(item_index as usize);
         }
-        reload_items(&mut data, &ui, config.selected_sequence);
+        reload_sequence_items(&mut data, &ui, config.selected_sequence);
     }
 }
 
-fn reload_sequence(data: &mut AppData, ui: &AppWindow, search: &str) {
+pub fn reload_sequence(data: &mut AppData, ui: &AppWindow, search: &str) {
     let mut sequence_list: Vec<SharedString> = Vec::new();
     let re = new_regex(search);
 
@@ -197,7 +191,7 @@ fn reload_sequence(data: &mut AppData, ui: &AppWindow, search: &str) {
     ui.global::<GSequence>().set_info(SequenceInfo::default());
 }
 
-fn reload_items(data: &mut AppData, ui: &AppWindow, sequence_id: u64) {
+pub fn reload_sequence_items(data: &mut AppData, ui: &AppWindow, sequence_id: u64) {
     if let Some(sequence) = data.sequences.get(&sequence_id) {
         let mut items = Vec::new();
         for item in sequence.iter() {
@@ -213,5 +207,12 @@ fn reload_items(data: &mut AppData, ui: &AppWindow, sequence_id: u64) {
             items.push(ui_item);
         }
         ui.global::<GSequence>().set_items(items.as_slice().into());
+
+        let name = id_to_name(sequence_id, &data.sequence_name_map).unwrap_or_default().into();
+        let info = SequenceInfo {
+            name,
+            id: sequence_id.to_string().into(),
+        };
+        ui.global::<GSequence>().set_info(info);
     }
 }
