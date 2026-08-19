@@ -214,7 +214,7 @@ export component DialogueBox inherits Rectangle {
 
                                 Text {
                                     text: affect.class;
-                                    font-size: 12px;
+                                    font-size: 13px;
                                     font-weight: 400;
                                     color: #a3a3a8;
                                 }
@@ -225,7 +225,7 @@ export component DialogueBox inherits Rectangle {
 
                                 Text {
                                     text: affect.state;
-                                    font-size: 12px;
+                                    font-size: 13px;
                                     font-weight: 600;
                                     color: #8b5cf6;
                                 }
@@ -293,6 +293,7 @@ export component DialogueBox inherits Rectangle {
             HorizontalBox {
                 new_event := SelectionBox {
                     items: GContent.event_list;
+                    placeholder-text: "Trigger event";
                     filter(text) => {
                         GContent.search_event(text);
                     }
@@ -358,7 +359,7 @@ export component ContentTab inherits TabReload {
         alignment: stretch;
 
         Rectangle {
-            width: 15%;
+            width: 17%;
 
             VerticalBox {
                 ColumnTitle {
@@ -382,13 +383,6 @@ export component ContentTab inherits TabReload {
                         selected: {
                             GContent.selecting_class == class_name
                         };
-                        // background: {
-                        //     if (GContent.selecting_class == class_name) {
-                        //         Palette.selection-background
-                        //     } else {
-                        //         Palette.background
-                        //     }
-                        // };
                         select => {
                             GContent.select-class(class_name);
                             GContent.selecting_class = class_name;
@@ -419,7 +413,7 @@ export component ContentTab inherits TabReload {
         VerticalDivider { }
 
         Rectangle {
-            width: 15%;
+            width: 17%;
 
             VerticalBox {
                 ColumnTitle {
@@ -442,13 +436,6 @@ export component ContentTab inherits TabReload {
                         selected: {
                             GContent.selecting_state == state_name
                         };
-                        // background: {
-                        //     if (GContent.selecting_state == state_name) {
-                        //         Palette.selection-background
-                        //     } else {
-                        //         Palette.background
-                        //     }
-                        // };
                         select => {
                             GContent.select-state(state_name);
                             GContent.selecting_state = state_name;

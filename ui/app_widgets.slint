@@ -141,6 +141,10 @@ export component EditableTextBox inherits Rectangle {
     callback delete();
     callback select;
 
+    background: { if selected { #213d5b } else { #00000000 } };
+    border-radius: 1px;
+    border-color: { if selected { #38bdf8 } else { #00000000 } };
+
     touch_area := TouchArea {
         width: 100%;
         height: 100%;

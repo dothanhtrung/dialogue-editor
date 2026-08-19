@@ -254,7 +254,7 @@ pub fn reload_sequence_items(data: &mut AppData, ui: &AppWindow, sequence_id: u6
                 dialogue: if let Some(dialogue_pos) = item.dialogue {
                     dialogue_pos.to_string().into()
                 } else {
-                    SharedString::from("None")
+                    SharedString::from("All")
                 },
             };
             items.push(ui_item);
