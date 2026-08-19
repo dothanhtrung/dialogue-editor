@@ -1,7 +1,4 @@
 fn main() {
-    let config = slint_build::CompilerConfiguration::new().with_library_paths(std::collections::HashMap::from([(
-        "material".to_string(),
-        std::path::Path::new(&std::env::var_os("CARGO_MANIFEST_DIR").unwrap()).join("ui/material-1.0/material.slint"),
-    )]));
+    let config = slint_build::CompilerConfiguration::new();
     slint_build::compile_with_config("ui/app.slint", config).expect("Slint build failed");
 }

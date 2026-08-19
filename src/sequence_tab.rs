@@ -12,6 +12,11 @@ use crate::{
         new_regex,
         show_noti,
     },
+    history::{
+        Action,
+        ActionTarget,
+        ActionType,
+    },
     slint_generatedAppWindow::UiSequenceItem,
 };
 use slint::{
@@ -24,11 +29,9 @@ use std::{
     rc::Rc,
 };
 
-// TODO: History
-
 pub fn setup(ui_content: &mut GSequence, data: Rc<RefCell<AppData>>, config: Rc<RefCell<Config>>, ui: Weak<AppWindow>) {
     ui_content.on_select(select(data.clone(), config.clone(), ui.clone()));
-    ui_content.on_rename(rename(data.clone(), ui.clone()));
+    ui_content.on_rename(rename(data.clone(), config.clone(), ui.clone()));
     ui_content.on_add(add(data.clone(), config.clone(), ui.clone()));
     ui_content.on_delete(delete(data.clone(), config.clone(), ui.clone()));
     ui_content.on_search(search(data.clone(), config.clone(), ui.clone()));
@@ -53,9 +56,14 @@ fn select(
     }
 }
 
-fn rename(data: Rc<RefCell<AppData>>, ui_handle: Weak<AppWindow>) -> impl Fn(SharedString, SharedString) {
+fn rename(
+    data: Rc<RefCell<AppData>>,
+    config: Rc<RefCell<Config>>,
+    ui_handle: Weak<AppWindow>,
+) -> impl Fn(SharedString, SharedString) {
     move |old_name, new_name| {
         let mut data = data.borrow_mut();
+        let mut config = config.borrow_mut();
         let ui = ui_handle.unwrap();
 
         let old_id = name_to_id(&old_name, &mut data.sequence_name_map);
@@ -64,6 +72,14 @@ fn rename(data: Rc<RefCell<AppData>>, ui_handle: Weak<AppWindow>) -> impl Fn(Sha
         if let Some(sequence) = data.sequences.shift_remove(&old_id) {
             data.sequences.insert(new_id, sequence);
             reload_sequence(&mut data, &ui, "");
+
+            config.history.add_undo(
+                Action {
+                    action: ActionType::UpdateStr(new_name.to_string(), old_name.to_string()),
+                    target: ActionTarget::Sequence(None),
+                },
+                &ui,
+            );
         }
     }
 }
@@ -84,6 +100,14 @@ fn add(data: Rc<RefCell<AppData>>, config: Rc<RefCell<Config>>, ui_handle: Weak<
         } else {
             data.sequences.insert(sequence_id, Vec::new());
             config.selected_sequence = sequence_id;
+
+            config.history.add_undo(
+                Action {
+                    action: ActionType::DeleteStr(name.to_string()),
+                    target: ActionTarget::Sequence(None),
+                },
+                &ui,
+            );
 
             ui.global::<GSequence>().set_selected_sequence(name);
             reload_sequence(&mut data, &ui, "");
@@ -106,6 +130,14 @@ fn delete(
             config.selected_sequence = 0;
             ui.global::<GSequence>().set_selected_sequence(SharedString::new());
             reload_sequence(&mut data, &ui, "");
+
+            config.history.add_undo(
+                Action {
+                    action: ActionType::AddStr(name.to_string()),
+                    target: ActionTarget::Sequence(None),
+                },
+                &ui,
+            );
         } else {
             show_noti(
                 &ui,
@@ -139,20 +171,30 @@ fn add_item(
 ) -> impl Fn(SharedString, SharedString, SharedString) {
     move |class_name, state_name, dialogue_pos| {
         let mut data = data.borrow_mut();
-        let config = config.borrow();
+        let mut config = config.borrow_mut();
         let ui = ui_handle.unwrap();
 
         let class_id = name_to_id(&class_name, &mut data.class_name_map);
         let state_id = name_to_id(&state_name, &mut data.state_name_map);
         let dialogue_pos =
             if dialogue_pos.is_empty() { None } else { Some(dialogue_pos.parse::<usize>().unwrap_or(0)) };
+        let selected_sequence = config.selected_sequence;
 
         if let Some(sequence) = data.sequences.get_mut(&config.selected_sequence) {
-            sequence.push(SequenceItem {
+            let item = SequenceItem {
                 class: class_id,
                 state: state_id,
                 dialogue: dialogue_pos,
-            });
+            };
+            sequence.push(item);
+
+            config.history.add_undo(
+                Action {
+                    action: ActionType::DeleteId(selected_sequence),
+                    target: ActionTarget::SequenceItem(sequence.len() - 1, None),
+                },
+                &ui,
+            );
         }
         reload_sequence_items(&mut data, &ui, config.selected_sequence);
     }
@@ -161,11 +203,22 @@ fn add_item(
 fn delete_item(data: Rc<RefCell<AppData>>, config: Rc<RefCell<Config>>, ui_handle: Weak<AppWindow>) -> impl Fn(i32) {
     move |item_index| {
         let mut data = data.borrow_mut();
-        let config = config.borrow();
+        let mut config = config.borrow_mut();
         let ui = ui_handle.unwrap();
+        let selected_sequence = config.selected_sequence;
 
-        if let Some(sequence) = data.sequences.get_mut(&config.selected_sequence) {
-            sequence.remove(item_index as usize);
+        if let Some(sequence) = data.sequences.get_mut(&config.selected_sequence)
+            && item_index >= 0
+            && (item_index as usize) < sequence.len()
+        {
+            let item = sequence.remove(item_index as usize);
+            config.history.add_undo(
+                Action {
+                    action: ActionType::AddId(selected_sequence),
+                    target: ActionTarget::SequenceItem(item_index as usize, Some(item)),
+                },
+                &ui,
+            );
         }
         reload_sequence_items(&mut data, &ui, config.selected_sequence);
     }
@@ -208,7 +261,9 @@ pub fn reload_sequence_items(data: &mut AppData, ui: &AppWindow, sequence_id: u6
         }
         ui.global::<GSequence>().set_items(items.as_slice().into());
 
-        let name = id_to_name(sequence_id, &data.sequence_name_map).unwrap_or_default().into();
+        let name = id_to_name(sequence_id, &data.sequence_name_map)
+            .unwrap_or_default()
+            .into();
         let info = SequenceInfo {
             name,
             id: sequence_id.to_string().into(),

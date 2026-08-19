@@ -11,6 +11,10 @@ use crate::{
         state_ui::update_state,
     },
     namemap_tab::reload_all_map,
+    sequence_tab::{
+        reload_sequence,
+        reload_sequence_items,
+    },
 };
 use indexmap::IndexMap;
 use isolang::Language;
@@ -47,7 +51,8 @@ pub enum ActionTarget {
     ContentLang(u64, u64, usize, Language),
     ContentAffect(u64, u64, usize, u64),
     ContentEvent(u64, u64, usize),
-    Sequence(Option<SequenceItem>),
+    Sequence(Option<Vec<SequenceItem>>),
+    SequenceItem(usize, Option<SequenceItem>),
     NamemapClass(String),
     NamemapState(String),
     NamemapSequence(String),
@@ -153,6 +158,12 @@ fn apply_action(action: &Action, data: &mut AppData) {
                     state[*dialogue_pos].contents.insert(*language, value.clone());
                 }
             }
+            ActionTarget::Sequence(sequence) => {
+                if let Some(sequence) = sequence {
+                    let sequence_id = name_to_id(value.as_str(), &mut data.sequence_name_map);
+                    data.sequences.insert(sequence_id, sequence.clone());
+                }
+            }
 
             _ => {}
         },
@@ -181,6 +192,10 @@ fn apply_action(action: &Action, data: &mut AppData) {
                 {
                     state[*dialogue_pos].contents.shift_remove(language);
                 }
+            }
+            ActionTarget::Sequence(_) => {
+                let sequence_id = name_to_id(value.as_str(), &mut data.sequence_name_map);
+                data.sequences.shift_remove(&sequence_id);
             }
 
             _ => {}
@@ -232,6 +247,13 @@ fn apply_action(action: &Action, data: &mut AppData) {
                     state[*dialogue_pos].events.insert(*value);
                 }
             }
+            ActionTarget::SequenceItem(index, item) => {
+                if let Some(sequence) = data.sequences.get_mut(value)
+                    && let Some(item) = item
+                {
+                    sequence.insert(*index, item.clone());
+                }
+            }
             ActionTarget::NamemapClass(class_name) => {
                 data.class_name_map.insert(class_name.clone(), *value);
             }
@@ -240,6 +262,9 @@ fn apply_action(action: &Action, data: &mut AppData) {
             }
             ActionTarget::NamemapEvent(event_name) => {
                 data.event_name_map.insert(event_name.clone(), *value);
+            }
+            ActionTarget::NamemapSequence(sequence_name) => {
+                data.sequence_name_map.insert(sequence_name.clone(), *value);
             }
             _ => {}
         },
@@ -258,6 +283,11 @@ fn apply_action(action: &Action, data: &mut AppData) {
                     state[*dialogue_pos].events.remove(value);
                 }
             }
+            ActionTarget::SequenceItem(index, _) => {
+                if let Some(sequence) = data.sequences.get_mut(value) {
+                    sequence.remove(*index);
+                }
+            }
             ActionTarget::NamemapClass(class_name) => {
                 data.class_name_map.remove(class_name);
             }
@@ -266,6 +296,9 @@ fn apply_action(action: &Action, data: &mut AppData) {
             }
             ActionTarget::NamemapEvent(event_name) => {
                 data.event_name_map.remove(event_name);
+            }
+            ActionTarget::NamemapSequence(sequence_name) => {
+                data.sequence_name_map.remove(sequence_name);
             }
             _ => {}
         },
@@ -278,6 +311,9 @@ fn apply_action(action: &Action, data: &mut AppData) {
             }
             ActionTarget::NamemapEvent(event_name) => {
                 data.event_name_map.insert(event_name.clone(), *new_id);
+            }
+            ActionTarget::NamemapSequence(sequence_name) => {
+                data.sequence_name_map.insert(sequence_name.clone(), *new_id);
             }
             _ => {}
         },
@@ -293,6 +329,8 @@ pub fn undo(data: Rc<RefCell<AppData>>, config: Rc<RefCell<Config>>, ui: Weak<Ap
         config.history.undo(&mut data);
         reload_content(&mut data, &ui, &config);
         reload_all_map(&data, &ui);
+        reload_sequence(&mut data, &ui, "");
+        reload_sequence_items(&mut data, &ui, config.selected_sequence);
 
         if config.history.undo_actions.is_empty() {
             ui.set_undo_available(false);
@@ -310,6 +348,8 @@ pub fn redo(data: Rc<RefCell<AppData>>, config: Rc<RefCell<Config>>, ui: Weak<Ap
         config.history.redo(&mut data);
         reload_content(&mut data, &ui, &config);
         reload_all_map(&data, &ui);
+        reload_sequence(&mut data, &ui, "");
+        reload_sequence_items(&mut data, &ui, config.selected_sequence);
 
         if config.history.redo_actions.is_empty() {
             ui.set_redo_available(false);

@@ -38,15 +38,19 @@ pub fn setup(ui_namemap: &mut GNameMap, data: Rc<RefCell<AppData>>, config: Rc<R
     ui_namemap.on_delete_class(delete_class_map(data.clone(), config.clone(), ui.clone()));
     ui_namemap.on_delete_state(delete_state_map(data.clone(), config.clone(), ui.clone()));
     ui_namemap.on_delete_event(delete_event_map(data.clone(), config.clone(), ui.clone()));
+    ui_namemap.on_delete_sequence(delete_sequence_map(data.clone(), config.clone(), ui.clone()));
     ui_namemap.on_update_class_id(update_class_id(data.clone(), config.clone(), ui.clone()));
     ui_namemap.on_update_state_id(update_state_id(data.clone(), config.clone(), ui.clone()));
     ui_namemap.on_update_event_id(update_event_id(data.clone(), config.clone(), ui.clone()));
+    ui_namemap.on_update_sequence_id(update_sequence_id(data.clone(), config.clone(), ui.clone()));
     ui_namemap.on_new_class(add_new_class(data.clone(), config.clone(), ui.clone()));
     ui_namemap.on_new_state(add_new_state(data.clone(), config.clone(), ui.clone()));
     ui_namemap.on_new_event(add_new_event(data.clone(), config.clone(), ui.clone()));
+    ui_namemap.on_new_sequence(add_new_sequence(data.clone(), config.clone(), ui.clone()));
     ui_namemap.on_search_class(search_class_map(data.clone(), ui.clone()));
     ui_namemap.on_search_state(search_state_map(data.clone(), ui.clone()));
     ui_namemap.on_search_event(search_event_map(data.clone(), ui.clone()));
+    ui_namemap.on_search_sequence(search_sequence_map(data.clone(), ui.clone()));
 }
 
 fn delete_class_map(

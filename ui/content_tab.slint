@@ -181,7 +181,6 @@ export component DialogueBox inherits Rectangle {
                     AddButton {
                         width: 48px;
                         clicked => {
-                            // TODO: DO not overwrite existed dialogue
                             GContent.add_lang_content(new_lang.current-value, new_content.text);
                             new_content.text = "";
                             is_edited = false;
@@ -204,7 +203,6 @@ export component DialogueBox inherits Rectangle {
                     col: Math.mod(i, 3);
 
                     TouchArea {
-                        // Slint error?
                         clicked => { GContent.goto(affect.class, affect.state); }
 
                         HorizontalBox {
@@ -235,7 +233,6 @@ export component DialogueBox inherits Rectangle {
 
                             TouchArea {
                                 clicked => {
-                                    // Slint error?
                                     GContent.delete_affect(affect.class);
                                 }
 
@@ -378,6 +375,7 @@ export component ContentTab inherits TabReload {
                     }
                 }
 
+                // TODO: highlight selected item
                 ListView {
                     for class_name[i] in GContent.classes: EditableTextBox {
                         value: class_name;
