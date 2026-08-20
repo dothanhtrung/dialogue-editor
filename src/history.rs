@@ -154,15 +154,15 @@ fn apply_action(action: &Action, data: &mut AppData) {
             ActionTarget::ContentLang(class_id, state_id, dialogue_pos, language) => {
                 if let Some(class) = data.dialogues.get_mut(class_id)
                     && let Some(state) = class.get_mut(state_id)
+                    && *dialogue_pos < state.len()
                 {
                     state[*dialogue_pos].contents.insert(*language, value.clone());
                 }
             }
             ActionTarget::Sequence(sequence) => {
-                if let Some(sequence) = sequence {
-                    let sequence_id = name_to_id(value.as_str(), &mut data.sequence_name_map);
-                    data.sequences.insert(sequence_id, sequence.clone());
-                }
+                let sequence = sequence.clone().unwrap_or_default();
+                let sequence_id = name_to_id(value.as_str(), &mut data.sequence_name_map);
+                data.sequences.insert(sequence_id, sequence);
             }
 
             _ => {}

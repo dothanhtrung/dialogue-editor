@@ -111,6 +111,7 @@ fn add(data: Rc<RefCell<AppData>>, config: Rc<RefCell<Config>>, ui_handle: Weak<
 
             ui.global::<GSequence>().set_selected_sequence(name);
             reload_sequence(&mut data, &ui, "");
+            reload_sequence_items(&mut data, &ui, sequence_id);
         }
     }
 }
@@ -126,7 +127,7 @@ fn delete(
         let ui = ui_handle.unwrap();
 
         let sequence_id = name_to_id(&name, &mut data.sequence_name_map);
-        if let Some(_item) = data.sequences.shift_remove(&sequence_id) {
+        if let Some(item) = data.sequences.shift_remove(&sequence_id) {
             config.selected_sequence = 0;
             ui.global::<GSequence>().set_selected_sequence(SharedString::new());
             reload_sequence(&mut data, &ui, "");
@@ -134,7 +135,7 @@ fn delete(
             config.history.add_undo(
                 Action {
                     action: ActionType::AddStr(name.to_string()),
-                    target: ActionTarget::Sequence(None),
+                    target: ActionTarget::Sequence(Some(item)),
                 },
                 &ui,
             );
