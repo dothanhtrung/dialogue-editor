@@ -17,9 +17,44 @@ export component TagChip inherits Rectangle {
     border-width: 1px;
     border-color: #2d2d2f;
 
-    callback hover();
+    in-out property <bool> has-hover;
+
     callback clicked();
     callback btn_clicked();
+}
+
+export component SimpleTag inherits TagChip {
+    in property <string> text;
+    in property <brush> text-color: #ffffff;
+    in property <length> font-size: 13px;
+    in property <int> font-weight: 400;
+    in property <image> icon;
+
+    has-hover: area.has-hover;
+
+    area := TouchArea {
+        clicked => { root.clicked(); }
+
+        HorizontalBox {
+            alignment: space-between;
+            Text {
+                text: text;
+                color: text-color;
+                font-size: font-size;
+                font-weight: font-weight;
+            }
+
+            Rectangle {
+                Button {
+                    clicked => { root.btn_clicked(); }
+                }
+
+                Image {
+                    source: icon;
+                }
+            }
+        }
+    }
 }
 
 export component AddButton inherits Rectangle {
@@ -38,7 +73,7 @@ export component AddButton inherits Rectangle {
     }
 
     Text {
-        text: "Add";
+        text: text;
         font-size: 13px;
         font-weight: 600;
     }
@@ -216,14 +251,23 @@ export component SelectionBox inherits Rectangle {
         focus-field.text = "";
         popup.close();
     }
+    public function focus2() {
+        focus-field.focus();
+        popup.show();
+        root.filter(text);
+    }
 
     callback filter(string);
+    callback selected(string);
 
-    TouchArea {
+    area := TouchArea {
         width: 100%;
         height: 100%;
 
-        clicked => { popup.show(); root.filter(text); }
+        clicked => {
+            popup.show();
+            root.filter(text);
+        }
 
         focus-field := LineEdit {
             width: root.width;
@@ -245,44 +289,43 @@ export component SelectionBox inherits Rectangle {
         x: 0;
         y: focus-field.height + 5px;
 
-        VerticalBox {
-            Rectangle {
-                background: Palette.background;
-                border-color: Palette.border;
-                border-width: 1px;
-                clip: false;
-                max-height: root.dropdown-max-height;
-                width: 100%;
+        Rectangle {
+            background: Palette.background;
+            border-color: Palette.border;
+            border-width: 1px;
+            clip: false;
+            max-height: root.dropdown-max-height;
+            width: 100%;
 
-                ListView {
-                    for item in root.items: Rectangle {
-                        background: item-touch.has-hover ?
-                            Palette.accent-background : transparent;
-                        border-radius: 2px;
-                        height: 32px;
+            ListView {
+                for item in root.items: Rectangle {
+                    background: item-touch.has-hover ?
+                        Palette.accent-background : transparent;
+                    border-radius: 2px;
+                    height: 32px;
 
-                        Rectangle {
-                            width: 100%;
-                            height: 100%;
+                    Rectangle {
+                        width: 100%;
+                        height: 100%;
 
-                            Text {
-                                text: item;
-                                font-size: 13px;
-                                font-weight: 400;
-                                vertical-alignment: center;
-                                x: 8px;
-                                color: Palette.foreground;
-                            }
+                        Text {
+                            text: item;
+                            font-size: 13px;
+                            font-weight: 400;
+                            vertical-alignment: center;
+                            x: 8px;
+                            color: Palette.foreground;
                         }
+                    }
 
-                        item-touch := TouchArea {
-                            width: 100%;
-                            height: 100%;
+                    item-touch := TouchArea {
+                        width: 100%;
+                        height: 100%;
 
-                            clicked => {
-                                focus-field.text = item;
-                                popup.close();
-                            }
+                        clicked => {
+                            focus-field.text = item;
+                            popup.close();
+                            root.selected(item);
                         }
                     }
                 }

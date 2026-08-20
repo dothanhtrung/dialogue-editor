@@ -65,12 +65,8 @@ component NameMapItem inherits Rectangle {
         alignment: space-between;
 
         HorizontalBox {
-            Path {
-                width: 9.998px;
-                height: 9.998px;
-                commands: "M5.58602 0.999603C5.85123 0.99966 6.10557 1.10506 6.29308 1.29263L10.6454 5.64499C10.8713 5.87227 10.998 6.17966 10.998 6.50006C10.998 6.82047 10.8713 7.12786 10.6454 7.35513L7.35516 10.6454C7.12789 10.8712 6.8205 10.998 6.50009 10.998C6.17969 10.998 5.8723 10.8712 5.64502 10.6454L1.29266 6.29304C1.10509 6.10554 0.99969 5.8512 0.999634 5.58599V1.99969C0.999634 1.73445 1.105 1.48007 1.29255 1.29252C1.4801 1.10497 1.73448 0.999603 1.99972 0.999603H5.58602Z";
-                stroke: #94a3b8;
-                stroke-width: 2px;
+            Image {
+                source: @image-url("icons/label_icon.svg");
             }
 
             Text {
@@ -112,7 +108,7 @@ component NameMapItem inherits Rectangle {
 }
 
 export component StringIdContainer inherits Rectangle {
-    background: #1b1e28;
+    background: #1a1b1e;
     border-radius: 8px;
     border-width: 1px;
     border-color: #292e3d;
@@ -159,8 +155,6 @@ export component StringIdContainer inherits Rectangle {
         }
 
         Rectangle {
-            background: #1b1e28;
-
             ListView {
                 for value[i] in values: NameMapItem {
                     value: value;
@@ -178,9 +172,6 @@ export component StringIdContainer inherits Rectangle {
         }
 
         Rectangle {
-            background: #14161d;
-            border-color: #292e3d;
-
             HorizontalBox {
                 new_name := LineEdit {
                     placeholder-text: "Name";

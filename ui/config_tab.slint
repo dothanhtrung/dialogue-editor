@@ -1,5 +1,5 @@
 
-import { TabReload } from "app_widgets.slint";
+import { TabReload, TagChip, SimpleTag, AddButton } from "app_widgets.slint";
 import {
     Palette,
     Button,
@@ -8,26 +8,19 @@ import {
     CheckBox,
     Slider,
     ScrollView,
-} from "std-widgets.slint";
-import {
-    Horizontal,
-    Vertical,
-    ElevatedButton,
-    InputChip,
-    OutlinedCard,
-    Grid,
-    HorizontalDivider,
+    HorizontalBox,
+    VerticalBox,
+    GridBox,
     Switch,
-} from "material-1.0/material.slint";
+} from "std-widgets.slint";
 import { GFile } from "file_section.slint";
-import { Icons } from "material-1.0/ui/icons/icons.slint";
 import { GConfig } from "common.slint";
 
 export component Tag inherits Rectangle {
     in property <string> value;
     callback delete();
 
-    Horizontal {
+    HorizontalBox {
         Text {
             text <=> value;
         }
@@ -42,50 +35,88 @@ export component Tag inherits Rectangle {
 }
 
 export component ConfigTab inherits TabReload {
-    ScrollView {
-        Vertical {
-            Vertical {
+    VerticalBox {
+        alignment: start;
+
+        VerticalBox {
+            HorizontalBox {
                 alignment: start;
 
-                Text {
-                    text: "Dialogue languages";
+                Image {
+                    source: @image-url("icons/localization_icon.svg");
                 }
 
-                Grid {
-                    for lang[i] in GConfig.lang_list: Rectangle {
-                        row: i / 9;
-                        col: Math.mod(i, 9);
+                Text {
+                    text: "LANGUAGE SETTINGS";
+                    font-size: 15px;
+                    font-weight: 700;
+                }
+            }
 
-                        InputChip {
+            VerticalBox {
+                Text {
+                    text: "SUPPORTED LANGUAGES";
+                    font-size: 12px;
+                    color: #a1a1aa;
+                    font-weight: 700;
+                }
+
+                Rectangle {
+                    background: #18181b;
+                    border-radius: 6px;
+                    border-width: 1px;
+                    border-color: #2f2f37;
+
+                    HorizontalBox {
+                        for lang[i] in GConfig.lang_list: SimpleTag {
                             text: lang;
-                            trailing_icon: Icons.close;
-                            trailing_icon_clicked => {
+                            text-color: #f97316;
+                            font-size: 13px;
+                            font-weight: 700;
+
+                            btn_clicked => {
                                 GConfig.delete_lang(lang);
                             }
                         }
                     }
                 }
+            }
 
-                Horizontal {
-                    new_lang := LineEdit {
-                        placeholder-text: "Language code in ISO-639 (separate by space)";
-                    }
+            HorizontalBox {
+                new_lang := LineEdit {
+                    placeholder-text: "Language code, separated by space";
+                }
 
-                    ElevatedButton {
-                        text: "Add";
-                        clicked => {
-                            GConfig.add_lang(new_lang.text);
-                            self.text = "";
-                        }
+                AddButton {
+                    width: 80px;
+                    clicked => {
+                        GConfig.add_lang(new_lang.text);
+                        new_lang.text = "";
                     }
                 }
             }
+        }
 
-            HorizontalDivider { }
+        VerticalBox {
+            HorizontalBox {
+                alignment: start;
 
-            Horizontal {
+                Image {
+                    source: @image-url("icons/save_icon.svg");
+                }
+
+                Text {
+                    text: "EXPORT SETTINGS";
+                    font-size: 15px;
+                    font-weight: 700;
+                }
+            }
+
+            HorizontalBox {
                 Text {
                     text: "Save dialogue without name map";
+                    font-size: 14px;
+                    font-weight: 700;
                 }
 
                 Rectangle {
@@ -95,29 +126,66 @@ export component ConfigTab inherits TabReload {
                 }
             }
 
-            Horizontal {
-                max_undo := Text {
-                    text: "Maximum undo: " + GConfig.max_undo;
-                }
-
-                Slider {
-                    value: GConfig.max_undo;
-                    minimum: 10;
-                    maximum: 100;
-                    step: 1;
-                    released(value) => {
-                        GConfig.set_max_undo(value.round());
-                    }
-                    changed(value) => {
-                        max_undo.text = "Maximum undo: " + value.round();
-                    }
-                }
-            }
-
             if (GFile.enable_crypt): Rectangle {
                 LineEdit {
                     text <=> GFile.encrypt_key;
                     placeholder-text: "Encryption key";
+                }
+            }
+        }
+
+        VerticalBox {
+            HorizontalBox {
+                alignment: start;
+
+                Image {
+                    source: @image-url("icons/gear_icon.svg");
+                }
+
+                Text {
+                    text: "EDITOR SETTINGS";
+                    font-size: 15px;
+                    font-weight: 700;
+                }
+            }
+
+            Text {
+                text: "MAXIMUM UNDO STEPS";
+                font-size: 12px;
+                color: #a1a1aa;
+                font-weight: 700;
+            }
+
+            HorizontalBox {
+                alignment: start;
+                cross-axis-alignment: center;
+
+                max_undo := LineEdit {
+                    text: GConfig.max_undo;
+                    input-type: number;
+                    accepted(text) => {
+                        GConfig.set_max_undo(text.to-float().round());
+                    }
+                }
+
+                Rectangle {
+                    background: #27272a;
+                    border-radius: 6px;
+                    border-width: 1px;
+                    border-color: #3f3f46;
+                    Button {
+                        text: "Set";
+                        clicked => {
+                            GConfig.set_max_undo(max_undo.text.to-float().round());
+                        }
+                    }
+                }
+
+                Text {
+                    text: "0 means unlimited";
+                    font-size: 12px;
+                    font-weight: 400;
+                    color: #717680;
                 }
             }
         }

@@ -1,11 +1,12 @@
 
-import { Horizontal, VerticalDivider } from "material-1.0/material.slint";
+
 import { GFile } from "file_section.slint";
+import { HorizontalBox } from "std-widgets.slint";
 
 export component StatusBar inherits Rectangle {
     in property <bool> is_saved: true;
 
-    Horizontal {
+    HorizontalBox {
         alignment: LayoutAlignment.space-between;
         Text {
             text: {

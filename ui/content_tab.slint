@@ -23,7 +23,7 @@ import {
     ScrollView,
     GridBox,
 } from "std-widgets.slint";
-import { VerticalDivider } from "material-1.0/ui/components/divider.slint";
+
 import { GConfig } from "common.slint";
 
 
@@ -98,7 +98,7 @@ export component DialogueBox inherits Rectangle {
 
     VerticalBox {
         VerticalBox {
-            height: 50%;
+            height: 60%;
 
             Text {
                 text: "CONTENT";
@@ -261,6 +261,9 @@ export component DialogueBox inherits Rectangle {
                         filter(text) => {
                             GContent.search_affect_class(text);
                         }
+                        selected => {
+                            new_affect_state.focus2();
+                        }
                     }
 
                     new_affect_state := SelectionBox {
@@ -302,6 +305,7 @@ export component DialogueBox inherits Rectangle {
                 Rectangle {
                     AddButton {
                         text: "Add Trigger";
+                        width: 64px;
                         clicked => {
                             GContent.add_event(new_event.text);
                             new_event.clear();
@@ -359,6 +363,10 @@ export component ContentTab inherits TabReload {
         alignment: stretch;
 
         Rectangle {
+            background: #1a1b1e;
+            border-radius: 8px;
+            border-width: 1px;
+            border-color: #2e3035;
             width: 17%;
 
             VerticalBox {
@@ -410,9 +418,11 @@ export component ContentTab inherits TabReload {
             }
         }
 
-        VerticalDivider { }
-
         Rectangle {
+            background: #1a1b1e;
+            border-radius: 8px;
+            border-width: 1px;
+            border-color: #2e3035;
             width: 17%;
 
             VerticalBox {
@@ -465,9 +475,11 @@ export component ContentTab inherits TabReload {
             }
         }
 
-        VerticalDivider { }
-
         Rectangle {
+            background: #1a1b1e;
+            border-radius: 8px;
+            border-width: 1px;
+            border-color: #2e3035;
             width: 20%;
 
             VerticalBox {
@@ -513,10 +525,13 @@ export component ContentTab inherits TabReload {
             }
         }
 
-        VerticalDivider { }
-
         DialogueBox {
+            background: #1a1b1e;
+            border-radius: 8px;
+            border-width: 1px;
+            border-color: #2e3035;
             width: 45%;
+            
             visible: {
                 GContent.selecting_dialogue >= 0
             };

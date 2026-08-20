@@ -19,10 +19,6 @@ import {
     VerticalBox,
     ScrollView,
 } from "std-widgets.slint";
-import {
-    HorizontalDivider,
-    VerticalDivider,
-} from "material-1.0/material.slint";
 import { GConfig } from "common.slint";
 import { GContent } from "content_tab.slint";
 
@@ -164,13 +160,10 @@ export component SequenceTab inherits TabReload {
                     VerticalBox {
                         HorizontalBox {
                             cross-axis-alignment: center;
+                            alignment: start;
 
-                            Path {
-                                width: 7.001px;
-                                height: 7.001px;
-                                commands: "M1 4.5004H8.0008M4.5004 1V8.0008";
-                                stroke: #38bdf8;
-                                stroke-width: 2px;
+                            Image {
+                                source: @image-url("icons/plus_icon.svg");
                             }
 
                             Text {
