@@ -37,6 +37,48 @@ TODO:
     * [ ] Graph visualization
 
 
+Data structure
+--------------
+
+```ron
+(
+    dialogues: {
+        <class_id>: {
+            <state_id>: [
+                (
+                    contents: {
+                        "<language code>": "Dialogue content. {{variable}} is supported",
+                    },
+                    affects: {
+                        <target_class_id>: <target_state_id>,
+                    },
+                    events: [event_id]
+                ),
+            ],
+        },
+    },
+    sequences: {
+        <sequence_id>>: [
+            (
+                class: <class_id>,
+                state: <state_id>,
+                dialogue: Option<usize>,
+            ),
+        ],
+    },
+)
+```
+
+| Field        | Type   | Description                                                                                                                          |
+|:------------ |:------ |:------------------------------------------------------------------------------------------------------------------------------------ |
+|class_id      |u64     |The character class id. For example: Villager, Hero, etc. should have unique id.                                                      |
+|state_id      |u64     |The character state id. For example: Idle, Arguing, Cheering, etc. should have unique id.                                             |
+|language_code |String  |3 character language code by ISO 639-3. For example: `eng`, `spa`, etc.                                                               |
+|affects       |HashMap |If a character with `target_class_id` talks to the one with this dialogue, that character state will be changed to `target_state_id`. |
+|events        |[u64]   |Array of event id. They will be triggered by plugin if the dialogue is used.                                                          |
+|sequence_id   |u64     |ID if the sequence. Sequence is a list of dialogues to be displayed in order. If `dialogue` is not specified, all dialogues in same state will be used. |
+
+
 How to
 ------
 
@@ -54,6 +96,10 @@ Output: `target/release/dialogue-editor`.
 ./dialogue-editor -c dialogue-editor.ron
 ```
 * `dialogue-editor.ron`: Application config file.
+
+### Output
+
+This application can output file in 2 formats: `.ron` a text file, and `.bin` a binary file, depending on your file name when save.
 
 License
 -------

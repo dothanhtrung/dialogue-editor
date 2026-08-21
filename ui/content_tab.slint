@@ -99,6 +99,7 @@ export component DialogueBox inherits Rectangle {
     VerticalBox {
         VerticalBox {
             height: 60%;
+            alignment: start;
 
             Text {
                 text: "CONTENT";
@@ -191,6 +192,8 @@ export component DialogueBox inherits Rectangle {
         }
 
         VerticalBox {
+            alignment: start;
+
             Text {
                 text: "STATE AFFECT";
                 font-size: 14px;
@@ -204,6 +207,10 @@ export component DialogueBox inherits Rectangle {
 
                     TouchArea {
                         clicked => { GContent.goto(affect.class, affect.state); }
+
+                        Tooltip {
+                            text: @markdown("Go to");
+                        }
 
                         HorizontalBox {
                             cross-axis-alignment: center;
@@ -238,6 +245,10 @@ export component DialogueBox inherits Rectangle {
 
                                 Image {
                                     source: @image-url("icons/x_circle.svg");
+                                }
+
+                                Tooltip {
+                                    text: @markdown("Remove");
                                 }
                             }
                         }
@@ -287,6 +298,8 @@ export component DialogueBox inherits Rectangle {
         }
 
         VerticalBox {
+            alignment: start;
+
             Text {
                 text: "EVENTS";
                 font-size: 14px;
@@ -335,15 +348,18 @@ export component DialogueBox inherits Rectangle {
                                     font-weight: 600;
                                 }
 
-                                Rectangle {
-                                    Button {
-                                        clicked => {
-                                            GContent.delete_event(event);
-                                        }
+                                TouchArea {
+
+                                    clicked => {
+                                        GContent.delete_event(event);
                                     }
 
                                     Image {
                                         source: @image-url("icons/x_circle.svg");
+                                    }
+
+                                    Tooltip {
+                                        text: @markdown("Remove");
                                     }
                                 }
                             }
@@ -531,7 +547,7 @@ export component ContentTab inherits TabReload {
             border-width: 1px;
             border-color: #2e3035;
             width: 45%;
-            
+
             visible: {
                 GContent.selecting_dialogue >= 0
             };

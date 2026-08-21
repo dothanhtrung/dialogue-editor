@@ -73,6 +73,8 @@ export component ConfigTab inherits TabReload {
                             text-color: #f97316;
                             font-size: 13px;
                             font-weight: 700;
+                            icon: @image-url("icons/x_circle.svg");
+                            btn_tooltip: @markdown("Remove");
 
                             btn_clicked => {
                                 GConfig.delete_lang(lang);

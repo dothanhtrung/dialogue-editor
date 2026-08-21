@@ -96,7 +96,6 @@ pub fn reload_content(data: &mut AppData, ui: &AppWindow, config: &Config) {
     }
     ui.global::<GContent>().set_event_list(event_list.as_slice().into());
 
-    // TODO: state list by affected class
     let mut state_list: Vec<SharedString> = Vec::new();
     for state in data.state_name_map.keys() {
         state_list.push(state.into());

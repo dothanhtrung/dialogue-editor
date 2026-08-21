@@ -29,6 +29,7 @@ export component SimpleTag inherits TagChip {
     in property <length> font-size: 13px;
     in property <int> font-weight: 400;
     in property <image> icon;
+    in property <styled-text> btn_tooltip;
 
     has-hover: area.has-hover;
 
@@ -44,13 +45,15 @@ export component SimpleTag inherits TagChip {
                 font-weight: font-weight;
             }
 
-            Rectangle {
-                Button {
-                    clicked => { root.btn_clicked(); }
-                }
+            TouchArea {
+                clicked => { root.btn_clicked(); }
 
                 Image {
                     source: icon;
+                }
+
+                Tooltip {
+                    text: btn_tooltip;
                 }
             }
         }
