@@ -7,16 +7,15 @@ import {
     StandardButton,
     HorizontalBox,
 } from "std-widgets.slint";
+import { GConfig } from "common.slint";
 import { GContent } from "content_tab.slint";
 import { GNameMap } from "namemap_tab.slint";
 
 export global GFile {
-    in-out property <int> file_format;
     in-out property <bool> enable_crypt;
     in-out property <string> encrypt_key;
     in-out property <string> file_path;
     in-out property <string> file_name;
-    in-out property <bool> save_without_name;
     in-out property <bool> is_loading: false;
 
     // file_picker(load_true_save_false, force)
@@ -48,7 +47,7 @@ export component FileSection inherits Rectangle {
             GFile.file_picker(false, false);
             GFile.is_loading = true;
         } else {
-            GFile.save(GFile.file_path, GFile.encrypt_key, GFile.save_without_name);
+            GFile.save(GFile.file_path, GFile.encrypt_key, false);
             GFile.is_loading = true;
         }
     }
@@ -61,6 +60,16 @@ export component FileSection inherits Rectangle {
     public function open() {
         GFile.file_picker(true, false);
         GFile.is_loading = true;
+    }
+
+    Timer {
+        interval: GConfig.autosave_interval * 1000ms;
+        running: { if (GConfig.autosave_interval > 0) { true } else { false } };
+        triggered => {
+            if (GConfig.autosave_interval > 0 && GFile.file_path != "") {
+                GFile.save(GFile.file_path, GFile.encrypt_key, true);
+            }
+        }
     }
 
     HorizontalBox {

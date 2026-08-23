@@ -29,7 +29,6 @@ TODO:
     * [ ] Dialogue condition
     * [ ] Metadata (e.g. schema version)
     * [ ] Resizable UI
-    * [ ] Autosave
 
 * Very low priority
     * [ ] Workspace

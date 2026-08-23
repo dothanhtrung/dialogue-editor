@@ -3,8 +3,12 @@ export global GConfig {
     in-out property <[string]> lang_list;
     in-out property <[string]> all_langs;
     in-out property <int> max_undo;
+    in-out property <int> autosave_interval;
+    in-out property <bool> save_without_namemap;
 
     callback delete_lang(string);
     callback add_lang(string);
     callback set_max_undo(int);
+    callback set_autosave_interval(int);
+    callback set_save_without_namemap(bool);
 }

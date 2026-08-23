@@ -1,5 +1,3 @@
-use std::collections::BTreeMap;
-
 use crate::{
     AppWindow,
     GNoti,
@@ -10,6 +8,7 @@ use regex::{
     RegexBuilder,
 };
 use slint::ComponentHandle;
+use std::collections::HashMap;
 use tracing::{
     error,
     info,
@@ -45,7 +44,7 @@ pub fn show_noti(ui: &AppWindow, level: NotiLevel, message: &str) {
     ui.invoke_show_notification();
 }
 
-pub fn name_to_id(name: &str, data: &mut BTreeMap<String, u64>) -> u64 {
+pub fn name_to_id(name: &str, data: &mut HashMap<String, u64>) -> u64 {
     if let Some(id) = data.get(name) {
         *id
     } else {
@@ -57,7 +56,7 @@ pub fn name_to_id(name: &str, data: &mut BTreeMap<String, u64>) -> u64 {
     }
 }
 
-pub fn id_to_name(id: u64, data: &BTreeMap<String, u64>) -> Option<String> {
+pub fn id_to_name(id: u64, data: &HashMap<String, u64>) -> Option<String> {
     for (name, i) in data.iter() {
         if id == *i {
             return Some(name.clone());

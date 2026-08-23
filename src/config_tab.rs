@@ -24,6 +24,20 @@ pub fn setup(ui_config: &mut GConfig, data: Rc<RefCell<AppData>>, config: Rc<Ref
     ui_config.on_add_lang(add_lang(config.clone(), ui.clone()));
     ui_config.on_delete_lang(delete_lang(data.clone(), config.clone(), ui.clone()));
     ui_config.on_set_max_undo(set_max_undo(config.clone()));
+    ui_config.on_set_autosave_interval(set_autosave_interval(config.clone()));
+    ui_config.on_set_save_without_namemap(set_save_without_namemap(config.clone()));
+
+    let config = config.borrow();
+    let ui = ui.unwrap();
+    refresh(&config, &ui);
+}
+
+fn refresh(config: &Config, ui: &AppWindow) {
+    ui.global::<GConfig>().set_max_undo(config.history.limit as i32);
+    ui.global::<GConfig>().set_autosave_interval(config.autosave_interval as i32);
+    ui.global::<GConfig>().set_save_without_namemap(config.save_without_namemap);
+
+    reload_lang_list(config, ui);
 }
 
 fn add_lang(config: Rc<RefCell<Config>>, ui: Weak<AppWindow>) -> impl Fn(SharedString) {
@@ -52,6 +66,7 @@ fn add_lang(config: Rc<RefCell<Config>>, ui: Weak<AppWindow>) -> impl Fn(SharedS
         }
 
         reload_lang_list(&config, &ui);
+        config.save();
     }
 }
 
@@ -81,6 +96,7 @@ fn delete_lang(data: Rc<RefCell<AppData>>, config: Rc<RefCell<Config>>, ui: Weak
                 format!("Invalid language code: {}", lang).as_str(),
             );
         }
+        config.save();
     }
 }
 
@@ -97,5 +113,22 @@ fn set_max_undo(config: Rc<RefCell<Config>>) -> impl Fn(i32) {
     move |max_undo| {
         let mut config = config.borrow_mut();
         config.history.limit = max_undo as usize;
+        config.save();
+    }
+}
+
+fn set_autosave_interval(config: Rc<RefCell<Config>>) -> impl Fn(i32) {
+    move |interval| {
+        let mut config = config.borrow_mut();
+        config.autosave_interval = interval as u32;
+        config.save();
+    }
+}
+
+fn set_save_without_namemap(config: Rc<RefCell<Config>>) -> impl Fn(bool) {
+    move |save_without_namemap| {
+        let mut config = config.borrow_mut();
+        config.save_without_namemap = save_without_namemap;
+        config.save();
     }
 }

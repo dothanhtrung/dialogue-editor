@@ -2,11 +2,22 @@ pub mod bin_file;
 pub mod ron_file;
 
 use crate::{
-    AppData, AppWindow, Config, GFile, UnsaveLoadDialog, common::{
+    AppData,
+    AppWindow,
+    Config,
+    GFile,
+    UnsaveLoadDialog,
+    common::{
         NotiLevel,
         id_to_name,
         show_noti,
-    }, content_tab::reload_content, namemap_tab::reload_all_map, sequence_tab::{reload_sequence, reload_sequence_items},
+    },
+    content_tab::reload_content,
+    namemap_tab::reload_all_map,
+    sequence_tab::{
+        reload_sequence,
+        reload_sequence_items,
+    },
 };
 use rfd::FileDialog;
 use serde::{
@@ -129,13 +140,12 @@ fn file_picker(
         );
 
         config.file_format = get_file_format(&config.file_path);
-        ui.global::<GFile>().set_file_format(config.file_format as i32);
 
         if load_true_save_false {
             load(&mut data, &mut config, &ui);
         } else {
             // Show warning when data is empty and the save file is not empty
-            save(&data, &config, &ui);
+            save(&data, &config, &ui, false);
         }
 
         ui.global::<GFile>().set_is_loading(false);
@@ -144,6 +154,7 @@ fn file_picker(
 
 fn load(data: &mut AppData, config: &mut Config, ui: &AppWindow) {
     *data = match config.file_format {
+        // TODO: Failed to load bin file
         FileFormat::Bin => match bin_file::load_from(&config.file_path, &config.encrypt_key) {
             Ok(ret) => ret,
             Err(e) => {
@@ -185,63 +196,85 @@ fn request_save(
     config: Rc<RefCell<Config>>,
     ui_handle: Weak<AppWindow>,
 ) -> impl Fn(SharedString, SharedString, bool) {
-    move |file_path, encrypt_key, save_without_name| {
+    move |file_path, encrypt_key, auto_save| {
         let mut config = config.borrow_mut();
         let data = data.borrow();
         let ui = ui_handle.unwrap();
 
         config.encrypt_key = encrypt_key.to_string();
         config.file_path = PathBuf::from(file_path.as_str());
-        config.save_without_name = save_without_name;
         config.file_format = get_file_format(&config.file_path);
 
-        save(&data, &config, &ui);
+        save(&data, &config, &ui, auto_save);
     }
 }
 
-fn save(data: &AppData, config: &Config, ui: &AppWindow) {
+fn save(data: &AppData, config: &Config, ui: &AppWindow, auto_save: bool) {
     config.save();
+    let ext = config
+        .file_path
+        .extension()
+        .and_then(|ext| ext.to_str())
+        .unwrap_or_default();
+    let file_path = if auto_save {
+        config.file_path.with_extension(format!("autosave.{}", ext))
+    } else {
+        config.file_path.clone()
+    };
+
+    let data_without_namemap = if config.save_without_namemap {
+        let mut data_without_name = data.clone();
+        data_without_name.clear_name_map();
+        Some(data_without_name)
+    } else {
+        None
+    };
+
     match config.file_format {
         FileFormat::Bin => {
-            if let Err(e) = bin_file::save_to::<AppData>(data, &config.file_path, &config.encrypt_key) {
+            if let Err(e) = bin_file::save_to::<AppData>(data, &file_path, &config.encrypt_key) {
                 show_noti(ui, NotiLevel::Error, format!("Failed to save: {:?}", e).as_str());
             } else {
-                if config.save_without_name {
-                    let mut data_without_name = data.clone();
-                    data_without_name.clear_name_map();
-                    let file_path = config.file_path.with_extension("no_name.bin");
-                    if let Err(e) = bin_file::save_to(&data_without_name, &file_path, &config.encrypt_key) {
+                if config.save_without_namemap {
+                    let file_path = file_path.with_extension("no_name.bin");
+                    if let Err(e) = bin_file::save_to(
+                        &data_without_namemap.unwrap_or_default(),
+                        &file_path,
+                        &config.encrypt_key,
+                    ) {
                         show_noti(ui, NotiLevel::Error, format!("Failed to save: {:?}", e).as_str());
                     }
                 }
 
                 ui.set_is_saved(true);
-                show_noti(
-                    ui,
-                    NotiLevel::Info,
-                    format!("Success save {}", &config.file_path.display()).as_str(),
-                );
+                if !auto_save {
+                    show_noti(
+                        ui,
+                        NotiLevel::Info,
+                        format!("Success save {}", &file_path.display()).as_str(),
+                    );
+                }
             }
         }
         FileFormat::Ron => {
-            if let Err(e) = ron_file::save_to::<AppData>(data, &config.file_path) {
+            if let Err(e) = ron_file::save_to::<AppData>(data, &file_path) {
                 show_noti(ui, NotiLevel::Error, format!("Failed to save: {:?}", e).as_str());
             } else {
-                if config.save_without_name {
-                    let mut data_without_name = data.clone();
-                    data_without_name.clear_name_map();
-                    let file_path = config.file_path.with_extension("no_name.ron");
-                    if let Err(e) = ron_file::save_to(&data_without_name, &file_path) {
+                if config.save_without_namemap {
+                    let file_path = file_path.with_extension("no_name.ron");
+                    if let Err(e) = ron_file::save_to(&data_without_namemap.unwrap_or_default(), &file_path) {
                         show_noti(ui, NotiLevel::Error, format!("Failed to save: {:?}", e).as_str());
                     }
                 }
 
                 ui.set_is_saved(true);
-                show_noti(
-                    ui,
-                    NotiLevel::Info,
-                    format!("Success save {}", &config.file_path.display()).as_str(),
-                );
+                if !auto_save {
+                    show_noti(
+                        ui,
+                        NotiLevel::Info,
+                        format!("Success save {}", &file_path.display()).as_str(),
+                    );
+                }
             }
         }
     }

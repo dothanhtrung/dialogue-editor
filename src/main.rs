@@ -25,10 +25,12 @@ use serde::{
     Deserialize,
     Serialize,
 };
-use std::collections::BTreeSet;
+use std::collections::{
+    HashSet,
+    HashMap,
+};
 use std::{
     cell::RefCell,
-    collections::BTreeMap,
     error::Error,
     path::{
         Path,
@@ -55,11 +57,11 @@ struct Dialogue {
     contents: IndexMap<Language, String>,
     /// The class this dialogue will affect and the state that class will change to
     #[serde(default)]
-    #[serde(skip_serializing_if = "BTreeMap::is_empty")]
-    affects: BTreeMap<u64, u64>,
+    #[serde(skip_serializing_if = "HashMap::is_empty")]
+    affects: HashMap<u64, u64>,
     #[serde(default)]
-    #[serde(skip_serializing_if = "BTreeSet::is_empty")]
-    events: BTreeSet<u64>,
+    #[serde(skip_serializing_if = "HashSet::is_empty")]
+    events: HashSet<u64>,
 }
 
 #[derive(Serialize, Deserialize, Default, Clone)]
@@ -75,14 +77,14 @@ struct AppData {
     dialogues: IndexMap<u64, IndexMap<u64, Vec<Dialogue>>>,
     #[serde(default, skip_serializing_if = "IndexMap::is_empty")]
     sequences: IndexMap<u64, Vec<SequenceItem>>,
-    #[serde(default, skip_serializing_if = "BTreeMap::is_empty")]
-    class_name_map: BTreeMap<String, u64>,
-    #[serde(default, skip_serializing_if = "BTreeMap::is_empty")]
-    state_name_map: BTreeMap<String, u64>,
-    #[serde(default, skip_serializing_if = "BTreeMap::is_empty")]
-    event_name_map: BTreeMap<String, u64>,
-    #[serde(default, skip_serializing_if = "BTreeMap::is_empty")]
-    sequence_name_map: BTreeMap<String, u64>,
+    #[serde(default, skip_serializing_if = "HashMap::is_empty")]
+    class_name_map: HashMap<String, u64>,
+    #[serde(default, skip_serializing_if = "HashMap::is_empty")]
+    state_name_map: HashMap<String, u64>,
+    #[serde(default, skip_serializing_if = "HashMap::is_empty")]
+    event_name_map: HashMap<String, u64>,
+    #[serde(default, skip_serializing_if = "HashMap::is_empty")]
+    sequence_name_map: HashMap<String, u64>,
 }
 
 impl AppData {
@@ -90,6 +92,7 @@ impl AppData {
         self.class_name_map.clear();
         self.state_name_map.clear();
         self.event_name_map.clear();
+        self.sequence_name_map.clear();
     }
 }
 
@@ -110,14 +113,16 @@ struct Config {
     #[serde(default)]
     /// Used when file_format is Bin
     encrypt_key: String,
-    #[serde(default)]
+    #[serde(default, skip)]
     file_format: FileFormat,
     #[serde(default)]
-    save_without_name: bool,
+    save_without_namemap: bool,
     #[serde(default = "default_lang")]
-    langs: BTreeSet<Language>,
+    langs: HashSet<Language>,
     #[serde(default)]
     history: History,
+    #[serde(default)]
+    autosave_interval: u32,
 }
 
 impl Default for Config {
@@ -131,9 +136,10 @@ impl Default for Config {
             selected_sequence: 0,
             encrypt_key: String::new(),
             file_format: FileFormat::default(),
-            save_without_name: false,
-            langs: BTreeSet::from([Language::Eng]),
+            save_without_namemap: false,
+            langs: HashSet::from([Language::Eng]),
             history: History::default(),
+            autosave_interval: 0,
         }
     }
 }
@@ -173,17 +179,11 @@ fn main() -> Result<(), Box<dyn Error>> {
 
     let data = AppData::default();
 
-    ui.global::<GConfig>().set_max_undo(config.history.limit as i32);
-
     // ======== File section ===========
     ui.global::<GFile>().set_encrypt_key(config.encrypt_key.as_str().into());
-    ui.global::<GFile>().set_file_format(config.file_format as i32);
-    ui.global::<GFile>().set_save_without_name(config.save_without_name);
 
     #[cfg(feature = "crypt")]
     ui.global::<GFile>().set_enable_crypt(true);
-
-    config_tab::reload_lang_list(&config, &ui);
 
     let config = Rc::new(RefCell::new(config));
     let data = Rc::new(RefCell::new(data));
@@ -192,6 +192,10 @@ fn main() -> Result<(), Box<dyn Error>> {
 
     ui.on_undo(undo(data.clone(), config.clone(), ui.as_weak()));
     ui.on_redo(redo(data.clone(), config.clone(), ui.as_weak()));
+
+    // ----------------------- Config Tab ---------------------------
+    let mut ui_config = ui.global::<GConfig>();
+    config_tab::setup(&mut ui_config, data.clone(), config.clone(), ui.as_weak());
 
     // ======== File ============
     let mut ui_file = ui.global::<GFile>();
@@ -209,15 +213,11 @@ fn main() -> Result<(), Box<dyn Error>> {
     let mut ui_namemap = ui.global::<GNameMap>();
     namemap_tab::setup(&mut ui_namemap, data.clone(), config.clone(), ui.as_weak());
 
-    // ----------------------- Config Tab ---------------------------
-    let mut ui_config = ui.global::<GConfig>();
-    config_tab::setup(&mut ui_config, data.clone(), config.clone(), ui.as_weak());
-
     ui.run()?;
 
     Ok(())
 }
 
-fn default_lang() -> BTreeSet<Language> {
-    BTreeSet::from([Language::Eng])
+fn default_lang() -> HashSet<Language> {
+    HashSet::from([Language::Eng])
 }

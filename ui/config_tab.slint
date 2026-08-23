@@ -115,16 +115,21 @@ export component ConfigTab inherits TabReload {
             }
 
             HorizontalBox {
+                alignment: start;
+
+                Rectangle {
+                    Switch {
+                        checked <=> GConfig.save_without_namemap;
+                        toggled => {
+                            GConfig.set_save_without_namemap(self.checked);
+                        }
+                    }
+                }
+
                 Text {
                     text: "Save dialogue without name map";
                     font-size: 14px;
                     font-weight: 700;
-                }
-
-                Rectangle {
-                    Switch {
-                        checked <=> GFile.save_without_name;
-                    }
                 }
             }
 
@@ -166,7 +171,8 @@ export component ConfigTab inherits TabReload {
                     text: GConfig.max_undo;
                     input-type: number;
                     accepted(text) => {
-                        GConfig.set_max_undo(text.to-float().round());
+                        GConfig.max_undo = self.text.to-float().round();
+                        GConfig.set_max_undo(GConfig.max_undo);
                     }
                 }
 
@@ -178,13 +184,68 @@ export component ConfigTab inherits TabReload {
                     Button {
                         text: "Set";
                         clicked => {
-                            GConfig.set_max_undo(max_undo.text.to-float().round());
+                            max_undo.accepted(max_undo.text);
                         }
                     }
                 }
 
                 Text {
                     text: "0 means unlimited";
+                    font-size: 12px;
+                    font-weight: 400;
+                    color: #717680;
+                }
+            }
+
+            Text {
+                text: "AUTOSAVE";
+                font-size: 12px;
+                color: #a1a1aa;
+                font-weight: 700;
+            }
+
+            HorizontalBox {
+                alignment: start;
+                cross-axis-alignment: center;
+
+                Text {
+                    text: "Every";
+                    color: #a1a1aa;
+                    font-size: 12px;
+                    font-weight: 400;
+                }
+
+                autosave_interval := LineEdit {
+                    text: GConfig.autosave_interval;
+                    input-type: number;
+                    accepted(text) => {
+                        GConfig.autosave_interval = self.text.to-float().round();
+                        GConfig.set_autosave_interval(GConfig.autosave_interval);
+                    }
+                }
+
+                Text {
+                    text: "seconds";
+                    color: #a1a1aa;
+                    font-size: 12px;
+                    font-weight: 400;
+                }
+
+                Rectangle {
+                    background: #27272a;
+                    border-radius: 6px;
+                    border-width: 1px;
+                    border-color: #3f3f46;
+                    Button {
+                        text: "Set";
+                        clicked => {
+                            autosave_interval.accepted(autosave_interval.text);
+                        }
+                    }
+                }
+
+                Text {
+                    text: "0 means disabled";
                     font-size: 12px;
                     font-weight: 400;
                     color: #717680;

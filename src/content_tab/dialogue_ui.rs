@@ -386,15 +386,8 @@ pub fn reload_dialogue(data: &AppData, ui: &AppWindow, config: &Config, search: 
         let mut dialogues: Vec<SharedString> = Vec::new();
         let re = new_regex(search);
         for dialog in state_dialogs {
-            let content = if !config.langs.is_empty()
-                && let Some(content) = dialog.contents.get(config.langs.first().unwrap())
-            {
-                content.into()
-            } else if let Some((_, content)) = dialog.contents.first() {
-                content.into()
-            } else {
-                SharedString::new()
-            };
+            let content =
+                if let Some((_, content)) = dialog.contents.first() { content.into() } else { SharedString::new() };
 
             if search.is_empty() || (re.is_ok() && re.as_ref().unwrap().is_match(&content)) {
                 dialogues.push(content);
