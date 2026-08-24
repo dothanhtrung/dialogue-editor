@@ -53,14 +53,11 @@ struct Cli {
 #[derive(Serialize, Deserialize, Default, Clone)]
 struct Dialogue {
     #[serde(default)]
-    #[serde(skip_serializing_if = "IndexMap::is_empty")]
     contents: IndexMap<Language, String>,
     /// The class this dialogue will affect and the state that class will change to
     #[serde(default)]
-    #[serde(skip_serializing_if = "HashMap::is_empty")]
     affects: HashMap<u64, u64>,
     #[serde(default)]
-    #[serde(skip_serializing_if = "HashSet::is_empty")]
     events: HashSet<u64>,
 }
 
@@ -75,15 +72,15 @@ pub struct SequenceItem {
 struct AppData {
     #[serde(default)]
     dialogues: IndexMap<u64, IndexMap<u64, Vec<Dialogue>>>,
-    #[serde(default, skip_serializing_if = "IndexMap::is_empty")]
+    #[serde(default)]
     sequences: IndexMap<u64, Vec<SequenceItem>>,
-    #[serde(default, skip_serializing_if = "HashMap::is_empty")]
+    #[serde(default)]
     class_name_map: HashMap<String, u64>,
-    #[serde(default, skip_serializing_if = "HashMap::is_empty")]
+    #[serde(default)]
     state_name_map: HashMap<String, u64>,
-    #[serde(default, skip_serializing_if = "HashMap::is_empty")]
+    #[serde(default)]
     event_name_map: HashMap<String, u64>,
-    #[serde(default, skip_serializing_if = "HashMap::is_empty")]
+    #[serde(default)]
     sequence_name_map: HashMap<String, u64>,
 }
 
