@@ -104,17 +104,25 @@ fn file_picker(
             return;
         }
 
-        let file_dialog = FileDialog::new()
-            .add_filter("Ron", &["ron"])
-            .add_filter("Bin", &["bin"])
-            .set_directory(
-                config
-                    .file_path
-                    .parent()
-                    .unwrap_or(Path::new("/"))
-                    .to_str()
-                    .unwrap_or("/"),
-            );
+        let mut file_dialog = FileDialog::new().set_directory(
+            config
+                .file_path
+                .parent()
+                .unwrap_or(Path::new("/"))
+                .to_str()
+                .unwrap_or("/"),
+        );
+
+        // Move the last file format to the first filter, so that the user can easily select the last used format
+        match config.file_format {
+            FileFormat::Ron => {
+                file_dialog = file_dialog.add_filter("Ron", &["ron"]).add_filter("Bin", &["bin"]);
+            }
+            FileFormat::Bin => {
+                file_dialog = file_dialog.add_filter("Bin", &["bin"]).add_filter("Ron", &["ron"]);
+            }
+        }
+
         config.file_path = if load_true_save_false {
             let Some(file_path) = file_dialog.pick_file() else {
                 return;
